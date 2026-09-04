@@ -63,7 +63,8 @@ export type Group = {
   label: string;
   /** 日本語の見出し（ナビに出るのはこちら） */
   jp: string;
-  /** セクション冒頭のリード文 */
+  /** セクション冒頭のリード文。見出しから分かることは書かない。
+      補足が要るときだけ入れる（例：入場に条件がある、など） */
   lead?: string;
   /** カードの並べ方 */
   layout: "grid" | "list";
@@ -86,7 +87,6 @@ export const groups: Record<string, Group> = {
   movies: {
     label: "Movies",
     jp: "ムービー",
-    lead: "夜の部で上映するフィルムのラインナップ。",
     layout: "grid",
     ratio: "16 / 9",
     // 一覧では作品名と上映日時まで。紹介文は個別ページで読ませる
@@ -98,7 +98,6 @@ export const groups: Record<string, Group> = {
   live: {
     label: "Live",
     jp: "ライブ",
-    lead: "会場で演奏するアーティスト。",
     layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
@@ -108,7 +107,6 @@ export const groups: Record<string, Group> = {
   talk: {
     label: "Talk Show",
     jp: "トークショー",
-    lead: "昼の部のトークセッションとワークショップ。",
     layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
@@ -118,7 +116,6 @@ export const groups: Record<string, Group> = {
   dj: {
     label: "DJ",
     jp: "DJ",
-    lead: "アフターパーティに登場するDJ。",
     layout: "grid",
     ratio: "1 / 1",
     cardMin: "300px",
@@ -128,7 +125,6 @@ export const groups: Record<string, Group> = {
   foods: {
     label: "Foods",
     jp: "フード",
-    lead: "会場に並ぶ飲食ブース。",
     layout: "grid",
     ratio: "4 / 3",
     parent: "contents",
@@ -136,7 +132,6 @@ export const groups: Record<string, Group> = {
   shops: {
     label: "Shop & Booth",
     jp: "ショップ ＆ ブース",
-    lead: "出店ブースとマーケット。",
     layout: "grid",
     ratio: "4 / 3",
     parent: "contents",
@@ -144,7 +139,6 @@ export const groups: Record<string, Group> = {
   stay: {
     label: "Stay",
     jp: "宿泊",
-    lead: "会場周辺のキャンプサイトと宿泊施設。",
     layout: "grid",
     ratio: "16 / 9",
     parent: "access",
