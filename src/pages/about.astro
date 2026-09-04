@@ -3,9 +3,11 @@ import { render } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
 import { site } from "../config/site";
+import VideoEmbed from "../components/VideoEmbed.astro";
 import { getCurrentEvent } from "../lib/content";
 
 const event = await getCurrentEvent();
+const ev = event?.data;
 const About = event ? (await render(event)).Content : null;
 ---
 
@@ -15,7 +17,14 @@ const About = event ? (await render(event)).Content : null;
   <section class="page">
     <div class="wrap">
       <div class="measure">
-            <p class="en tagline">{site.tagline}</p>
+            <p class="tagline">{site.tagline}</p>
+        {
+          ev?.prVideo && (
+            <div class="video">
+              <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />
+            </div>
+          )
+        }
             {About && (
               <div class="prose body">
                 <About />
@@ -33,10 +42,16 @@ const About = event ? (await render(event)).Content : null;
   }
 
   .tagline {
-    font-size: clamp(1.2rem, 3vw, 1.7rem);
-    letter-spacing: 0.14em;
+    font-family: var(--font-tagline);
+    font-weight: 700;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    letter-spacing: 0.01em;
     color: var(--brand);
     line-height: 1.5;
+  }
+
+  .video {
+    margin-top: clamp(24px, 4vw, 36px);
   }
 
   .body {

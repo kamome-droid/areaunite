@@ -4,6 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
+import VideoEmbed from "../components/VideoEmbed.astro";
 import DateText from "../components/DateText.astro";
 import ItemLayout from "../components/ItemLayout.astro";
 import Card from "../components/Card.astro";
@@ -70,6 +71,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref="/about/"
         moreLabel="もっと見る"
       >
+        {ev?.prVideo && <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />}
         <p class="about">{aboutLead}</p>
       </Section>
     )
@@ -196,6 +198,11 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 
   .about {
     font-size: clamp(1rem, 1.8vw, 1.08rem);
+  }
+
+  /* PRムービーの下に本文を置く */
+  .sec__body :global(.embed) + .about {
+    margin-top: clamp(24px, 4vw, 36px);
   }
 
   /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約 */

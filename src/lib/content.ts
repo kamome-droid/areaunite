@@ -64,7 +64,7 @@ type ScheduleDay = {
   time?: string;
   program: {
     part?: string;
-    include?: string;
+    include?: string | string[];
     items: { time: string; title: string; note?: string }[];
   }[];
 };
@@ -77,21 +77,29 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
   for (const block of day.program) {
     const items: ProgramItem[] = [...block.items];
 
-    if (block.include) {
-      const source = await getItems(block.include);
-      // 差し込み元の分類が置かれているページ。ここへ飛ばす
-      const parent = groups[block.include]?.parent;
+    const includes = block.include
+      ? Array.isArray(block.include)
+        ? block.include
+        : [block.include]
+      : [];
+
+    for (const group of includes) {
+      const source = await getItems(group);
+      // 差し込み元の分類が置かれているページ。個別ページが無ければそこへ飛ばす
+      const parent = groups[group]?.parent;
       const base = parent ? parents[parent].href : "";
 
       for (const entry of source) {
         if (!entry.data.time) continue;
+        const bracket =
+          groups[group]?.scheduleFormat === "bracket" && entry.data.subtitle;
+
         items.push({
           time: entry.data.time,
-          // 「制作者名」＋「作品名」を1行にまとめる
-          title: entry.data.subtitle
+          title: bracket
             ? `${entry.data.subtitle}「${entry.data.title}」`
             : entry.data.title,
-          href: itemHref(block.include, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
+          href: itemHref(group, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
         });
       }
     }

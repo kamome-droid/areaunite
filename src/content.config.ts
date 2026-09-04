@@ -61,8 +61,9 @@ const programBlock = z.object({
   /** 「第2部 ／ ムービー」など。省略すると見出しなしで行だけ並ぶ */
   part: z.string().optional(),
   /** items コレクションの group キー。時刻を持つ項目が時刻順に入る。
-      「制作者名」＋「作品名」の形で1行にまとめて表示する */
-  include: z.string().optional(),
+      「制作者名」＋「作品名」の形で1行にまとめて表示する。
+      配列で複数の分類をまとめて差し込むこともできる */
+  include: z.union([z.string(), z.array(z.string())]).optional(),
   /** 直接書く行 */
   items: z.array(timeSlot).default([]),
 });
@@ -96,6 +97,8 @@ const event = defineCollection({
     date: z.coerce.date(),
     /** KV画像（/public 起点） */
     hero: z.string().default(""),
+    /** PRムービー（YouTube / Vimeo）。ABOUTに埋め込まれる */
+    prVideo: z.string().optional(),
     /** KVの見せ方
         overlay … 写真の上にイベント名や日付を重ねる（KVに文字が入っていないとき）
         band    … KVを切らずに全部見せ、日付は下に置く

@@ -74,6 +74,10 @@ export type Group = {
   /** 項目ごとに個別ページを持つ。持つとカードや一覧からそのページへ飛べる
       （画面上ではモーダルで開き、直接URLを叩けばページとして開く） */
   detail?: boolean;
+  /** タイムテーブルでの名前の書き方。
+      bracket … 制作者「作品名」（映画のように作り手を併記したいとき）
+      plain   … 名前だけ（出演者のように名前で通じるとき。既定） */
+  scheduleFormat?: "bracket" | "plain";
   /** どの親ページに置くか */
   parent: Parent;
 };
@@ -88,14 +92,17 @@ export const groups: Record<string, Group> = {
     // 一覧では作品名と上映日時まで。紹介文は個別ページで読ませる
     cardMin: "300px",
     detail: true,
+    scheduleFormat: "bracket",
     parent: "contents",
   },
   live: {
     label: "Live",
     jp: "ライブ",
-    lead: "ライブアクトとDJのラインナップ。",
+    lead: "会場で演奏するアーティスト。",
     layout: "grid",
-    ratio: "1 / 1",
+    ratio: "4 / 3",
+    cardMin: "300px",
+    detail: true,
     parent: "contents",
   },
   talk: {
@@ -104,6 +111,18 @@ export const groups: Record<string, Group> = {
     lead: "昼の部のトークセッションとワークショップ。",
     layout: "grid",
     ratio: "4 / 3",
+    cardMin: "300px",
+    detail: true,
+    parent: "contents",
+  },
+  dj: {
+    label: "DJ",
+    jp: "DJ",
+    lead: "アフターパーティに登場するDJ。",
+    layout: "grid",
+    ratio: "1 / 1",
+    cardMin: "300px",
+    detail: true,
     parent: "contents",
   },
   foods: {
