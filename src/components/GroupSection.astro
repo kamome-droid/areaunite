@@ -25,12 +25,13 @@ const bodies = await Promise.all(items.map((i) => render(i)));
     items.length === 0 ? (
       <p class="empty muted">準備中です。決まりしだい公開します。</p>
     ) : (
-      <ItemLayout layout={def.layout}>
+      <ItemLayout layout={def.layout} min={def.cardMin}>
         {items.map((item, i) => {
           const Body = bodies[i].Content;
           const common = {
             title: item.data.title,
             subtitle: item.data.subtitle,
+            date: item.data.date,
             time: item.data.time,
             image: item.data.image,
             link: item.data.link,

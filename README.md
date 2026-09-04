@@ -131,15 +131,20 @@ Google マップを検索する形に自動で組み立てる。APIキーは要�
 ---
 group: movies
 title: "作品タイトル"
-subtitle: "制作・監督名"      # タイトルの上に小さく出る
-time: "17:30"                # あると時刻順に並び、サムネイルに時刻が乗る
+subtitle: "制作チーム名・監督名"   # タイトルの上に小さく出る
+time: "17:30"                    # 開始時刻。時刻順に並ぶ
+date: "10.17 SAT"                # 上映日。時刻と並べてカードの下に出る
 image: /images/items/xxx.jpg
-link: https://example.com    # 任意
-featured: true               # トップページのダイジェストに出す
-draft: true                  # 下書き。本番ビルドには出ない
+link: https://example.com        # 任意
+featured: true                   # トップページのダイジェストに出す
+draft: true                      # 下書き。本番ビルドには出ない
 ---
-本文（任意）。
+作品紹介（任意）。
 ```
+
+カード1枚は「制作者名 → 作品タイトル → 紹介文 → 上映日時」の順で並ぶ。
+紹介文が長くなる分類は `src/config/site.ts` の `cardMin` を広げて
+1枚あたりの幅を確保する（ムービーは 420px にして2列にしている）。
 
 ### `src/content/sponsors/` — 協賛ロゴ
 

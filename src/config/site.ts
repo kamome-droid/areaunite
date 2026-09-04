@@ -69,6 +69,8 @@ export type Group = {
   layout: "grid" | "list";
   /** カード画像の比率 */
   ratio?: "16 / 9" | "4 / 3" | "1 / 1" | "3 / 4";
+  /** カード1枚の最小幅。説明文が長い分類は広げる */
+  cardMin?: string;
   /** どの親ページに置くか */
   parent: Parent;
 };
@@ -78,8 +80,10 @@ export const groups: Record<string, Group> = {
     label: "Movies",
     jp: "ムービー",
     lead: "夜の部で上映するフィルムのラインナップ。",
-    layout: "list",
+    layout: "grid",
     ratio: "16 / 9",
+    // 作品紹介は長くなるので、カードを広めにとって2列で見せる
+    cardMin: "420px",
     parent: "contents",
   },
   live: {

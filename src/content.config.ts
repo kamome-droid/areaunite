@@ -18,6 +18,8 @@ const items = defineCollection({
     subtitle: z.string().optional(),
     /** 開始時刻。"17:30" のように入れるとタイムテーブル表示になる */
     time: z.string().optional(),
+    /** 上映日など。"10.17 SAT" のように入れるとカードに時刻と並べて出る */
+    date: z.string().optional(),
     /** カード画像（/public 起点） */
     image: z.string().optional(),
     /** 外部リンク（公式サイト・Instagram など） */

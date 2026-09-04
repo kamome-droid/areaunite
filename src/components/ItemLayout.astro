@@ -5,12 +5,12 @@ interface Props {
   /** grid のときのカード最小幅 */
   min?: string;
 }
-const { layout = "grid", min = "270px" } = Astro.props;
+const { layout = "grid", min } = Astro.props;
 ---
 
 <div
   class:list={["items", `items--${layout}`]}
-  style={`--card-min:${min}`}
+  style={`--card-min:${min ?? "270px"}`}
 >
   <slot />
 </div>
@@ -18,7 +18,11 @@ const { layout = "grid", min = "270px" } = Astro.props;
 <style>
   .items--grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    /* min() を挟まないと、画面幅がカード最小幅を下回ったときに横へはみ出す */
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--card-min), 100%), 1fr)
+    );
     gap: clamp(16px, 2.2vw, 26px);
   }
 

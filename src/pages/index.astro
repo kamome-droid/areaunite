@@ -6,10 +6,10 @@ import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
 import DateText from "../components/DateText.astro";
 import ItemLayout from "../components/ItemLayout.astro";
-import Row from "../components/Row.astro";
+import Card from "../components/Card.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
-import { site, parents, groupsOf } from "../config/site";
+import { site, parents, groups, groupsOf } from "../config/site";
 import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors } from "../lib/content";
 
 const event = await getCurrentEvent();
@@ -134,20 +134,22 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref={`${parents.contents.href}#movies`}
         moreLabel="もっと見る"
       >
-        <ItemLayout layout="list">
+        <ItemLayout layout="grid" min={groups.movies.cardMin}>
           {movies.map((m, i) => {
             const Body = movieBodies[i].Content;
             return (
-              <Row
+              <Card
                 title={m.data.title}
                 subtitle={m.data.subtitle}
+                date={m.data.date}
                 time={m.data.time}
                 image={m.data.image}
                 link={m.data.link}
                 linkLabel={m.data.linkLabel}
+                ratio={groups.movies.ratio}
               >
                 <Body />
-              </Row>
+              </Card>
             );
           })}
         </ItemLayout>

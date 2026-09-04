@@ -3,6 +3,8 @@
 interface Props {
   title: string;
   subtitle?: string;
+  /** 上映日など */
+  date?: string;
   time?: string;
   image?: string;
   link?: string;
@@ -13,6 +15,7 @@ interface Props {
 const {
   title,
   subtitle,
+  date,
   time,
   image,
   link,
@@ -34,7 +37,6 @@ const external = Boolean(link && /^https?:\/\//.test(link));
         </span>
       )
     }
-    {time && <span class="card__time num">{time}</span>}
   </div>
 
   <div class="card__body">
@@ -43,6 +45,15 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     <div class="card__text prose">
       <slot />
     </div>
+    {
+      (date || time) && (
+        <p class="card__when num">
+          {date && <span>{date}</span>}
+          {time && <span class="card__time">{time}</span>}
+        </p>
+      )
+    }
+
     {
       link && (
         <a
@@ -101,17 +112,23 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     color: var(--border-strong);
   }
 
-  .card__time {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    padding: 4px 12px;
-    background: var(--brand);
-    color: var(--brand-ink);
+  /* 上映日時。本文のあとに置き、下端で揃える */
+  .card__when {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: auto;
+    padding-top: 18px;
+    color: var(--brand);
     font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: 0.06em;
-    line-height: 1.5;
+    line-height: 1.4;
+  }
+
+  .card__time {
+    font-size: 1.25rem;
   }
 
   .card__body {
@@ -147,8 +164,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
   }
 
   .card__link {
-    margin-top: auto;
-    padding-top: 16px;
+    margin-top: 14px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
