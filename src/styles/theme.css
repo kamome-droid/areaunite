@@ -39,8 +39,10 @@
   --radius-lg: 10px;
 
   /* ---- レイアウト ---- */
-  --page-max: 1180px; /* コンテンツ最大幅 */
-  --page-pad: clamp(20px, 5vw, 40px); /* 左右の余白 */
+  /* コンテンツ最大幅。広げすぎると、本文（.measure = 800px）との差が
+     右側の空きとして目立ち、全体が左に寄って見える */
+  --page-max: 1080px;
+  --page-pad: clamp(20px, 4vw, 48px); /* 左右の余白 */
   --section-gap: clamp(64px, 9vw, 120px); /* セクション間の余白 */
   --header-h: 64px;
 }

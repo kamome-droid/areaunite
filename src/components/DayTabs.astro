@@ -40,26 +40,44 @@ const { days } = Astro.props;
 </div>
 
 {
-  days.map(({ day, blocks }) => (
-    <section
-      class="daypanel"
-      id={`panel-${day.id}`}
-      role="tabpanel"
-      aria-labelledby={`tab-${day.id}`}
-      data-day={day.id}
-    >
-      <div class="wrap">
-        <h2 class="visually-hidden">
-          {day.label} {day.note}
-        </h2>
-        {blocks.length > 0 ? (
-          <Timetable blocks={blocks} />
-        ) : (
-          <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
-        )}
-      </div>
-    </section>
-  ))
+  days.map(({ day, blocks }, i) => {
+    const prev = days[i - 1]?.day;
+    const next = days[i + 1]?.day;
+    return (
+      <section
+        class="daypanel"
+        id={`panel-${day.id}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${day.id}`}
+        data-day={day.id}
+      >
+        <div class="wrap">
+          <h2 class="visually-hidden">
+            {day.label} {day.note}
+          </h2>
+
+          {/* 端に置いた目印。ここが見えたら前後の日へ切り替える */}
+          {prev && (
+            <p class="dayhint" data-sentinel="prev">
+              <span aria-hidden="true">↑</span> 上にスクロールで {prev.label}
+            </p>
+          )}
+
+          {blocks.length > 0 ? (
+            <Timetable blocks={blocks} />
+          ) : (
+            <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
+          )}
+
+          {next && (
+            <p class="dayhint" data-sentinel="next">
+              <span aria-hidden="true">↓</span> 下にスクロールで {next.label}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  })
 }
 
 <script>
@@ -71,6 +89,10 @@ const { days } = Astro.props;
   );
 
   if (tabs.length > 0) {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
     const select = (id: string) => {
       tabs.forEach((t) =>
         t.setAttribute("aria-selected", String(t.dataset.day === id))
@@ -80,16 +102,48 @@ const { days } = Astro.props;
       });
     };
 
+    /** ヘッダーとタブが重なっている高さ。切り替え後はこの真下に頭出しする */
+    const stickyHeight = () =>
+      (document.querySelector<HTMLElement>(".hd")?.offsetHeight ?? 0) +
+      (document.querySelector<HTMLElement>(".daytabs")?.offsetHeight ?? 0);
+
+    /** 目印が「一度画面から出てから戻ってきた」ときだけ反応させるための状態。
+        切り替え直後に反対側へ弾き返されるのを防ぐ */
+    const armed = new WeakMap<Element, boolean>();
+    const disarmAll = () =>
+      document
+        .querySelectorAll("[data-sentinel]")
+        .forEach((el) => armed.set(el, false));
+
+    /** 直前に切り替えた時刻。勢い余った小さな逆スクロールで戻されるのを防ぐ */
+    let lastSwitchAt = 0;
+
+    const goTo = (id: string, smooth = false) => {
+      select(id);
+      disarmAll();
+
+      const panel = panels.find((p) => p.dataset.day === id);
+      if (panel) {
+        window.scrollTo({
+          top: Math.max(0, panel.offsetTop - stickyHeight()),
+          behavior: smooth && !reduceMotion ? "smooth" : "instant",
+        });
+        // 頭出しした直後でも「上へ戻る」だけは効かせたいので、
+        // 上端の目印だけは構えた状態にしておく
+        const back = panel.querySelector('[data-sentinel="prev"]');
+        if (back) armed.set(back, true);
+      }
+      history.replaceState(null, "", `#${id}`);
+      // 自分で動かしたぶんを向きの判定に混ぜない
+      lastY = window.scrollY;
+      lastSwitchAt = performance.now();
+    };
+
+    // ---- タブ ----
     tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        const id = tab.dataset.day!;
-        select(id);
-        // ボタンなのでスクロールは起きない。URLだけ揃えて共有できるようにする
-        history.replaceState(null, "", `#${id}`);
-      });
+      tab.addEventListener("click", () => goTo(tab.dataset.day!, true));
     });
 
-    // 左右キーでタブを移動する
     document
       .querySelector(".daytabs__list")
       ?.addEventListener("keydown", (e) => {
@@ -101,19 +155,94 @@ const { days } = Astro.props;
         const next =
           (current + (key === "ArrowRight" ? 1 : -1) + tabs.length) %
           tabs.length;
-        select(tabs[next].dataset.day!);
+        goTo(tabs[next].dataset.day!, true);
         tabs[next].focus();
       });
 
+    // ---- スクロールでの切り替え ----
+    // 端に置いた目印に到達したかを毎フレーム位置で見る。
+    // 交差監視だと、一気にスクロールしたときに通過を取りこぼす。
+    let lastY = window.scrollY;
+    let direction: "up" | "down" = "down";
+    let ticking = false;
+
+    const liveSentinels = () =>
+      Array.from(
+        document.querySelectorAll<HTMLElement>(
+          ".daypanel:not([hidden]) [data-sentinel]"
+        )
+      );
+
+    const check = () => {
+      ticking = false;
+
+      for (const el of liveSentinels()) {
+        const kind = el.dataset.sentinel;
+        const rect = el.getBoundingClientRect();
+        // next は下端の目印、prev は上端の目印
+        const reached =
+          kind === "next" ? rect.top <= window.innerHeight : rect.bottom >= 0;
+
+        // 届いていないあいだに構えておく（＝一度離れないと再発火しない）
+        if (!reached) {
+          armed.set(el, true);
+          continue;
+        }
+        if (!armed.get(el)) continue;
+        // 切り替えた直後の跳ね返りを避ける
+        if (performance.now() - lastSwitchAt < 500) continue;
+
+        // 読み進めている向きと一致するときだけ切り替える
+        if (kind === "next" && direction !== "down") continue;
+        if (kind === "prev" && direction !== "up") continue;
+
+        const panel = el.closest<HTMLElement>(".daypanel");
+        const index = panels.indexOf(panel!);
+        const target = panels[kind === "next" ? index + 1 : index - 1];
+        if (!target) continue;
+
+        goTo(target.dataset.day!);
+        return;
+      }
+    };
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        const y = window.scrollY;
+        if (y > lastY) direction = "down";
+        else if (y < lastY) direction = "up";
+        lastY = y;
+
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(check);
+        }
+      },
+      { passive: true }
+    );
+
+    window.addEventListener("resize", () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(check);
+      }
+    });
+
+    // ---- 初期表示 ----
     const fromHash = () => {
       const id = location.hash.slice(1);
       return tabs.some((t) => t.dataset.day === id) ? id : null;
     };
 
-    select(fromHash() ?? tabs[0].dataset.day!);
+    const initial = fromHash();
+    select(initial ?? tabs[0].dataset.day!);
+    disarmAll();
+    requestAnimationFrame(check);
+
     window.addEventListener("hashchange", () => {
       const id = fromHash();
-      if (id) select(id);
+      if (id) goTo(id);
     });
   }
 </script>
@@ -194,5 +323,19 @@ const { days } = Astro.props;
   .daypanel__empty {
     padding-block: 40px;
     text-align: center;
+  }
+
+  /* 前後の日への手がかり。切り替えの検知点も兼ねる */
+  .dayhint {
+    padding-block: 22px;
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .dayhint span {
+    color: var(--brand);
+    margin-right: 4px;
   }
 </style>
