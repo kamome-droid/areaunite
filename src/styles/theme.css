@@ -36,14 +36,12 @@
   /* 数字・時刻 */
   --font-num: "Barlow", var(--font-body);
   /* キャッチコピー。
-     Optima は Linotype の商用書体で Web配信できないが、macOS には標準で
-     入っている。Windows には同じ Zapf 設計の Palatino Linotype があるので
-     そこへ、どちらも無い環境は配信している EB Garamond へ落とす。
-     つまり見る環境で書体が変わる。全員に同じ書体を見せるには、
-     ライセンスのある Optima の Webフォントを持ち込むか、
-     この行を配信できる1書体に固定する。 */
-  --font-tagline: Optima, "Optima nova", "Palatino Linotype", "Book Antiqua",
-    Palatino, "EB Garamond", serif;
+     狙いは Optima（フレア＝線の端が広がる人文主義サンセリフ）だが、
+     Optima は Linotype の商用書体で Web配信できない。Google Fonts の中で
+     フレアと線の太さが最も近い Philosopher を配信し、どの環境でも同じ
+     見た目になるようにしている。書体を変えるならこの1行と、
+     PageHead.astro のフォント読み込みを差し替える */
+  --font-tagline: "Philosopher", Optima, "Palatino Linotype", serif;
 
   /* ---- 形 ---- */
   --radius: 6px;

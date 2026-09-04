@@ -1,10 +1,9 @@
 import { parents, groupsOf } from "../config/site";
-import { getCurrentEvent } from "./content";
 
 /* =========================================================
    グローバルナビの組み立て
-   親は5つに固定し、子は site.ts の groups と
-   開催回のスケジュールから自動で生える。
+   親は固定で、子は site.ts の groups から自動で生える。
+   子を持たせるのは「親から推測できない行き先」があるときだけ。
    ========================================================= */
 
 export type NavChild = { label: string; href: string };
@@ -16,18 +15,12 @@ export type NavItem = {
 };
 
 export async function getNav(): Promise<NavItem[]> {
-  const event = await getCurrentEvent();
-  const parts = event?.data.schedule ?? [];
-
   return [
     { label: "About", jp: "イベントについて", href: "/about/", children: [] },
     { label: "Ticket", jp: "チケット", href: "/ticket/", children: [] },
-    {
-      label: "Schedule",
-      jp: "スケジュール",
-      href: "/schedule/",
-      children: parts.map((p) => ({ label: p.jp, href: `/schedule/#${p.id}` })),
-    },
+    // 日はページ内で続けて並んでおり、ページ先頭に日の目次もある。
+    // ナビから途中に飛ばせても得るものがないので、子は持たせない
+    { label: "Schedule", jp: "スケジュール", href: "/schedule/", children: [] },
     {
       label: parents.contents.label,
       jp: parents.contents.jp,
