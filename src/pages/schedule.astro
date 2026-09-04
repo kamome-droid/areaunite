@@ -1,49 +1,49 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
-import SubNav from "../components/SubNav.astro";
-import Section from "../components/Section.astro";
+import DayTabs from "../components/DayTabs.astro";
 import Timetable from "../components/Timetable.astro";
 import { getCurrentEvent, resolveProgram } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+
 const days = await Promise.all(
   (ev?.schedule ?? []).map(async (day) => ({
     day,
     blocks: await resolveProgram(day),
   }))
 );
+
+/** 1日開催ならタブは要らないので、そのまま表を出す */
+const single = days.length === 1 ? days[0] : null;
 ---
 
 <BaseLayout title="Schedule｜スケジュール" description="当日のスケジュール。">
   <PageHero label="Schedule" jp="スケジュール" />
 
-  {
-    days.length > 1 && (
-      <SubNav items={days.map(({ day }) => ({ href: `#${day.id}`, label: day.jp }))} />
-    )
-  }
+  {days.length > 1 && <DayTabs days={days} />}
 
   {
-    days.map(({ day, blocks }, i) => (
-      <Section
-        id={day.id}
-        label={day.label}
-        jp={day.note || undefined}
-        surface={i % 2 === 1}
-      >
-        {blocks.length > 0 ? (
-          <Timetable blocks={blocks} />
-        ) : (
-          <p class="empty muted">準備中です。決まりしだい公開します。</p>
-        )}
-      </Section>
-    ))
+    single && (
+      <section class="single">
+        <div class="wrap">
+          {single.blocks.length > 0 ? (
+            <Timetable blocks={single.blocks} />
+          ) : (
+            <p class="empty muted">準備中です。決まりしだい公開します。</p>
+          )}
+        </div>
+      </section>
+    )
   }
 </BaseLayout>
 
 <style>
+  .single {
+    padding-block: clamp(40px, 6vw, 72px);
+  }
+
   .empty {
     padding-block: 40px;
     text-align: center;

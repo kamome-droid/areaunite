@@ -24,7 +24,9 @@ const tabs = [
 >
   <PageHero label={parents.access.label} jp={parents.access.jp} />
 
-  {tabs.length > 1 && <SubNav items={tabs} />}
+  {/* 2つだけだと帯にポツンと浮いて弱いので、3つ以上のときだけ目次を出す。
+      少ない項目はそのまま下へ読み進めればよい（ナビの子メニューからは飛べる） */}
+  {tabs.length > 2 && <SubNav items={tabs} />}
 
   <Section id="map" label="Venue" jp="会場・アクセス" narrow>
     {ev?.venue && <p class="venue">{ev.venue}</p>}

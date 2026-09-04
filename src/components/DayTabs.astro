@@ -1,0 +1,198 @@
+---
+import Timetable from "./Timetable.astro";
+import type { ProgramBlock } from "../lib/content";
+
+/**
+ * 開催日の切り替えタブ。選んだ日のプログラムだけを出す。
+ * 2日以上あるイベントで、来場者が「自分が行く日」だけを見られるようにする。
+ * JSが動かない環境では全日が縦に並ぶ（内容は欠けない）。
+ */
+interface Props {
+  days: {
+    day: { id: string; label: string; jp: string; note?: string };
+    blocks: ProgramBlock[];
+  }[];
+}
+const { days } = Astro.props;
+---
+
+<div class="daytabs">
+  <div class="wrap">
+    <div class="daytabs__list" role="tablist" aria-label="開催日">
+      {
+        days.map(({ day }, i) => (
+          <button
+            type="button"
+            class="daytab"
+            role="tab"
+            id={`tab-${day.id}`}
+            aria-controls={`panel-${day.id}`}
+            aria-selected={i === 0 ? "true" : "false"}
+            data-day={day.id}
+          >
+            <span class="en daytab__label">{day.label}</span>
+            {day.note && <span class="num daytab__date">{day.note}</span>}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+{
+  days.map(({ day, blocks }) => (
+    <section
+      class="daypanel"
+      id={`panel-${day.id}`}
+      role="tabpanel"
+      aria-labelledby={`tab-${day.id}`}
+      data-day={day.id}
+    >
+      <div class="wrap">
+        <h2 class="visually-hidden">
+          {day.label} {day.note}
+        </h2>
+        {blocks.length > 0 ? (
+          <Timetable blocks={blocks} />
+        ) : (
+          <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
+        )}
+      </div>
+    </section>
+  ))
+}
+
+<script>
+  const tabs = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".daytab")
+  );
+  const panels = Array.from(
+    document.querySelectorAll<HTMLElement>(".daypanel")
+  );
+
+  if (tabs.length > 0) {
+    const select = (id: string) => {
+      tabs.forEach((t) =>
+        t.setAttribute("aria-selected", String(t.dataset.day === id))
+      );
+      panels.forEach((p) => {
+        p.hidden = p.dataset.day !== id;
+      });
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const id = tab.dataset.day!;
+        select(id);
+        // ボタンなのでスクロールは起きない。URLだけ揃えて共有できるようにする
+        history.replaceState(null, "", `#${id}`);
+      });
+    });
+
+    // 左右キーでタブを移動する
+    document
+      .querySelector(".daytabs__list")
+      ?.addEventListener("keydown", (e) => {
+        const key = (e as KeyboardEvent).key;
+        if (key !== "ArrowLeft" && key !== "ArrowRight") return;
+        const current = tabs.findIndex(
+          (t) => t.getAttribute("aria-selected") === "true"
+        );
+        const next =
+          (current + (key === "ArrowRight" ? 1 : -1) + tabs.length) %
+          tabs.length;
+        select(tabs[next].dataset.day!);
+        tabs[next].focus();
+      });
+
+    const fromHash = () => {
+      const id = location.hash.slice(1);
+      return tabs.some((t) => t.dataset.day === id) ? id : null;
+    };
+
+    select(fromHash() ?? tabs[0].dataset.day!);
+    window.addEventListener("hashchange", () => {
+      const id = fromHash();
+      if (id) select(id);
+    });
+  }
+</script>
+
+<style>
+  .daytabs {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .daytabs__list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(150px, 250px);
+    justify-content: start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .daytabs__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .daytab {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 4px 16px;
+    margin: 0;
+    border: 0;
+    /* 選択中を示す線。未選択は薄い罫線ぶんだけ確保しておく */
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .daytab + .daytab {
+    margin-left: clamp(20px, 3vw, 40px);
+  }
+
+  .daytab__label {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  .daytab__date {
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  .daytab:hover {
+    color: var(--text);
+  }
+
+  .daytab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--brand);
+  }
+
+  .daytab[aria-selected="true"] .daytab__date {
+    color: var(--brand);
+  }
+
+  .daypanel {
+    padding-block: clamp(40px, 6vw, 72px);
+  }
+
+  .daypanel__empty {
+    padding-block: 40px;
+    text-align: center;
+  }
+</style>
