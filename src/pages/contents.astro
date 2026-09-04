@@ -17,7 +17,6 @@ const list = groupsOf("contents");
   <PageHero
     label={parents.contents.label}
     jp={parents.contents.jp}
-    lead="当日の内容をまとめています。"
   />
 
   <SubNav items={list.map(([key, g]) => ({ href: `#${key}`, label: g.jp }))} />

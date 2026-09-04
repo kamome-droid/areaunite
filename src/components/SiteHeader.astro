@@ -1,6 +1,7 @@
 ---
 import { site } from "../config/site";
 import { getNav } from "../lib/nav";
+import SnsIcons from "./SnsIcons.astro";
 
 const allNav = await getNav();
 const path = Astro.url.pathname;
@@ -60,6 +61,7 @@ const isCurrent = (href: string) => {
     </nav>
 
     <div class="hd__right">
+      <SnsIcons class="hd__sns" />
       {
         site.headerCta && (
           <a class="btn hd__cta" href={site.headerCta.href}>
@@ -261,6 +263,10 @@ const isCurrent = (href: string) => {
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+
+  .hd__sns {
+    margin-right: -6px;
   }
 
   .hd__cta {

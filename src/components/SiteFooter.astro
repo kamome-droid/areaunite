@@ -1,10 +1,10 @@
 ---
 import { site } from "../config/site";
 import { getNav } from "../lib/nav";
+import SnsIcons from "./SnsIcons.astro";
 
 const nav = await getNav();
 const year = new Date().getFullYear();
-const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
 ---
 
 <footer class="ft">
@@ -20,19 +20,7 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
         }
       </a>
       <p class="en ft__tagline">{site.tagline}</p>
-      {
-        snsEntries.length > 0 && (
-          <ul class="ft__sns">
-            {snsEntries.map(([key, url]) => (
-              <li>
-                <a href={url} target="_blank" rel="noopener noreferrer" class="en">
-                  {key}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
+      <SnsIcons class="ft__sns" size={22} />
     </div>
 
     <nav class="ft__nav" aria-label="フッターメニュー">
@@ -62,6 +50,10 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
 
   <div class="wrap ft__copy">
     <small class="en">© {year} {site.copyright}</small>
+    <!-- ナビには置かない、けれど行き止まりにもしないページはここに出す -->
+    <ul class="ft__extra">
+      <li><a href="/contact/">お問い合わせ</a></li>
+    </ul>
   </div>
 </footer>
 
@@ -98,25 +90,8 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
   }
 
   .ft__sns {
-    display: flex;
-    gap: 10px;
-    margin-top: 22px;
-  }
-
-  .ft__sns a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 38px;
-    padding-inline: 1em;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    font-size: 0.85rem;
-    transition: border-color 0.2s ease, color 0.2s ease;
-  }
-
-  .ft__sns a:hover {
-    border-color: var(--brand);
-    color: var(--brand);
+    margin-top: 20px;
+    margin-left: -8px;
   }
 
   .ft__nav > ul {
@@ -166,10 +141,30 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
   }
 
   .ft__copy {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
     padding-block: 20px 28px;
     border-top: 1px solid var(--border);
     color: var(--text-muted);
     letter-spacing: 0.1em;
+  }
+
+  .ft__extra {
+    display: flex;
+    gap: 20px;
+  }
+
+  .ft__extra a {
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    transition: color 0.2s ease;
+  }
+
+  .ft__extra a:hover {
+    color: var(--brand);
   }
 
   @media (max-width: 760px) {

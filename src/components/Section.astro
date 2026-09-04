@@ -35,18 +35,23 @@ const {
         <h2 class="en sec__label">{label}</h2>
         {jp && <p class="sec__jp">{jp}</p>}
       </div>
-      {
-        moreHref && (
-          <a class="en sec__more" href={moreHref}>
-            {moreLabel}
-          </a>
-        )
-      }
     </div>
     {lead && <p class="sec__lead muted">{lead}</p>}
     <div class="sec__body">
       <slot />
     </div>
+    {
+      moreHref && (
+        <p class="sec__more-wrap">
+          <a class="sec__more" href={moreHref}>
+            {moreLabel}
+            <span class="sec__arrow" aria-hidden="true">
+              →
+            </span>
+          </a>
+        </p>
+      )
+    }
   </div>
 </section>
 
@@ -84,18 +89,36 @@ const {
     line-height: 1;
   }
 
+  .sec__more-wrap {
+    margin-top: clamp(24px, 3.5vw, 36px);
+  }
+
   .sec__more {
-    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 1.4em;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
     font-size: 0.95rem;
-    color: var(--text-muted);
-    padding-bottom: 2px;
-    border-bottom: 1px solid var(--border-strong);
-    transition: color 0.2s ease, border-color 0.2s ease;
+    line-height: 1;
+    color: var(--text);
+    transition: border-color 0.2s ease, color 0.2s ease;
   }
 
   .sec__more:hover {
-    color: var(--brand);
     border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .sec__arrow {
+    color: var(--brand);
+    transition: translate 0.2s ease;
+  }
+
+  .sec__more:hover .sec__arrow {
+    translate: 4px 0;
   }
 
   .sec__lead {

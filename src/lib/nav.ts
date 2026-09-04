@@ -20,7 +20,7 @@ export async function getNav(): Promise<NavItem[]> {
   const parts = event?.data.schedule ?? [];
 
   return [
-    { label: "About", jp: "イベントについて", href: "/#about", children: [] },
+    { label: "About", jp: "イベントについて", href: "/about/", children: [] },
     { label: "Ticket", jp: "チケット", href: "/ticket/", children: [] },
     {
       label: "Schedule",

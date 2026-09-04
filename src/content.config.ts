@@ -55,8 +55,11 @@ const schedulePart = z.object({
   label: z.string(),
   /** 日本語見出し（ナビに出るのはこちら） */
   jp: z.string(),
-  /** "12:00 - 17:00" のような時間帯の補足 */
+  /** その日の日付など、見出しに添える文字 */
   note: z.string().optional(),
+  /** "12:00 - LATE" のような開催時間帯。トップページの要約に出る。
+      空なら items の最初と最後の時刻から組み立てる */
+  time: z.string().optional(),
   items: z.array(timeSlot).default([]),
 });
 

@@ -6,18 +6,28 @@ import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
 import ItemLayout from "../components/ItemLayout.astro";
 import Row from "../components/Row.astro";
-import Timetable from "../components/Timetable.astro";
-import PriceTable from "../components/PriceTable.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
-import { site, parents, groups, groupsOf } from "../config/site";
+import { site, parents, groupsOf } from "../config/site";
 import { getCurrentEvent, getFeaturedItems, getSponsors } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
-const About = event ? (await render(event)).Content : null;
+/** トップは冒頭だけ見せる。本文まるごとは /about/ に置く */
+const aboutLead = event
+  ? event.body.split(/\n\s*\n/)[0].replace(/\*\*/g, "").trim()
+  : "";
 
-const movies = await getFeaturedItems("movies", 6);
+/** 「何時から何時まで」。明記がなければ items の最初と最後から組み立てる */
+const partTime = (part: { time?: string; items: { time: string }[] }) => {
+  if (part.time) return part.time;
+  if (part.items.length === 0) return "";
+  return part.items.length === 1
+    ? part.items[0].time
+    : `${part.items[0].time} - ${part.items[part.items.length - 1].time}`;
+};
+
+const movies = await getFeaturedItems("movies", 4);
 const movieBodies = await Promise.all(movies.map((m) => render(m)));
 const sponsors = await getSponsors();
 
@@ -37,10 +47,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     catch={ev?.catch}
     date={ev?.dateLabel}
     venue={ev?.venue}
-    ctaLabel="チケット"
-    ctaHref="/ticket/"
-    subCtaLabel="上映作品"
-    subCtaHref={`${parents.contents.href}#movies`}
   />
 
   {
@@ -52,55 +58,51 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   {
-    About && (
-      <Section id="about" label="About" jp={site.name} narrow>
-        <div class="prose about">
-          <About />
-        </div>
+    aboutLead && (
+      <Section
+        id="about"
+        label="About"
+        jp="イベントについて"
+        narrow
+        moreHref="/about/"
+        moreLabel="もっと見る"
+      >
+        <p class="about">{aboutLead}</p>
       </Section>
     )
   }
 
   {
-    ev && (ev.schedule.length > 0 || ev.dateLabel) && (
+    ev && (
       <Section
         id="schedule"
         label="Schedule"
         jp="タイムテーブル"
         surface
         moreHref="/schedule/"
-        moreLabel="タイムテーブルを見る"
+        moreLabel="詳細を見る"
       >
-        <div class="sched">
-          <dl class="sched__meta">
-            <div>
-              <dt class="en">Date</dt>
-              <dd class="num">{ev.dateLabel}</dd>
-            </div>
-            {ev.venue && (
-              <div>
-                <dt class="en">Venue</dt>
-                <dd>{ev.venue}</dd>
-              </div>
-            )}
-          </dl>
-
-          <div class="sched__parts">
-            {ev.schedule.map((part) => (
-              <div class="part">
-                <p class="en part__label">
-                  {part.label}
-                  {part.note && <span class="part__note">{part.note}</span>}
-                </p>
-                {part.items.length > 0 ? (
-                  <Timetable items={part.items} />
-                ) : (
-                  <p class="part__empty muted">準備中です。</p>
-                )}
-              </div>
-            ))}
+        <dl class="sched">
+          <div class="sched__row">
+            <dt class="en">Date</dt>
+            <dd class="num">{ev.dateLabel}</dd>
           </div>
-        </div>
+          {ev.venue && (
+            <div class="sched__row">
+              <dt class="en">Venue</dt>
+              <dd>{ev.venue}</dd>
+            </div>
+          )}
+          {ev.schedule.map((part) => (
+            <div class="sched__row">
+              <dt class="en">{part.label}</dt>
+              <dd class="num">
+                {partTime(part) || <span class="muted">準備中</span>}
+                {part.note && <span class="sched__note">{part.note}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </Section>
     )
   }
@@ -109,7 +111,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     id="contents"
     label={parents.contents.label}
     jp={parents.contents.jp}
-    lead="当日の内容をまとめています。"
     moreHref={parents.contents.href}
     moreLabel="すべて見る"
   >
@@ -120,10 +121,10 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     movies.length > 0 && (
       <Section
         id="movies"
-        label={groups.movies.label}
-        jp={groups.movies.jp}
+        label="Pick Up"
+        jp="注目ムービー"
         moreHref={`${parents.contents.href}#movies`}
-        moreLabel="上映作品をすべて見る"
+        moreLabel="もっと見る"
       >
         <ItemLayout layout="list">
           {movies.map((m, i) => {
@@ -150,29 +151,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     ev && ev.guests.length > 0 && (
       <Section id="guests" label="Guests" jp={ev.guestsLabel}>
         <NameList names={ev.guests} />
-      </Section>
-    )
-  }
-
-  {
-    ev && ev.tickets.length > 0 && (
-      <Section
-        id="ticket"
-        label="Ticket"
-        jp="チケット"
-        surface
-        moreHref="/ticket/"
-        moreLabel="注意事項を見る"
-        narrow
-      >
-        <PriceTable rows={ev.tickets} />
-        {ev.ticketUrl && (
-          <p class="ticket__cta">
-            <a class="btn" href={ev.ticketUrl} target="_blank" rel="noopener noreferrer">
-              {ev.ticketUrlLabel ?? "チケットを購入する"}
-            </a>
-          </p>
-        )}
       </Section>
     )
   }
@@ -219,21 +197,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     )
   }
 
-  <Section id="contact" label="Contact" jp="お問い合わせ" narrow>
-    <p class="muted">
-      出店・協賛・取材などのご相談は、フォームまたは Instagram のDMからご連絡ください。
-    </p>
-    <p class="contact__cta">
-      <a class="btn" href="/contact/">お問い合わせフォーム</a>
-      {
-        site.sns.instagram && (
-          <a class="btn btn--ghost" href={site.sns.instagram} target="_blank" rel="noopener noreferrer">
-            Instagram
-          </a>
-        )
-      }
-    </p>
-  </Section>
 </BaseLayout>
 
 <style>
@@ -251,35 +214,56 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     font-size: clamp(1rem, 1.8vw, 1.08rem);
   }
 
+  /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約 */
   .sched {
+    border-top: 1px solid var(--border);
+  }
+
+  .sched__row {
     display: grid;
-    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-    gap: clamp(24px, 4vw, 56px);
-    align-items: start;
+    grid-template-columns: 120px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 8px 28px;
+    padding-block: 18px;
+    border-bottom: 1px solid var(--border);
   }
 
-  .sched__meta > div + div {
-    margin-top: 24px;
+  .sched__row dt {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    line-height: 1.6;
   }
 
-  .sched__meta dt,
+  .sched__row dd {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+  }
+
+  .sched__note {
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    color: var(--brand);
+  }
+
+  /* ACCESS 要約 */
+  .info > div + div {
+    margin-top: 22px;
+  }
+
   .info dt {
     font-size: 0.75rem;
     letter-spacing: 0.22em;
     color: var(--text-muted);
     line-height: 1;
-  }
-
-  .sched__meta dd {
-    margin: 10px 0 0;
-    font-size: clamp(1.3rem, 3vw, 1.75rem);
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    line-height: 1.3;
-  }
-
-  .info > div + div {
-    margin-top: 22px;
   }
 
   .info dd {
@@ -292,14 +276,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     margin-left: 14px;
     color: var(--brand);
     font-size: 0.9rem;
-  }
-
-  .ticket__cta,
-  .contact__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 28px;
   }
 
   .supporters {
@@ -320,36 +296,10 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     font-size: 0.92rem;
   }
 
-  .sched__parts > .part + .part {
-    margin-top: clamp(30px, 4vw, 44px);
-  }
-
-  .part__label {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    margin-bottom: 12px;
-    font-size: 1.3rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    line-height: 1.2;
-  }
-
-  .part__note {
-    font-size: 0.82rem;
-    letter-spacing: 0.14em;
-    color: var(--brand);
-  }
-
-  .part__empty {
-    padding-block: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 760px) {
-    .sched {
+  @media (max-width: 560px) {
+    .sched__row {
       grid-template-columns: 1fr;
+      gap: 4px;
     }
   }
 </style>

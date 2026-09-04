@@ -1,0 +1,97 @@
+---
+import { site } from "../config/site";
+
+/** site.ts の sns に入っているものだけアイコンを出す。空の項目は表示しない。 */
+interface Props {
+  size?: number;
+  class?: string;
+}
+const { size = 20, class: className } = Astro.props;
+
+const links = [
+  { key: "instagram", label: "Instagram", url: site.sns.instagram },
+  { key: "x", label: "X", url: site.sns.x },
+  { key: "youtube", label: "YouTube", url: site.sns.youtube },
+].filter((l) => l.url);
+---
+
+{
+  links.length > 0 && (
+    <ul class:list={["sns", className]}>
+      {links.map((l) => (
+        <li>
+          <a
+            href={l.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={l.label}
+            title={l.label}
+          >
+            {l.key === "instagram" && (
+              <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="3"
+                  y="3"
+                  width="18"
+                  height="18"
+                  rx="5.2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                />
+                <circle cx="17.2" cy="6.8" r="1.25" fill="currentColor" />
+              </svg>
+            )}
+            {l.key === "x" && (
+              <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                />
+              </svg>
+            )}
+            {l.key === "youtube" && (
+              <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8M9.5 15.6V8.4l6.3 3.6z"
+                />
+              </svg>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .sns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sns a {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius);
+    color: var(--text);
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .sns a:hover {
+    color: var(--brand);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+  }
+</style>
