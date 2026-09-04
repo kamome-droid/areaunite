@@ -65,6 +65,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         label="About"
         jp="イベントについて"
         narrow
+        surface
         moreHref="/about/"
         moreLabel="もっと見る"
       >
@@ -79,7 +80,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         id="schedule"
         label="Schedule"
         jp="スケジュール"
-        surface
         moreHref="/schedule/"
         moreLabel="詳細を見る"
       >
@@ -123,6 +123,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     id="contents"
     label={parents.contents.label}
     jp={parents.contents.jp}
+    surface
     moreHref={parents.contents.href}
     moreLabel="すべて見る"
   >
@@ -161,7 +162,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 
   {
     ev && ev.guests.length > 0 && (
-      <Section id="guests" label="Guests" jp={ev.guestsLabel}>
+      <Section id="guests" label="Guests" jp={ev.guestsLabel} surface>
         <NameList names={ev.guests} />
       </Section>
     )
