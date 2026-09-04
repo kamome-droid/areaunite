@@ -30,17 +30,13 @@ export async function getNav(): Promise<NavItem[]> {
         href: `${parents.contents.href}#${key}`,
       })),
     },
+    // 子は「会場・アクセス」と「宿泊」の2つだけで、どちらも親の日本語ラベル
+    // （アクセス・宿泊）から推測できる。開いても得るものがないので持たせない
     {
       label: parents.access.label,
       jp: parents.access.jp,
       href: parents.access.href,
-      children: [
-        { label: "会場・アクセス", href: `${parents.access.href}#map` },
-        ...groupsOf("access").map(([key, g]) => ({
-          label: g.jp,
-          href: `${parents.access.href}#${key}`,
-        })),
-      ],
+      children: [],
     },
     { label: "Contact", jp: "お問い合わせ", href: "/contact/", children: [] },
   ];
