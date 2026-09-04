@@ -50,16 +50,13 @@ const isCurrent = (href: string) => {
 
               {item.children.length > 0 && (
                 <div class="hd__sub">
-                  <div class="wrap hd__sub__inner">
-                    <span class="hd__sub__label">{item.jp}</span>
-                    <ul>
-                      {item.children.map((c) => (
-                        <li>
-                          <a href={c.href}>{c.label}</a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <ul class="hd__sub__inner">
+                    {item.children.map((c) => (
+                      <li>
+                        <a href={c.href}>{c.label}</a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </li>
@@ -145,6 +142,46 @@ const isCurrent = (href: string) => {
     header?.classList.toggle("is-scrolled", window.scrollY > 8);
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
+
+  /* 子メニューの帯は画面幅いっぱいだが、中身は押した項目の真下から始めたい。
+     位置は文字幅で変わるので、実測してCSS変数で渡す。 */
+  const bar = header?.querySelector<HTMLElement>(".hd__bar");
+
+  const placeSubMenus = () => {
+    if (!header || !bar) return;
+    const pad = parseFloat(getComputedStyle(bar).paddingLeft) || 20;
+    const headerLeft = header.getBoundingClientRect().left;
+
+    header
+      .querySelectorAll<HTMLElement>(".hd__item.has-children")
+      .forEach((item) => {
+        const link = item.querySelector<HTMLElement>(".hd__link");
+        const inner = item.querySelector<HTMLElement>(".hd__sub__inner");
+        if (!link || !inner) return;
+
+        // 折り返しを止めて自然な1行の幅を測る。
+        // 折り返す状態のままだと、親要素の幅がそのまま返ってきてしまう
+        item.style.setProperty("--sub-x", "0px");
+        inner.style.flexWrap = "nowrap";
+        inner.style.width = "max-content";
+        const width = inner.getBoundingClientRect().width;
+        inner.style.flexWrap = "";
+        inner.style.width = "";
+
+        // 右にはみ出すときは、収まる位置まで左へ寄せる
+        const limit = Math.max(pad, window.innerWidth - width - pad);
+        const wanted = link.getBoundingClientRect().left - headerLeft;
+        item.style.setProperty(
+          "--sub-x",
+          `${Math.round(Math.max(pad, Math.min(wanted, limit)))}px`
+        );
+      });
+  };
+
+  placeSubMenus();
+  window.addEventListener("resize", placeSubMenus);
+  // 書体が入れ替わると文字幅が変わるので測り直す
+  document.fonts?.ready.then(placeSubMenus);
 </script>
 
 <style>
@@ -259,23 +296,13 @@ const isCurrent = (href: string) => {
 
   .hd__sub__inner {
     display: flex;
-    align-items: baseline;
-    gap: clamp(20px, 3vw, 48px);
-    padding-block: 18px;
-  }
-
-  .hd__sub__label {
-    flex: 0 0 auto;
-    font-size: 0.72rem;
-    letter-spacing: 0.2em;
-    color: var(--brand);
-    line-height: 1.6;
-  }
-
-  .hd__sub ul {
-    display: flex;
     flex-wrap: wrap;
     gap: 6px clamp(18px, 2.6vw, 40px);
+    /* 押した項目の真下から始める。実測値をスクリプトから受け取る */
+    padding-left: var(--sub-x, 0px);
+    padding-right: clamp(20px, 4vw, 48px);
+    padding-block: 16px;
+    transition: padding-left 0.18s ease;
   }
 
   .hd__sub a {

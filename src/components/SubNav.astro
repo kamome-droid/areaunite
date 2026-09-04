@@ -1,61 +1,118 @@
 ---
-/** 親ページの中を移動するタブ。項目が多いときは横スクロールする。 */
+/**
+ * ページ内の目次。押すとその見出しへ移動し、
+ * スクロール位置に応じていま読んでいるところを示す。
+ * 囲みは持たせない（押せる要素として過剰に見えるため）。
+ */
 interface Props {
   items: { href: string; label: string }[];
 }
 const { items } = Astro.props;
 ---
 
-<nav class="subnav" aria-label="ページ内メニュー">
-  <div class="wrap">
-    <ul>
-      {
-        items.map((i) => (
-          <li>
-            <a href={i.href}>{i.label}</a>
-          </li>
-        ))
-      }
-    </ul>
+<nav class="secindex" aria-label="ページ内メニュー">
+  <div class="wrap secindex__inner">
+    {
+      items.map((i) => (
+        <a class="secindex__item" href={i.href} data-target={i.href.replace("#", "")}>
+          {i.label}
+        </a>
+      ))
+    }
   </div>
 </nav>
 
+<script>
+  const bar = document.querySelector<HTMLElement>(".secindex");
+  const items = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>(".secindex__item")
+  );
+
+  if (bar && items.length > 0) {
+    const header = document.querySelector<HTMLElement>(".hd");
+    const targets = items
+      .map((item) => document.getElementById(item.dataset.target ?? ""))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    const stickyHeight = () =>
+      (header?.offsetHeight ?? 0) + bar.offsetHeight;
+
+    /** アンカーで飛んだとき、見出しがバーの下に隠れないようにする */
+    const syncScrollPadding = () => {
+      document.documentElement.style.scrollPaddingTop = `${stickyHeight() + 8}px`;
+    };
+
+    const markCurrent = () => {
+      const line = stickyHeight() + 12;
+      let current = targets[0];
+      for (const target of targets) {
+        if (target.getBoundingClientRect().top - line <= 0) current = target;
+      }
+      items.forEach((item) => {
+        if (item.dataset.target === current?.id) {
+          item.setAttribute("aria-current", "location");
+        } else {
+          item.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    let ticking = false;
+    const request = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        markCurrent();
+      });
+    };
+
+    syncScrollPadding();
+    markCurrent();
+    window.addEventListener("scroll", request, { passive: true });
+    window.addEventListener("resize", () => {
+      syncScrollPadding();
+      request();
+    });
+  }
+</script>
+
 <style>
-  .subnav {
+  .secindex {
     position: sticky;
     top: var(--header-h);
     z-index: 20;
-    background: color-mix(in srgb, var(--bg) 92%, transparent);
-    backdrop-filter: blur(10px);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
   }
 
-  .subnav ul {
+  .secindex__inner {
     display: flex;
-    gap: 6px;
+    gap: clamp(18px, 3vw, 40px);
     overflow-x: auto;
     scrollbar-width: none;
-    padding-block: 10px;
   }
 
-  .subnav ul::-webkit-scrollbar {
+  .secindex__inner::-webkit-scrollbar {
     display: none;
   }
 
-  .subnav a {
-    display: block;
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 0.9rem;
-    line-height: 1.4;
+  .secindex__item {
+    padding-block: 15px;
+    border-bottom: 2px solid transparent;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-muted);
     white-space: nowrap;
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .subnav a:hover {
-    border-color: var(--brand);
-    color: var(--brand);
+  .secindex__item:hover {
+    color: var(--text);
+  }
+
+  .secindex__item[aria-current] {
+    color: var(--text);
+    border-bottom-color: var(--brand);
   }
 </style>
