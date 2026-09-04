@@ -35,11 +35,9 @@
     "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
   /* 数字・時刻 */
   --font-num: "Barlow", var(--font-body);
-  /* キャッチコピー（DIN系）。
-     DIN 本体は Google Fonts に無いため、代替として Barlow Semi Condensed を
-     配信している。ライセンスのある DIN のWebフォントを持ち込む場合は
-     public/fonts/ に置き、この行の先頭に font-family 名を足すだけでよい */
-  --font-tagline: "Barlow Semi Condensed", var(--font-display);
+  /* キャッチコピー（セリフ）。EB Garamond は Google Fonts にあるので
+     そのまま配信できる。別の書体にするならこの1行を差し替える */
+  --font-tagline: "EB Garamond", Garamond, "Times New Roman", serif;
 
   /* ---- 形 ---- */
   --radius: 6px;
