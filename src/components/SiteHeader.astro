@@ -159,18 +159,17 @@ const isCurrent = (href: string) => {
         const inner = item.querySelector<HTMLElement>(".hd__sub__inner");
         if (!link || !inner) return;
 
-        // 折り返しを止めて自然な1行の幅を測る。
-        // 折り返す状態のままだと、親要素の幅がそのまま返ってきてしまう
+        // いったん左端に戻してから、中身の実寸を測る
         item.style.setProperty("--sub-x", "0px");
-        inner.style.flexWrap = "nowrap";
-        inner.style.width = "max-content";
         const width = inner.getBoundingClientRect().width;
-        inner.style.flexWrap = "";
-        inner.style.width = "";
 
-        // 右にはみ出すときは、収まる位置まで左へ寄せる
+        // 押した項目の中心と、中身の中心を合わせる
+        const linkRect = link.getBoundingClientRect();
+        const center = linkRect.left - headerLeft + linkRect.width / 2;
+        const wanted = center - width / 2;
+
+        // 画面からはみ出すときは、収まる位置まで寄せる
         const limit = Math.max(pad, window.innerWidth - width - pad);
-        const wanted = link.getBoundingClientRect().left - headerLeft;
         item.style.setProperty(
           "--sub-x",
           `${Math.round(Math.max(pad, Math.min(wanted, limit)))}px`
@@ -297,12 +296,14 @@ const isCurrent = (href: string) => {
   .hd__sub__inner {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 6px clamp(18px, 2.6vw, 40px);
-    /* 押した項目の真下から始める。実測値をスクリプトから受け取る */
-    padding-left: var(--sub-x, 0px);
-    padding-right: clamp(20px, 4vw, 48px);
+    /* 押した項目の中心に合わせて置く。位置はスクリプトから受け取る */
+    width: max-content;
+    max-width: calc(100% - clamp(20px, 4vw, 48px) * 2);
+    margin-left: var(--sub-x, 0px);
     padding-block: 16px;
-    transition: padding-left 0.18s ease;
+    transition: margin-left 0.18s ease;
   }
 
   .hd__sub a {
