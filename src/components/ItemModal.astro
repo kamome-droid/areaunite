@@ -118,6 +118,18 @@
     max-height: inherit;
   }
 
+  /* 下端で文章が切れたとき、まだ続きがあることが分かるように */
+  .modal__inner::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56px;
+    pointer-events: none;
+    background: linear-gradient(to top, var(--surface), transparent);
+  }
+
   .modal__body {
     max-height: min(88svh, 860px);
     overflow-y: auto;
