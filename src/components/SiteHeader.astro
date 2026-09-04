@@ -50,13 +50,16 @@ const isCurrent = (href: string) => {
 
               {item.children.length > 0 && (
                 <div class="hd__sub">
-                  <ul>
-                    {item.children.map((c) => (
-                      <li>
-                        <a href={c.href}>{c.label}</a>
-                      </li>
-                    ))}
-                  </ul>
+                  <div class="wrap hd__sub__inner">
+                    <span class="hd__sub__label">{item.jp}</span>
+                    <ul>
+                      {item.children.map((c) => (
+                        <li>
+                          <a href={c.href}>{c.label}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
             </li>
@@ -207,7 +210,8 @@ const isCurrent = (href: string) => {
   }
 
   .hd__item {
-    position: relative;
+    /* 子メニューを画面幅の帯として出すため、基準はヘッダー側に持たせる */
+    position: static;
   }
 
   .hd__link {
@@ -223,55 +227,76 @@ const isCurrent = (href: string) => {
     transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .hd__link:hover,
+  /* 帯にマウスが移っているあいだも、親は点いたままにする */
+  .hd__item:hover .hd__link,
   .hd__link[aria-current="page"] {
     color: var(--brand);
     border-bottom-color: var(--brand);
   }
 
-  /* ---- 子メニュー ---- */
+  /* ---- 子メニュー ----
+     カードで浮かせず、ヘッダーの続きとして画面幅の帯を降ろす。
+     ページの左右マージンに揃うので、ナビと本文の目線が動かない。 */
   .hd__sub {
     position: absolute;
-    top: calc(var(--header-h) - 8px);
-    left: 50%;
-    translate: -50% 0;
-    min-width: 190px;
-    padding: 6px;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+    border-bottom: 1px solid var(--border);
     opacity: 0;
     visibility: hidden;
-    translate: -50% -6px;
-    transition: opacity 0.16s ease, translate 0.16s ease, visibility 0.16s;
+    translate: 0 -6px;
+    transition: opacity 0.18s ease, translate 0.18s ease, visibility 0.18s;
   }
 
   .hd__item:hover .hd__sub,
   .hd__item:focus-within .hd__sub {
     opacity: 1;
     visibility: visible;
-    translate: -50% 0;
+    translate: 0 0;
+  }
+
+  .hd__sub__inner {
+    display: flex;
+    align-items: baseline;
+    gap: clamp(20px, 3vw, 48px);
+    padding-block: 18px;
+  }
+
+  .hd__sub__label {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    color: var(--brand);
+    line-height: 1.6;
+  }
+
+  .hd__sub ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px clamp(18px, 2.6vw, 40px);
   }
 
   .hd__sub a {
     display: block;
-    padding: 9px 14px;
-    border-radius: var(--radius);
-    font-size: 0.92rem;
-    line-height: 1.5;
-    white-space: nowrap;
+    padding-block: 4px;
+    font-size: 0.95rem;
+    line-height: 1.6;
     color: var(--text-muted);
-    transition: background 0.15s ease, color 0.15s ease;
+    border-bottom: 1px solid transparent;
+    transition: color 0.16s ease, border-color 0.16s ease;
   }
 
   .hd__sub a:hover {
-    background: var(--surface-2);
     color: var(--brand);
+    border-bottom-color: var(--brand);
   }
 
   .hd__right {
     flex: 0 0 auto;
+    /* ナビが隠れるスマホ幅でも、右端に寄せたままにする */
+    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -351,22 +376,24 @@ const isCurrent = (href: string) => {
     color: var(--text-muted);
   }
 
+  /* 子項目は、親からぶら下がる一覧として縦に並べる */
   .drawer__children {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 0 2px 18px;
+    margin: 0 0 16px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border);
   }
 
   .drawer__children a {
     display: block;
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 0.86rem;
-    line-height: 1.4;
+    padding: 9px 0;
+    font-size: 0.98rem;
+    line-height: 1.5;
     color: var(--text-muted);
+    transition: color 0.16s ease;
+  }
+
+  .drawer__children a:hover {
+    color: var(--brand);
   }
 
   @media (max-width: 900px) {

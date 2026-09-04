@@ -3,7 +3,16 @@ import { site } from "../config/site";
 import { getNav } from "../lib/nav";
 import SnsIcons from "./SnsIcons.astro";
 
-const nav = await getNav();
+const allNav = await getNav();
+
+/** ヘッダーと同じ並びにする。ヘッダーではチケットがCTAボタンとして
+    いちばん右にあるので、フッターでも最後に置く */
+const ctaHref = site.headerCta?.href;
+const nav = [
+  ...allNav.filter((item) => item.href !== ctaHref),
+  ...allNav.filter((item) => item.href === ctaHref),
+];
+
 const year = new Date().getFullYear();
 ---
 
@@ -54,10 +63,6 @@ const year = new Date().getFullYear();
 
   <div class="wrap ft__copy">
     <small class="en">© {year} {site.copyright}</small>
-    <!-- ナビには置かない、けれど行き止まりにもしないページはここに出す -->
-    <ul class="ft__extra">
-      <li><a href="/contact/">お問い合わせ</a></li>
-    </ul>
   </div>
 </footer>
 
@@ -71,7 +76,7 @@ const year = new Date().getFullYear();
 
   .ft__inner {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr);
     gap: clamp(32px, 6vw, 72px);
     padding-block: clamp(48px, 7vw, 80px) 40px;
   }
@@ -88,6 +93,7 @@ const year = new Date().getFullYear();
   }
 
   .ft__tagline {
+    font-family: var(--font-tagline);
     margin-top: 14px;
     color: var(--brand);
     font-size: 1rem;
@@ -101,7 +107,7 @@ const year = new Date().getFullYear();
 
   .ft__nav > ul {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 28px 24px;
     align-items: start;
   }
@@ -147,21 +153,6 @@ const year = new Date().getFullYear();
     border-top: 1px solid var(--border);
     color: var(--text-muted);
     letter-spacing: 0.1em;
-  }
-
-  .ft__extra {
-    display: flex;
-    gap: 20px;
-  }
-
-  .ft__extra a {
-    font-size: 0.85rem;
-    letter-spacing: 0.06em;
-    transition: color 0.2s ease;
-  }
-
-  .ft__extra a:hover {
-    color: var(--brand);
   }
 
   @media (max-width: 760px) {

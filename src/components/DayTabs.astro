@@ -110,20 +110,33 @@ const { days } = Astro.props;
     /** 直前に切り替えた時刻。勢い余った小さな逆スクロールで戻されるのを防ぐ */
     let lastSwitchAt = 0;
 
-    const goTo = (id: string, smooth = false) => {
+    /** align: "top" はその日の頭出し、"bottom" は末尾に着地させる。
+        上へ戻るときに末尾へ着けることで、前の日から読み続けていたように見せる。 */
+    const goTo = (
+      id: string,
+      { smooth = false, align = "top" }: { smooth?: boolean; align?: "top" | "bottom" } = {}
+    ) => {
       select(id);
       disarmAll();
 
       const panel = panels.find((p) => p.dataset.day === id);
       if (panel) {
+        const top =
+          align === "bottom"
+            ? panel.offsetTop + panel.offsetHeight - window.innerHeight
+            : panel.offsetTop - stickyHeight();
+
         window.scrollTo({
-          top: Math.max(0, panel.offsetTop - stickyHeight()),
+          top: Math.max(0, top),
           behavior: smooth && !reduceMotion ? "smooth" : "instant",
         });
+
         // 頭出しした直後でも「上へ戻る」だけは効かせたいので、
         // 上端の目印だけは構えた状態にしておく
-        const back = panel.querySelector('[data-sentinel="prev"]');
-        if (back) armed.set(back, true);
+        if (align === "top") {
+          const back = panel.querySelector('[data-sentinel="prev"]');
+          if (back) armed.set(back, true);
+        }
       }
       history.replaceState(null, "", `#${id}`);
       // 自分で動かしたぶんを向きの判定に混ぜない
@@ -133,7 +146,7 @@ const { days } = Astro.props;
 
     // ---- タブ ----
     tabs.forEach((tab) => {
-      tab.addEventListener("click", () => goTo(tab.dataset.day!, true));
+      tab.addEventListener("click", () => goTo(tab.dataset.day!, { smooth: true }));
     });
 
     document
@@ -147,7 +160,7 @@ const { days } = Astro.props;
         const next =
           (current + (key === "ArrowRight" ? 1 : -1) + tabs.length) %
           tabs.length;
-        goTo(tabs[next].dataset.day!, true);
+        goTo(tabs[next].dataset.day!, { smooth: true });
         tabs[next].focus();
       });
 
@@ -197,7 +210,8 @@ const { days } = Astro.props;
         const target = panels[kind === "next" ? index + 1 : index - 1];
         if (!target) continue;
 
-        goTo(target.dataset.day!);
+        // 下へ送るときは次の日の頭、上へ戻すときは前の日の末尾へ
+        goTo(target.dataset.day!, { align: kind === "next" ? "top" : "bottom" });
         return;
       }
     };

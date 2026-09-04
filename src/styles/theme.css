@@ -15,9 +15,11 @@
   --brand-ink: #101010; /* ブランド色の面にのせる文字色 */
 
   /* ---- ベース（ダークテーマ。ライトにするならここを反転する） ---- */
-  --bg: #0b0b0c; /* ページ地 */
-  --surface: #141416; /* カード・帯 */
-  --surface-2: #1c1c20; /* さらに一段上の面 */
+  /* 3段の面。隣り合う段の差が小さいと切り替わりが読み取れないので、
+     明度でしっかり間隔をあける（おおよそ L* で 3 → 10 → 15） */
+  --bg: #0a0a0c; /* ページ地 */
+  --surface: #1a1a1f; /* カード・帯 */
+  --surface-2: #26262d; /* さらに一段上の面 */
   --text: #f2f1ee; /* 本文 */
   --text-muted: #a0a0a6; /* 補助テキスト */
   --border: rgba(255, 255, 255, 0.13);
@@ -33,6 +35,11 @@
     "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
   /* 数字・時刻 */
   --font-num: "Barlow", var(--font-body);
+  /* キャッチコピー（DIN系）。
+     DIN 本体は Google Fonts に無いため、代替として Barlow Semi Condensed を
+     配信している。ライセンスのある DIN のWebフォントを持ち込む場合は
+     public/fonts/ に置き、この行の先頭に font-family 名を足すだけでよい */
+  --font-tagline: "Barlow Semi Condensed", var(--font-display);
 
   /* ---- 形 ---- */
   --radius: 6px;

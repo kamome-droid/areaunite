@@ -1,0 +1,58 @@
+---
+/**
+ * 日付の表示。読みたいのは「何月何日か」なので、月日を主役にし、
+ * 年と曜日は添えものとして小さくする。
+ * "2026.10.17 SAT - 10.18 SUN" のような文字列をそのまま渡せばよい。
+ */
+interface Props {
+  value: string;
+  /** 月日を大きくキーカラーで出す（KVなど主役の場所で使う） */
+  emphasis?: boolean;
+  class?: string;
+}
+const { value, emphasis = false, class: className } = Astro.props;
+
+// 年（4桁）→ 月日（1〜2桁.1〜2桁）→ 曜日 の順に拾う
+const TOKEN =
+  /(\d{4}\.?|\d{1,2}\.\d{1,2}|\b(?:MON|TUE|WED|THU|FRI|SAT|SUN)\b|[（(][日月火水木金土][）)])/gi;
+
+const parts = value.split(TOKEN).filter((p) => p !== "" && p !== undefined);
+
+const kindOf = (t: string) => {
+  if (/^\d{4}\.?$/.test(t)) return "year";
+  if (/^\d{1,2}\.\d{1,2}$/.test(t)) return "md";
+  if (/^(?:MON|TUE|WED|THU|FRI|SAT|SUN)$/i.test(t)) return "dow";
+  if (/^[（(][日月火水木金土][）)]$/.test(t)) return "dow";
+  return null;
+};
+---
+
+<span class:list={[className, emphasis && "is-emphasis"]}
+  >{
+    parts.map((p) => {
+      const kind = kindOf(p);
+      return kind ? <span class={kind}>{p}</span> : p;
+    })
+  }</span
+>
+
+<style>
+  .dow {
+    font-size: 0.66em;
+    letter-spacing: 0.12em;
+  }
+
+  /* 主役の場所では、月日だけを大きくキーカラーで出す */
+  .is-emphasis .md {
+    font-size: 1.5em;
+    color: var(--brand);
+    letter-spacing: 0.01em;
+  }
+
+  .is-emphasis .year,
+  .is-emphasis .dow {
+    font-size: 0.62em;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+  }
+</style>

@@ -49,5 +49,6 @@ export async function getNav(): Promise<NavItem[]> {
         })),
       ],
     },
+    { label: "Contact", jp: "お問い合わせ", href: "/contact/", children: [] },
   ];
 }

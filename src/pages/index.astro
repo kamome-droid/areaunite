@@ -4,6 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
+import DateText from "../components/DateText.astro";
 import ItemLayout from "../components/ItemLayout.astro";
 import Row from "../components/Row.astro";
 import NameList from "../components/NameList.astro";
@@ -93,7 +94,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                   <div class="days">
                     {days.map((d) => (
                       <>
-                        <span class="num days__date">{d.date}</span>
+                        <DateText class="num days__date" value={d.date} />
                         {d.range ? (
                           <span class="num days__time">{d.range}</span>
                         ) : (
@@ -103,7 +104,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                     ))}
                   </div>
                 ) : (
-                  <span class="num days__date">{ev.dateLabel}</span>
+                  <DateText class="num days__date" value={ev.dateLabel} />
                 )
               }
             </dd>
@@ -169,36 +170,8 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   {
-    ev && (ev.venue || ev.address) && (
-      <Section id="access" label="Access" jp="会場・アクセス" moreHref="/access/" moreLabel="詳しく見る" narrow>
-        <dl class="info">
-          {ev.venue && (
-            <div>
-              <dt class="en">Venue</dt>
-              <dd>{ev.venue}</dd>
-            </div>
-          )}
-          {ev.address && (
-            <div>
-              <dt class="en">Address</dt>
-              <dd>
-                {ev.address}
-                {ev.mapUrl && (
-                  <a class="info__map en" href={ev.mapUrl} target="_blank" rel="noopener noreferrer">
-                    Google Map<span aria-hidden="true"> ↗</span>
-                  </a>
-                )}
-              </dd>
-            </div>
-          )}
-        </dl>
-      </Section>
-    )
-  }
-
-  {
     (sponsors.length > 0 || (ev && ev.supporters.length > 0)) && (
-      <Section id="sponsors" label="Sponsors" jp="協賛・後援" surface>
+      <Section id="sponsors" label="Sponsors" jp="協賛・後援">
         {sponsors.length > 0 && <SponsorGrid sponsors={sponsors.map((s) => s.data)} />}
         {ev && ev.supporters.length > 0 && (
           <div class="supporters">
@@ -287,30 +260,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     .days__pending {
       margin-bottom: 8px;
     }
-  }
-
-  /* ACCESS 要約 */
-  .info > div + div {
-    margin-top: 22px;
-  }
-
-  .info dt {
-    font-size: 0.75rem;
-    letter-spacing: 0.22em;
-    color: var(--text-muted);
-    line-height: 1;
-  }
-
-  .info dd {
-    margin: 8px 0 0;
-    font-size: 1.05rem;
-  }
-
-  .info__map {
-    display: inline-block;
-    margin-left: 14px;
-    color: var(--brand);
-    font-size: 0.9rem;
   }
 
   .supporters {
