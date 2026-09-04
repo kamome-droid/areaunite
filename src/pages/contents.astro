@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import SubNav from "../components/SubNav.astro";
+import GroupSection from "../components/GroupSection.astro";
+import { parents, groupsOf } from "../config/site";
+
+/** site.ts の groups に parent:"contents" を1件足すと、
+    このページにセクションが1つ増え、タブとナビにも自動で並ぶ。 */
+const list = groupsOf("contents");
+---
+
+<BaseLayout
+  title={`${parents.contents.label}｜${parents.contents.jp}`}
+  description="当日のムービー・ライブ・トークショー・フード・ショップの内容。"
+>
+  <PageHero
+    label={parents.contents.label}
+    jp={parents.contents.jp}
+    lead="当日の内容をまとめています。"
+  />
+
+  <SubNav items={list.map(([key, g]) => ({ href: `#${key}`, label: g.jp }))} />
+
+  {list.map(([key, g], i) => <GroupSection id={key} def={g} surface={i % 2 === 1} />)}
+</BaseLayout>

@@ -1,5 +1,8 @@
 ---
-import { site, nav } from "../config/site";
+import { site } from "../config/site";
+import { getNav } from "../lib/nav";
+
+const nav = await getNav();
 const year = new Date().getFullYear();
 const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
 ---
@@ -37,10 +40,19 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
         {
           nav.map((item) => (
             <li>
-              <a href={item.href}>
+              <a class="ft__parent" href={item.href}>
                 <span class="en">{item.label}</span>
-                {item.jp && <span class="ft__jp">{item.jp}</span>}
+                <span class="ft__jp">{item.jp}</span>
               </a>
+              {item.children.length > 0 && (
+                <ul class="ft__children">
+                  {item.children.map((c) => (
+                    <li>
+                      <a href={c.href}>{c.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))
         }
@@ -107,37 +119,50 @@ const snsEntries = Object.entries(site.sns).filter(([, v]) => v);
     color: var(--brand);
   }
 
-  .ft__nav ul {
+  .ft__nav > ul {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 2px 24px;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 28px 24px;
+    align-items: start;
   }
 
-  .ft__nav a {
+  .ft__parent {
     display: flex;
     flex-direction: column;
     gap: 1px;
-    padding-block: 8px;
-    color: var(--text-muted);
+  }
+
+  .ft__parent .en {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
     transition: color 0.2s ease;
   }
 
-  .ft__nav a:hover {
-    color: var(--brand);
-  }
-
-  .ft__nav .en {
-    font-size: 1rem;
-    color: var(--text);
-  }
-
-  .ft__nav a:hover .en {
+  .ft__parent:hover .en {
     color: var(--brand);
   }
 
   .ft__jp {
     font-size: 0.72rem;
     line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .ft__children {
+    margin-top: 10px;
+  }
+
+  .ft__children a {
+    display: block;
+    padding-block: 4px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+
+  .ft__children a:hover {
+    color: var(--brand);
   }
 
   .ft__copy {

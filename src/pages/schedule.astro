@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import SubNav from "../components/SubNav.astro";
+import Section from "../components/Section.astro";
+import Timetable from "../components/Timetable.astro";
+import { getCurrentEvent } from "../lib/content";
+
+const event = await getCurrentEvent();
+const ev = event?.data;
+const parts = ev?.schedule ?? [];
+---
+
+<BaseLayout title="Schedule｜タイムテーブル" description="当日のタイムテーブル。">
+  <PageHero
+    label="Schedule"
+    jp="タイムテーブル"
+    lead={ev ? `${ev.edition}／${ev.dateLabel}` : undefined}
+  />
+
+  {
+    parts.length > 1 && (
+      <SubNav items={parts.map((p) => ({ href: `#${p.id}`, label: p.jp }))} />
+    )
+  }
+
+  {
+    parts.map((p, i) => (
+      <Section
+        id={p.id}
+        label={p.label}
+        jp={p.note || undefined}
+        surface={i % 2 === 1}
+      >
+        {p.items.length > 0 ? (
+          <Timetable items={p.items} />
+        ) : (
+          <p class="empty muted">準備中です。決まりしだい公開します。</p>
+        )}
+      </Section>
+    ))
+  }
+</BaseLayout>
+
+<style>
+  .empty {
+    padding-block: 40px;
+    text-align: center;
+  }
+</style>

@@ -1,16 +1,16 @@
 ---
-import { groups } from "../config/site";
-
-/** groups の定義からコンテンツ一覧への導線を自動生成する。
-    site.ts に1件足すと、ここにも自動で増える。 */
-const entries = Object.entries(groups);
+/** コンテンツへの導線カード。渡された項目を並べるだけ。 */
+interface Props {
+  items: { href: string; label: string; jp: string }[];
+}
+const { items: entries } = Astro.props;
 ---
 
 <ul class="gnav">
   {
-    entries.map(([key, g]) => (
+    entries.map((g) => (
       <li>
-        <a href={`/${key}/`}>
+        <a href={g.href}>
           <span class="en gnav__label">{g.label}</span>
           <span class="gnav__jp">{g.jp}</span>
           <span class="gnav__arrow" aria-hidden="true">

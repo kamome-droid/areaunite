@@ -1,11 +1,16 @@
 ---
 /**
- * トップページのKV。
- * 「画像を差し替えるだけで別イベントになる」よう、文字は下段の帯にまとめ、
- * 画像そのものには一切の加工を前提としない。
+ * トップページのKV。見せ方を2通り持つ。
+ *
+ *  overlay … 写真の上にイベント名・日付を重ねる。KVに文字が入っていないとき向け。
+ *  band    … KVを切らずに丸ごと見せ、情報は下の帯に置く。
+ *            KVにロゴやタイトルが描き込まれているとき向け（文字の二重掛けを避ける）。
+ *
+ * どちらでも「画像を差し替えるだけ」で成立するよう、KVへの加工は前提にしない。
  */
 interface Props {
   image?: string;
+  style?: "overlay" | "band";
   eyebrow?: string;
   title: string;
   catch?: string;
@@ -19,6 +24,7 @@ interface Props {
 
 const {
   image,
+  style = "overlay",
   eyebrow,
   title,
   catch: catchCopy,
@@ -29,13 +35,15 @@ const {
   subCtaLabel,
   subCtaHref,
 } = Astro.props;
+
+const band = style === "band";
 ---
 
-<section class="hero">
+<section class:list={["hero", band ? "hero--band" : "hero--overlay"]}>
   <div class="hero__media">
     {
       image ? (
-        <img src={image} alt="" fetchpriority="high" decoding="async" />
+        <img src={image} alt={band ? title : ""} fetchpriority="high" decoding="async" />
       ) : (
         <div class="hero__ph" aria-hidden="true" />
       )
@@ -43,8 +51,18 @@ const {
   </div>
 
   <div class="wrap hero__inner">
-    {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
-    <h1 class="en hero__title">{title}</h1>
+    {
+      band ? (
+        <h1 class="visually-hidden">{title}</h1>
+      ) : (
+        <>
+          {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+          <h1 class="en hero__title">{title}</h1>
+        </>
+      )
+    }
+
+    {band && eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
     {catchCopy && <p class="hero__catch">{catchCopy}</p>}
 
     {
@@ -86,30 +104,7 @@ const {
 </section>
 
 <style>
-  .hero {
-    position: relative;
-    /* sticky ヘッダーの下までKVを回り込ませる */
-    margin-top: calc(-1 * var(--header-h));
-    min-height: min(88svh, 820px);
-    display: flex;
-    align-items: flex-end;
-    overflow: hidden;
-    isolation: isolate;
-  }
-
-  .hero__media {
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-  }
-
-  .hero__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* KVが未入稿でも構図が確認できるプレースホルダ */
+  /* ---- 共通 ---- */
   .hero__ph {
     width: 100%;
     height: 100%;
@@ -126,38 +121,11 @@ const {
       var(--surface-2);
   }
 
-  .hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(
-      to top,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg) 82%, transparent) 26%,
-      color-mix(in srgb, var(--bg) 30%, transparent) 62%,
-      color-mix(in srgb, var(--bg) 55%, transparent) 100%
-    );
-  }
-
-  .hero__inner {
-    padding-top: calc(var(--header-h) + 40px);
-    padding-bottom: clamp(48px, 7vw, 84px);
-  }
-
   .hero__eyebrow {
     font-size: clamp(0.9rem, 1.6vw, 1.05rem);
     letter-spacing: 0.28em;
     color: var(--brand);
-    line-height: 1;
-  }
-
-  .hero__title {
-    margin-top: 16px;
-    font-size: clamp(3rem, 10vw, 7rem);
-    font-weight: 700;
-    line-height: 0.92;
-    letter-spacing: 0.01em;
+    line-height: 1.4;
   }
 
   .hero__catch {
@@ -196,5 +164,86 @@ const {
     flex-wrap: wrap;
     gap: 12px;
     margin-top: clamp(26px, 4vw, 36px);
+  }
+
+  /* ---- overlay：画像の上に文字を重ねる ---- */
+  .hero--overlay {
+    position: relative;
+    /* sticky ヘッダーの下までKVを回り込ませる */
+    margin-top: calc(-1 * var(--header-h));
+    min-height: min(88svh, 820px);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero--overlay .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  .hero--overlay .hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero--overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 26%,
+      color-mix(in srgb, var(--bg) 30%, transparent) 62%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 100%
+    );
+  }
+
+  .hero--overlay .hero__inner {
+    padding-top: calc(var(--header-h) + 40px);
+    padding-bottom: clamp(48px, 7vw, 84px);
+  }
+
+  .hero--overlay .hero__title {
+    margin-top: 16px;
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+  }
+
+  /* ---- band：KVを切らずに見せ、情報は下に置く ---- */
+  /* ヘッダーの下に潜り込ませない。絵の周りの余白が額縁がわりになる */
+  .hero--band .hero__media {
+    display: grid;
+    place-items: center;
+    padding-inline: var(--page-pad);
+  }
+
+  .hero--band .hero__media img {
+    width: auto;
+    max-width: min(100%, 1100px);
+    max-height: min(72svh, 780px);
+    object-fit: contain;
+  }
+
+  .hero--band .hero__ph {
+    width: min(100%, 1100px);
+    aspect-ratio: 4 / 3;
+    max-height: min(72svh, 780px);
+  }
+
+  .hero--band .hero__inner {
+    padding-top: clamp(28px, 4vw, 44px);
+    padding-bottom: clamp(40px, 6vw, 64px);
+  }
+
+  .hero--band .hero__catch {
+    margin-top: 12px;
   }
 </style>

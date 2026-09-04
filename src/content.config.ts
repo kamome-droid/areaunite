@@ -46,6 +46,20 @@ const ticketRow = z.object({
   note: z.string().optional(),
 });
 
+/** タイムテーブルは「部」ごとに分ける（デイタイム／ナイトタイム …）。
+    ここに1件足すと、ナビの Schedule の子メニューも1つ増える。 */
+const schedulePart = z.object({
+  /** アンカーに使うID。"daytime" など */
+  id: z.string(),
+  /** 英字見出し */
+  label: z.string(),
+  /** 日本語見出し（ナビに出るのはこちら） */
+  jp: z.string(),
+  /** "12:00 - 17:00" のような時間帯の補足 */
+  note: z.string().optional(),
+  items: z.array(timeSlot).default([]),
+});
+
 const event = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/event" }),
   schema: z.object({
@@ -57,6 +71,11 @@ const event = defineCollection({
     date: z.coerce.date(),
     /** KV画像（/public 起点） */
     hero: z.string().default(""),
+    /** KVの見せ方
+        overlay … 写真の上にイベント名や日付を重ねる（KVに文字が入っていないとき）
+        band    … KVを切らずに全部見せ、日付やボタンは下の帯に置く
+                  （KVにロゴやタイトルが描き込まれているとき） */
+    heroStyle: z.enum(["overlay", "band"]).default("overlay"),
     /** KVに重ねるキャッチ */
     catch: z.string().default(""),
     /** 会場名・住所・地図 */
@@ -65,8 +84,8 @@ const event = defineCollection({
     mapUrl: z.string().optional(),
     mapEmbed: z.string().optional(),
     accessNotes: z.array(z.string()).default([]),
-    /** 当日のタイムテーブル */
-    schedule: z.array(timeSlot).default([]),
+    /** 当日のタイムテーブル（部ごと） */
+    schedule: z.array(schedulePart).default([]),
     /** チケット料金表 */
     tickets: z.array(ticketRow).default([]),
     /** チケット購入ボタン */

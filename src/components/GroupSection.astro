@@ -1,0 +1,59 @@
+---
+import { render } from "astro:content";
+import Section from "./Section.astro";
+import ItemLayout from "./ItemLayout.astro";
+import Card from "./Card.astro";
+import Row from "./Row.astro";
+import { getItems } from "../lib/content";
+import type { Group } from "../config/site";
+
+/** 分類ひとつ分のセクション。親ページはこれを並べるだけで組み上がる。 */
+interface Props {
+  id: string;
+  def: Group;
+  surface?: boolean;
+}
+
+const { id, def, surface = false } = Astro.props;
+
+const items = await getItems(id);
+const bodies = await Promise.all(items.map((i) => render(i)));
+---
+
+<Section id={id} label={def.label} jp={def.jp} lead={def.lead} surface={surface}>
+  {
+    items.length === 0 ? (
+      <p class="empty muted">準備中です。決まりしだい公開します。</p>
+    ) : (
+      <ItemLayout layout={def.layout}>
+        {items.map((item, i) => {
+          const Body = bodies[i].Content;
+          const common = {
+            title: item.data.title,
+            subtitle: item.data.subtitle,
+            time: item.data.time,
+            image: item.data.image,
+            link: item.data.link,
+            linkLabel: item.data.linkLabel,
+          };
+          return def.layout === "list" ? (
+            <Row {...common}>
+              <Body />
+            </Row>
+          ) : (
+            <Card {...common} ratio={def.ratio}>
+              <Body />
+            </Card>
+          );
+        })}
+      </ItemLayout>
+    )
+  }
+</Section>
+
+<style>
+  .empty {
+    padding-block: 40px;
+    text-align: center;
+  }
+</style>

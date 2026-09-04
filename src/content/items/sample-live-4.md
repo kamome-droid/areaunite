@@ -1,8 +1,8 @@
 ---
-group: music
-title: "DJ NAME B"
+group: live
+title: "DJ NAME C"
 subtitle: "DJ"
-order: 20
+order: 40
 draft: true
 ---
 アフターパーティのラインナップ枠。

@@ -1,9 +1,20 @@
 ---
-import { site, nav } from "../config/site";
+import { site } from "../config/site";
+import { getNav } from "../lib/nav";
 
+const allNav = await getNav();
 const path = Astro.url.pathname;
-const isCurrent = (href: string) =>
-  href.startsWith("/#") ? false : path === href || path === href.slice(0, -1);
+
+/** 右のCTAボタンと同じ行き先は、デスクトップの並びからだけ外す（同じものを2回出さない）。
+    モバイルはCTAボタンが隠れるので、ドロワーには全項目を残す。 */
+const barNav = allNav.filter((item) => item.href !== site.headerCta?.href);
+
+/** 親ページ（/contents/ など）は、その配下にいるあいだ点灯させる */
+const isCurrent = (href: string) => {
+  if (href.startsWith("/#")) return false;
+  const h = href.endsWith("/") ? href : `${href}/`;
+  return path === h || path === h.slice(0, -1);
+};
 ---
 
 <header class="hd">
@@ -21,15 +32,27 @@ const isCurrent = (href: string) =>
     <nav class="hd__nav" aria-label="メインメニュー">
       <ul>
         {
-          nav.map((item) => (
-            <li>
+          barNav.map((item) => (
+            <li class:list={["hd__item", item.children.length > 0 && "has-children"]}>
               <a
                 href={item.href}
-                class="en"
+                class="en hd__link"
                 aria-current={isCurrent(item.href) ? "page" : undefined}
               >
                 {item.label}
               </a>
+
+              {item.children.length > 0 && (
+                <div class="hd__sub">
+                  <ul>
+                    {item.children.map((c) => (
+                      <li>
+                        <a href={c.href}>{c.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </li>
           ))
         }
@@ -60,12 +83,21 @@ const isCurrent = (href: string) =>
   <div class="drawer" id="drawer" hidden>
     <ul class="drawer__list">
       {
-        nav.map((item) => (
+        allNav.map((item) => (
           <li>
-            <a href={item.href}>
+            <a class="drawer__parent" href={item.href}>
               <span class="en">{item.label}</span>
-              {item.jp && <span class="drawer__jp">{item.jp}</span>}
+              <span class="drawer__jp">{item.jp}</span>
             </a>
+            {item.children.length > 0 && (
+              <ul class="drawer__children">
+                {item.children.map((c) => (
+                  <li>
+                    <a href={c.href}>{c.label}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))
       }
@@ -124,7 +156,7 @@ const isCurrent = (href: string) =>
   .hd__bar {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     height: var(--header-h);
     width: 100%;
     max-width: var(--page-max);
@@ -154,29 +186,74 @@ const isCurrent = (href: string) =>
     min-width: 0;
   }
 
-  .hd__nav ul {
+  .hd__nav > ul {
     display: flex;
     justify-content: flex-end;
-    flex-wrap: nowrap;
-    gap: clamp(12px, 1.7vw, 26px);
+    gap: clamp(18px, 2.4vw, 38px);
   }
 
-  .hd__nav a {
+  .hd__item {
+    position: relative;
+  }
+
+  .hd__link {
     display: block;
-    font-size: 0.95rem;
+    font-size: 1.02rem;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
     color: var(--text);
-    padding-block: 6px;
+    /* 下に伸びる余白がそのまま子メニューへの通り道になる */
+    padding: 22px 0;
     border-bottom: 2px solid transparent;
     transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .hd__nav a:hover,
-  .hd__nav a[aria-current="page"] {
+  .hd__link:hover,
+  .hd__link[aria-current="page"] {
     color: var(--brand);
     border-bottom-color: var(--brand);
+  }
+
+  /* ---- 子メニュー ---- */
+  .hd__sub {
+    position: absolute;
+    top: calc(var(--header-h) - 8px);
+    left: 50%;
+    translate: -50% 0;
+    min-width: 190px;
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+    opacity: 0;
+    visibility: hidden;
+    translate: -50% -6px;
+    transition: opacity 0.16s ease, translate 0.16s ease, visibility 0.16s;
+  }
+
+  .hd__item:hover .hd__sub,
+  .hd__item:focus-within .hd__sub {
+    opacity: 1;
+    visibility: visible;
+    translate: -50% 0;
+  }
+
+  .hd__sub a {
+    display: block;
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    color: var(--text-muted);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .hd__sub a:hover {
+    background: var(--surface-2);
+    color: var(--brand);
   }
 
   .hd__right {
@@ -212,6 +289,7 @@ const isCurrent = (href: string) =>
     width: 18px;
     height: 1.5px;
     background: var(--text);
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
   .hd__burger[aria-expanded="true"] span:nth-child(1) {
@@ -223,10 +301,8 @@ const isCurrent = (href: string) =>
   .hd__burger[aria-expanded="true"] span:nth-child(3) {
     transform: translateY(-6.5px) rotate(-45deg);
   }
-  .hd__burger span {
-    transition: transform 0.2s ease, opacity 0.2s ease;
-  }
 
+  /* ---- モバイル ---- */
   .drawer {
     position: fixed;
     inset: var(--header-h) 0 0;
@@ -235,18 +311,18 @@ const isCurrent = (href: string) =>
     padding: 8px var(--page-pad) 48px;
   }
 
-  .drawer__list li + li {
+  .drawer__list > li + li {
     border-top: 1px solid var(--border);
   }
 
-  .drawer__list a {
+  .drawer__parent {
     display: flex;
     align-items: baseline;
     gap: 14px;
-    padding: 18px 2px;
+    padding: 18px 2px 10px;
   }
 
-  .drawer__list .en {
+  .drawer__parent .en {
     font-size: 1.5rem;
     font-weight: 600;
     line-height: 1;
@@ -257,8 +333,25 @@ const isCurrent = (href: string) =>
     color: var(--text-muted);
   }
 
-  /* ナビが1行に収まらなくなる幅でドロワーへ切り替える */
-  @media (max-width: 1100px) {
+  .drawer__children {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 2px 18px;
+  }
+
+  .drawer__children a {
+    display: block;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 0.86rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 900px) {
     .hd__nav {
       display: none;
     }

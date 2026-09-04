@@ -10,7 +10,7 @@ import Timetable from "../components/Timetable.astro";
 import PriceTable from "../components/PriceTable.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
-import { site, groups } from "../config/site";
+import { site, parents, groups, groupsOf } from "../config/site";
 import { getCurrentEvent, getFeaturedItems, getSponsors } from "../lib/content";
 
 const event = await getCurrentEvent();
@@ -20,11 +20,18 @@ const About = event ? (await render(event)).Content : null;
 const movies = await getFeaturedItems("movies", 6);
 const movieBodies = await Promise.all(movies.map((m) => render(m)));
 const sponsors = await getSponsors();
+
+const contentsNav = groupsOf("contents").map(([key, g]) => ({
+  href: `${parents.contents.href}#${key}`,
+  label: g.label,
+  jp: g.jp,
+}));
 ---
 
 <BaseLayout description={site.description}>
   <Hero
     image={ev?.hero}
+    style={ev?.heroStyle}
     eyebrow={site.tagline}
     title={ev?.edition ?? site.name}
     catch={ev?.catch}
@@ -33,7 +40,7 @@ const sponsors = await getSponsors();
     ctaLabel="チケット"
     ctaHref="/ticket/"
     subCtaLabel="上映作品"
-    subCtaHref="/movies/"
+    subCtaHref={`${parents.contents.href}#movies`}
   />
 
   {
@@ -59,8 +66,10 @@ const sponsors = await getSponsors();
       <Section
         id="schedule"
         label="Schedule"
-        jp="当日の流れ"
+        jp="タイムテーブル"
         surface
+        moreHref="/schedule/"
+        moreLabel="タイムテーブルを見る"
       >
         <div class="sched">
           <dl class="sched__meta">
@@ -75,14 +84,36 @@ const sponsors = await getSponsors();
               </div>
             )}
           </dl>
-          {ev.schedule.length > 0 && <Timetable items={ev.schedule} />}
+
+          <div class="sched__parts">
+            {ev.schedule.map((part) => (
+              <div class="part">
+                <p class="en part__label">
+                  {part.label}
+                  {part.note && <span class="part__note">{part.note}</span>}
+                </p>
+                {part.items.length > 0 ? (
+                  <Timetable items={part.items} />
+                ) : (
+                  <p class="part__empty muted">準備中です。</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
     )
   }
 
-  <Section id="contents" label="Contents" jp="コンテンツ" lead="当日の内容はカテゴリごとのページにまとめています。">
-    <GroupNav />
+  <Section
+    id="contents"
+    label={parents.contents.label}
+    jp={parents.contents.jp}
+    lead="当日の内容をまとめています。"
+    moreHref={parents.contents.href}
+    moreLabel="すべて見る"
+  >
+    <GroupNav items={contentsNav} />
   </Section>
 
   {
@@ -91,7 +122,7 @@ const sponsors = await getSponsors();
         id="movies"
         label={groups.movies.label}
         jp={groups.movies.jp}
-        moreHref="/movies/"
+        moreHref={`${parents.contents.href}#movies`}
         moreLabel="上映作品をすべて見る"
       >
         <ItemLayout layout="list">
@@ -287,6 +318,33 @@ const sponsors = await getSponsors();
   .supporters__list {
     margin-top: 10px;
     font-size: 0.92rem;
+  }
+
+  .sched__parts > .part + .part {
+    margin-top: clamp(30px, 4vw, 44px);
+  }
+
+  .part__label {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+  }
+
+  .part__note {
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    color: var(--brand);
+  }
+
+  .part__empty {
+    padding-block: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
   }
 
   @media (max-width: 760px) {

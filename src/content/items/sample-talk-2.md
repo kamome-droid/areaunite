@@ -1,5 +1,5 @@
 ---
-group: daytime
+group: talk
 title: "アコースティックライブ"
 subtitle: "LIVE ／ 15:30-"
 order: 20

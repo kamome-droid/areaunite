@@ -1,5 +1,5 @@
 ---
-group: daytime
+group: talk
 title: "ワークショップ"
 subtitle: "WORKSHOP ／ 13:00-"
 order: 30

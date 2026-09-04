@@ -1,62 +1,68 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
+import SubNav from "../components/SubNav.astro";
+import Section from "../components/Section.astro";
 import NoteList from "../components/NoteList.astro";
+import GroupSection from "../components/GroupSection.astro";
+import { parents, groupsOf } from "../config/site";
 import { getCurrentEvent } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+const list = groupsOf("access");
+
+const tabs = [
+  { href: "#map", label: "会場・アクセス" },
+  ...list.map(([key, g]) => ({ href: `#${key}`, label: g.jp })),
+];
 ---
 
-<BaseLayout title="Access｜会場・アクセス" description="会場の場所と駐車場のご案内。">
-  <PageHero label="Access" jp="会場・アクセス" />
+<BaseLayout
+  title={`${parents.access.label}｜${parents.access.jp}`}
+  description="会場の場所と駐車場、周辺の宿泊施設のご案内。"
+>
+  <PageHero label={parents.access.label} jp={parents.access.jp} />
 
-  <section class="page">
-    <div class="wrap wrap--narrow">
-      <dl class="info">
-        {
-          ev?.venue && (
-            <div>
-              <dt class="en">Venue</dt>
-              <dd class="info__big">{ev.venue}</dd>
-            </div>
-          )
-        }
-        {
-          ev?.address && (
-            <div>
-              <dt class="en">Address</dt>
-              <dd>{ev.address}</dd>
-            </div>
-          )
-        }
-      </dl>
+  {tabs.length > 1 && <SubNav items={tabs} />}
 
-      {
-        ev?.mapUrl && (
-          <p class="cta">
-            <a class="btn btn--ghost" href={ev.mapUrl} target="_blank" rel="noopener noreferrer">
-              Google Map で開く
-            </a>
-          </p>
-        )
-      }
+  <Section id="map" label="Venue" jp="会場・アクセス" narrow>
+    {ev?.venue && <p class="venue">{ev.venue}</p>}
 
-      {
-        ev && ev.accessNotes.length > 0 && (
-          <div class="notes-wrap">
-            <NoteList title="Information" items={ev.accessNotes} />
+    {
+      ev?.address && (
+        <dl class="info">
+          <div>
+            <dt class="en">Address</dt>
+            <dd>{ev.address}</dd>
           </div>
-        )
-      }
-    </div>
-  </section>
+        </dl>
+      )
+    }
+
+    {
+      ev?.mapUrl && (
+        <p class="cta">
+          <a class="btn btn--ghost" href={ev.mapUrl} target="_blank" rel="noopener noreferrer">
+            Google Map で開く
+          </a>
+        </p>
+      )
+    }
+
+    {
+      ev && ev.accessNotes.length > 0 && (
+        <div class="notes-wrap">
+          <NoteList title="Information" items={ev.accessNotes} />
+        </div>
+      )
+    }
+  </Section>
+
+  {list.map(([key, g]) => <GroupSection id={key} def={g} surface />)}
 </BaseLayout>
 
 <style>
-  .page {
-    padding-block: clamp(40px, 6vw, 72px) 0;
-  }
   .info > div + div {
     margin-top: 26px;
   }
@@ -70,10 +76,15 @@ const ev = event?.data;
     margin: 10px 0 0;
     font-size: 1.05rem;
   }
-  .info__big {
-    font-size: clamp(1.5rem, 4vw, 2.1rem) !important;
+  .venue {
+    font-size: clamp(1.6rem, 4.4vw, 2.3rem);
     font-weight: 600;
     letter-spacing: 0.03em;
+    line-height: 1.3;
+  }
+
+  .info {
+    margin-top: 26px;
   }
   .cta {
     margin-top: 30px;
