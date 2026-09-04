@@ -23,7 +23,7 @@ const { days } = Astro.props;
         days.map(({ day }, i) => (
           <button
             type="button"
-            class="daytab"
+            class:list={["daytab", i % 2 === 0 ? "daytab--a" : "daytab--b"]}
             role="tab"
             id={`tab-${day.id}`}
             aria-controls={`panel-${day.id}`}
@@ -45,7 +45,7 @@ const { days } = Astro.props;
     const next = days[i + 1]?.day;
     return (
       <section
-        class="daypanel"
+        class:list={["daypanel", i % 2 === 0 ? "daypanel--a" : "daypanel--b"]}
         id={`panel-${day.id}`}
         role="tabpanel"
         aria-labelledby={`tab-${day.id}`}
@@ -56,12 +56,8 @@ const { days } = Astro.props;
             {day.label} {day.note}
           </h2>
 
-          {/* 端に置いた目印。ここが見えたら前後の日へ切り替える */}
-          {prev && (
-            <p class="dayhint" data-sentinel="prev">
-              <span aria-hidden="true">↑</span> 上にスクロールで {prev.label}
-            </p>
-          )}
+          {/* 端に置いた検知用の目印。見た目は持たない */}
+          {prev && <div class="daysentinel" data-sentinel="prev" aria-hidden="true" />}
 
           {blocks.length > 0 ? (
             <Timetable blocks={blocks} />
@@ -69,11 +65,7 @@ const { days } = Astro.props;
             <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
           )}
 
-          {next && (
-            <p class="dayhint" data-sentinel="next">
-              <span aria-hidden="true">↓</span> 下にスクロールで {next.label}
-            </p>
-          )}
+          {next && <div class="daysentinel" data-sentinel="next" aria-hidden="true" />}
         </div>
       </section>
     );
@@ -179,9 +171,13 @@ const { days } = Astro.props;
       for (const el of liveSentinels()) {
         const kind = el.dataset.sentinel;
         const rect = el.getBoundingClientRect();
-        // next は下端の目印、prev は上端の目印
+        // next は下端の目印。画面に入った瞬間だと最後の数行を読む前に
+        // 送られてしまうので、画面の3/4まで上がってきたら到達とみなす。
+        // prev は上端の目印で、画面上端に戻ってきたら到達。
         const reached =
-          kind === "next" ? rect.top <= window.innerHeight : rect.bottom >= 0;
+          kind === "next"
+            ? rect.top <= window.innerHeight * 0.75
+            : rect.bottom >= 0;
 
         // 届いていないあいだに構えておく（＝一度離れないと再発火しない）
         if (!reached) {
@@ -253,7 +249,6 @@ const { days } = Astro.props;
     top: var(--header-h);
     z-index: 20;
     background: var(--bg);
-    border-bottom: 1px solid var(--border);
   }
 
   .daytabs__list {
@@ -273,20 +268,18 @@ const { days } = Astro.props;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 18px 4px 16px;
+    padding: 15px 20px 16px;
     margin: 0;
     border: 0;
-    /* 選択中を示す線。未選択は薄い罫線ぶんだけ確保しておく */
-    border-bottom: 3px solid transparent;
+    /* 選択中の印。未選択のときも高さを確保して位置をずらさない */
+    border-top: 3px solid transparent;
+    border-radius: 8px 8px 0 0;
     background: transparent;
     color: var(--text-muted);
     text-align: left;
     cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-
-  .daytab + .daytab {
-    margin-left: clamp(20px, 3vw, 40px);
+    transition: color 0.2s ease, border-color 0.2s ease,
+      background-color 0.2s ease;
   }
 
   .daytab__label {
@@ -305,11 +298,22 @@ const { days } = Astro.props;
 
   .daytab:hover {
     color: var(--text);
+    background: color-mix(in srgb, var(--text) 5%, transparent);
   }
 
+  /* 選択中のタブは、その日のパネルと同じ面で塗って地続きに見せる。
+     どの日を見ているかが、タブと本文の両方から分かる。 */
   .daytab[aria-selected="true"] {
     color: var(--text);
-    border-bottom-color: var(--brand);
+    border-top-color: var(--brand);
+  }
+
+  .daytab--a[aria-selected="true"] {
+    background: var(--surface);
+  }
+
+  .daytab--b[aria-selected="true"] {
+    background: var(--surface-2);
   }
 
   .daytab[aria-selected="true"] .daytab__date {
@@ -320,22 +324,40 @@ const { days } = Astro.props;
     padding-block: clamp(40px, 6vw, 72px);
   }
 
+  /* 日ごとに面を変える。切り替わったことが本文の地の色でも分かる */
+  .daypanel--a {
+    background: var(--surface);
+  }
+
+  .daypanel--b {
+    background: var(--surface-2);
+  }
+
+  /* 切り替わった瞬間を捉えられるよう、ひと呼吸だけ動かす */
+  @media (prefers-reduced-motion: no-preference) {
+    .daypanel:not([hidden]) {
+      animation: dayin 0.3s ease both;
+    }
+  }
+
+  @keyframes dayin {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   .daypanel__empty {
     padding-block: 40px;
     text-align: center;
   }
 
-  /* 前後の日への手がかり。切り替えの検知点も兼ねる */
-  .dayhint {
-    padding-block: 22px;
-    text-align: center;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-  }
-
-  .dayhint span {
-    color: var(--brand);
-    margin-right: 4px;
+  /* 切り替えの検知点。高さを持たせないので表示には影響しない */
+  .daysentinel {
+    height: 0;
   }
 </style>

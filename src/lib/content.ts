@@ -102,3 +102,28 @@ export async function getDayRange(day: ScheduleDay): Promise<string> {
   const last = items[items.length - 1].time;
   return first === last ? first : `${first}〜${last}`;
 }
+
+/* ---------------------------------------------------------
+   地図
+   --------------------------------------------------------- */
+
+/** 埋め込み地図と「地図で開く」リンクのURL。
+    mapEmbed / mapUrl の指定があればそれを使い、なければ住所（なければ会場名）で
+    検索する形に組み立てる。会場名を書いただけで地図が出るようにするための処理。 */
+export function mapLinks(ev?: {
+  venue?: string;
+  address?: string;
+  mapUrl?: string;
+  mapEmbed?: string;
+}) {
+  const query = ev?.address?.trim() || ev?.venue?.trim() || "";
+  if (!query && !ev?.mapEmbed && !ev?.mapUrl) return null;
+
+  const q = encodeURIComponent(query);
+  return {
+    embed: ev?.mapEmbed || (query ? `https://www.google.com/maps?q=${q}&output=embed` : ""),
+    link:
+      ev?.mapUrl ||
+      (query ? `https://www.google.com/maps/search/?api=1&query=${q}` : ""),
+  };
+}

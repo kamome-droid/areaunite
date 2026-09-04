@@ -64,7 +64,8 @@ const year = new Date().getFullYear();
 
 <style>
   .ft {
-    margin-top: var(--section-gap);
+    /* 直前のセクションが下に余白を持っているので、ここでは足さない
+       （足すと地の色の帯が挟まって見える） */
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
