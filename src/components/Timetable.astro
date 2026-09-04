@@ -1,27 +1,53 @@
 ---
-/** 当日のタイムテーブル。時刻・内容・補足の3列。 */
+import type { ProgramBlock } from "../lib/content";
+
+/** 当日のプログラム。「部」ごとに見出しを立て、その下に時刻と内容を並べる。 */
 interface Props {
-  items: { time: string; title: string; note?: string }[];
+  blocks: ProgramBlock[];
 }
-const { items } = Astro.props;
+const { blocks } = Astro.props;
 ---
 
-<ol class="tt">
+<div class="tt">
   {
-    items.map((s) => (
-      <li class="tt__row">
-        <p class="tt__time num">{s.time}</p>
-        <div class="tt__body">
-          <p class="tt__title">{s.title}</p>
-          {s.note && <p class="tt__note muted">{s.note}</p>}
-        </div>
-      </li>
+    blocks.map((block) => (
+      <section class="tt__block">
+        {block.part && <h3 class="tt__part">{block.part}</h3>}
+        <ol class="tt__list">
+          {block.items.map((s, i) => (
+            <li class="tt__row">
+              {/* 同じ時刻が続くときは時刻を繰り返さない（20:55に3本 など） */}
+              <p class="tt__time num">
+                {i > 0 && block.items[i - 1].time === s.time ? "" : s.time}
+              </p>
+              <div class="tt__body">
+                <p class="tt__title">{s.title}</p>
+                {s.note && <p class="tt__note muted">{s.note}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
     ))
   }
-</ol>
+</div>
 
 <style>
-  .tt {
+  .tt__block + .tt__block {
+    margin-top: clamp(36px, 5vw, 56px);
+  }
+
+  .tt__part {
+    margin-bottom: 14px;
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+    color: var(--brand);
+  }
+
+  .tt__list {
     border-top: 1px solid var(--border);
   }
 
@@ -29,8 +55,15 @@ const { items } = Astro.props;
     display: grid;
     grid-template-columns: 130px minmax(0, 1fr);
     gap: 8px 24px;
-    padding-block: 18px;
+    padding-block: 16px;
     border-bottom: 1px solid var(--border);
+  }
+
+  /* 時刻が省かれた行は、上の行と地続きに見えるよう罫線を薄くする */
+  .tt__row:has(.tt__time:empty) {
+    border-top: 0;
+    padding-top: 0;
+    margin-top: -8px;
   }
 
   .tt__time {
@@ -59,6 +92,9 @@ const { items } = Astro.props;
     }
     .tt__time {
       font-size: 1.15rem;
+    }
+    .tt__time:empty {
+      display: none;
     }
   }
 </style>

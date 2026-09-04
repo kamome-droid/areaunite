@@ -9,7 +9,7 @@ import Row from "../components/Row.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groupsOf } from "../config/site";
-import { getCurrentEvent, getFeaturedItems, getSponsors } from "../lib/content";
+import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -18,14 +18,15 @@ const aboutLead = event
   ? event.body.split(/\n\s*\n/)[0].replace(/\*\*/g, "").trim()
   : "";
 
-/** 「何時から何時まで」。明記がなければ items の最初と最後から組み立てる */
-const partTime = (part: { time?: string; items: { time: string }[] }) => {
-  if (part.time) return part.time;
-  if (part.items.length === 0) return "";
-  return part.items.length === 1
-    ? part.items[0].time
-    : `${part.items[0].time} - ${part.items[part.items.length - 1].time}`;
-};
+/** 日付と「何時から何時まで」。時間帯はスケジュールから組み立てる */
+const days = ev
+  ? await Promise.all(
+      ev.schedule.map(async (day) => ({
+        date: day.note || day.label,
+        range: await getDayRange(day),
+      }))
+    )
+  : [];
 
 const movies = await getFeaturedItems("movies", 4);
 const movieBodies = await Promise.all(movies.map((m) => render(m)));
@@ -87,14 +88,14 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
             <dt class="en">Date</dt>
             <dd>
               {
-                ev.schedule.length > 0 ? (
+                days.length > 0 ? (
                   /* 日付と時刻を2列に組んで、日ごとの行を縦に揃える */
                   <div class="days">
-                    {ev.schedule.map((part) => (
+                    {days.map((d) => (
                       <>
-                        <span class="num days__date">{part.note || part.label}</span>
-                        {partTime(part) ? (
-                          <span class="num days__time">{partTime(part)}</span>
+                        <span class="num days__date">{d.date}</span>
+                        {d.range ? (
+                          <span class="num days__time">{d.range}</span>
                         ) : (
                           <span class="days__pending muted">準備中</span>
                         )}

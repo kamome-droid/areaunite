@@ -45,3 +45,60 @@ export async function getSponsors() {
     return a.data.name.localeCompare(b.data.name);
   });
 }
+
+/* ---------------------------------------------------------
+   スケジュールの組み立て
+   --------------------------------------------------------- */
+
+export type ProgramItem = { time: string; title: string; note?: string };
+export type ProgramBlock = { part?: string; items: ProgramItem[] };
+
+type ScheduleDay = {
+  time?: string;
+  program: {
+    part?: string;
+    include?: string;
+    items: { time: string; title: string; note?: string }[];
+  }[];
+};
+
+/** include を実データに展開して、その日のプログラムを組み立てる。
+    上映作品などを一覧ページとスケジュールの二重管理にしないための仕組み。 */
+export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> {
+  const blocks: ProgramBlock[] = [];
+
+  for (const block of day.program) {
+    const items: ProgramItem[] = [...block.items];
+
+    if (block.include) {
+      const source = await getItems(block.include);
+      for (const entry of source) {
+        if (!entry.data.time) continue;
+        items.push({
+          time: entry.data.time,
+          // 「制作者名」＋「作品名」を1行にまとめる
+          title: entry.data.subtitle
+            ? `${entry.data.subtitle}「${entry.data.title}」`
+            : entry.data.title,
+        });
+      }
+    }
+
+    // 時刻は "HH:MM" 固定なので文字列比較で並ぶ。同時刻は書いた順のまま
+    items.sort((a, b) => a.time.localeCompare(b.time));
+    blocks.push({ part: block.part, items });
+  }
+
+  return blocks;
+}
+
+/** トップページに出す「何時から何時まで」。
+    明記がなければ、その日のプログラムの最初と最後の時刻から組み立てる。 */
+export async function getDayRange(day: ScheduleDay): Promise<string> {
+  if (day.time) return day.time;
+  const items = (await resolveProgram(day)).flatMap((b) => b.items);
+  if (items.length === 0) return "";
+  const first = items[0].time;
+  const last = items[items.length - 1].time;
+  return first === last ? first : `${first}〜${last}`;
+}

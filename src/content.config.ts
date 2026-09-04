@@ -46,6 +46,19 @@ const ticketRow = z.object({
   note: z.string().optional(),
 });
 
+/** 1日のプログラムは「部」のかたまりの並び。
+    items に直接書くか、include で items コレクションの分類を丸ごと差し込む。
+    include を使うと、上映作品などを一覧ページと二重に持たなくて済む。 */
+const programBlock = z.object({
+  /** 「第2部 ／ ムービー」など。省略すると見出しなしで行だけ並ぶ */
+  part: z.string().optional(),
+  /** items コレクションの group キー。時刻を持つ項目が時刻順に入る。
+      「制作者名」＋「作品名」の形で1行にまとめて表示する */
+  include: z.string().optional(),
+  /** 直接書く行 */
+  items: z.array(timeSlot).default([]),
+});
+
 /** スケジュールは日ごとに分ける（DAY 1 / DAY 2 …）。
     ここに1件足すと、ナビの Schedule の子メニューも1つ増える。 */
 const schedulePart = z.object({
@@ -60,7 +73,8 @@ const schedulePart = z.object({
   /** "12:00 - LATE" のような開催時間帯。トップページの要約に出る。
       空なら items の最初と最後の時刻から組み立てる */
   time: z.string().optional(),
-  items: z.array(timeSlot).default([]),
+  /** その日のプログラム */
+  program: z.array(programBlock).default([]),
 });
 
 const event = defineCollection({

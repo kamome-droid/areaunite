@@ -4,36 +4,37 @@ import PageHero from "../components/PageHero.astro";
 import SubNav from "../components/SubNav.astro";
 import Section from "../components/Section.astro";
 import Timetable from "../components/Timetable.astro";
-import { getCurrentEvent } from "../lib/content";
+import { getCurrentEvent, resolveProgram } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
-const parts = ev?.schedule ?? [];
+const days = await Promise.all(
+  (ev?.schedule ?? []).map(async (day) => ({
+    day,
+    blocks: await resolveProgram(day),
+  }))
+);
 ---
 
 <BaseLayout title="Schedule｜スケジュール" description="当日のスケジュール。">
-  <PageHero
-    label="Schedule"
-    jp="スケジュール"
-    lead={ev ? `${ev.edition}／${ev.dateLabel}` : undefined}
-  />
+  <PageHero label="Schedule" jp="スケジュール" />
 
   {
-    parts.length > 1 && (
-      <SubNav items={parts.map((p) => ({ href: `#${p.id}`, label: p.jp }))} />
+    days.length > 1 && (
+      <SubNav items={days.map(({ day }) => ({ href: `#${day.id}`, label: day.jp }))} />
     )
   }
 
   {
-    parts.map((p, i) => (
+    days.map(({ day, blocks }, i) => (
       <Section
-        id={p.id}
-        label={p.label}
-        jp={p.note || undefined}
+        id={day.id}
+        label={day.label}
+        jp={day.note || undefined}
         surface={i % 2 === 1}
       >
-        {p.items.length > 0 ? (
-          <Timetable items={p.items} />
+        {blocks.length > 0 ? (
+          <Timetable blocks={blocks} />
         ) : (
           <p class="empty muted">準備中です。決まりしだい公開します。</p>
         )}
