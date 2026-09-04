@@ -90,9 +90,10 @@ const event = defineCollection({
     hero: z.string().default(""),
     /** KVの見せ方
         overlay … 写真の上にイベント名や日付を重ねる（KVに文字が入っていないとき）
-        band    … KVを切らずに全部見せ、日付やボタンは下の帯に置く
-                  （KVにロゴやタイトルが描き込まれているとき） */
-    heroStyle: z.enum(["overlay", "band"]).default("overlay"),
+        band    … KVを切らずに全部見せ、日付は下に置く
+                  （KVにロゴやタイトルが描き込まれているとき）
+        split   … 左に情報・右にKV。KVを切らず、情報とまとめて1画面のヒーローにする */
+    heroStyle: z.enum(["overlay", "band", "split"]).default("overlay"),
     /** KVに重ねるキャッチ */
     catch: z.string().default(""),
     /** 会場名・住所・地図 */

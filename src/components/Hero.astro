@@ -1,16 +1,19 @@
 ---
 /**
- * トップページのKV。見せ方を2通り持つ。
+ * トップページのKV。見せ方を3通り持つ。
  *
- *  overlay … 写真の上にイベント名・日付を重ねる。KVに文字が入っていないとき向け。
- *  band    … KVを切らずに丸ごと見せ、情報は下の帯に置く。
- *            KVにロゴやタイトルが描き込まれているとき向け（文字の二重掛けを避ける）。
+ *  overlay … 画像を全面に敷き、上にイベント名・日付を重ねる。
+ *            文字の入っていない写真向け。
+ *  band    … KVを切らずに丸ごと見せ、情報は下に置く。
+ *            KVにロゴが描き込まれているとき向け。
+ *  split   … 左に情報、右にKV。KVを切らずに、情報と1画面にまとめる。
+ *            ロゴ入りのKVで、かつヒーローを1かたまりに見せたいとき向け。
  *
- * どちらでも「画像を差し替えるだけ」で成立するよう、KVへの加工は前提にしない。
+ * どの見せ方でも「画像を差し替えるだけ」で成立するよう、KVへの加工は前提にしない。
  */
 interface Props {
   image?: string;
-  style?: "overlay" | "band";
+  style?: "overlay" | "band" | "split";
   eyebrow?: string;
   title: string;
   catch?: string;
@@ -36,78 +39,111 @@ const {
   subCtaHref,
 } = Astro.props;
 
-const band = style === "band";
+const overlay = style === "overlay";
 ---
 
-<section class:list={["hero", band ? "hero--band" : "hero--overlay"]}>
-  <div class="hero__media">
-    {
-      image ? (
-        <img src={image} alt={band ? title : ""} fetchpriority="high" decoding="async" />
-      ) : (
-        <div class="hero__ph" aria-hidden="true" />
-      )
-    }
-  </div>
+<section class={`hero hero--${style}`}>
+  {
+    /* KVをぼかした光を背面に敷き、情報とKVを同じ空気でつなぐ */
+    image && !overlay && (
+      <div class="hero__glow" style={`background-image:url(${image})`} aria-hidden="true" />
+    )
+  }
 
   <div class="wrap hero__inner">
-    {
-      band ? (
-        <h1 class="visually-hidden">{title}</h1>
-      ) : (
-        <>
-          {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
-          <h1 class="en hero__title">{title}</h1>
-        </>
-      )
-    }
+    <div class="hero__text">
+      {
+        overlay ? (
+          <>
+            {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+            <h1 class="en hero__title">{title}</h1>
+          </>
+        ) : (
+          <>
+            {/* KVがタイトルを兼ねるので、見出しは読み上げ用にだけ置く */}
+            <h1 class="visually-hidden">{title}</h1>
+            {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+          </>
+        )
+      }
 
-    {band && eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
-    {catchCopy && <p class="hero__catch">{catchCopy}</p>}
+      {catchCopy && <p class="hero__catch">{catchCopy}</p>}
 
-    {
-      (date || venue) && (
-        <dl class="hero__meta">
-          {date && (
-            <div>
-              <dt class="en">Date</dt>
-              <dd class="num">{date}</dd>
-            </div>
-          )}
-          {venue && (
-            <div>
-              <dt class="en">Venue</dt>
-              <dd>{venue}</dd>
-            </div>
-          )}
-        </dl>
-      )
-    }
+      {
+        (date || venue) && (
+          <dl class="hero__meta">
+            {date && (
+              <div>
+                <dt class="en">Date</dt>
+                <dd class="num">{date}</dd>
+              </div>
+            )}
+            {venue && (
+              <div>
+                <dt class="en">Venue</dt>
+                <dd>{venue}</dd>
+              </div>
+            )}
+          </dl>
+        )
+      }
 
-    {
-      (ctaHref || subCtaHref) && (
-        <div class="hero__cta">
-          {ctaHref && (
-            <a class="btn" href={ctaHref}>
-              {ctaLabel}
-            </a>
-          )}
-          {subCtaHref && (
-            <a class="btn btn--ghost" href={subCtaHref}>
-              {subCtaLabel}
-            </a>
-          )}
-        </div>
-      )
-    }
+      {
+        (ctaHref || subCtaHref) && (
+          <div class="hero__cta">
+            {ctaHref && (
+              <a class="btn" href={ctaHref}>
+                {ctaLabel}
+              </a>
+            )}
+            {subCtaHref && (
+              <a class="btn btn--ghost" href={subCtaHref}>
+                {subCtaLabel}
+              </a>
+            )}
+          </div>
+        )
+      }
+    </div>
+
+    <div class="hero__media">
+      {
+        image ? (
+          <img src={image} alt={overlay ? "" : title} fetchpriority="high" decoding="async" />
+        ) : (
+          <div class="hero__ph" aria-hidden="true" />
+        )
+      }
+    </div>
   </div>
 </section>
 
 <style>
-  /* ---- 共通 ---- */
+  /* ---------- 共通 ---------- */
+  .hero {
+    position: relative;
+    /* sticky ヘッダーの下まで敷く */
+    margin-top: calc(-1 * var(--header-h));
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .hero__glow {
+    position: absolute;
+    inset: -12%;
+    z-index: -3;
+    background-size: cover;
+    background-position: center;
+    filter: blur(80px) saturate(1.6);
+    opacity: 0.32;
+    pointer-events: none;
+    /* 下端で断ち切れると段差に見えるので、地の色へ溶かす */
+    mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 92%);
+  }
+
   .hero__ph {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 4 / 3;
     background: radial-gradient(
         120% 90% at 20% 15%,
         color-mix(in srgb, var(--brand) 26%, transparent),
@@ -166,16 +202,11 @@ const band = style === "band";
     margin-top: clamp(26px, 4vw, 36px);
   }
 
-  /* ---- overlay：画像の上に文字を重ねる ---- */
+  /* ---------- overlay ---------- */
   .hero--overlay {
-    position: relative;
-    /* sticky ヘッダーの下までKVを回り込ませる */
-    margin-top: calc(-1 * var(--header-h));
     min-height: min(88svh, 820px);
     display: flex;
     align-items: flex-end;
-    overflow: hidden;
-    isolation: isolate;
   }
 
   .hero--overlay .hero__media {
@@ -184,10 +215,12 @@ const band = style === "band";
     z-index: -2;
   }
 
-  .hero--overlay .hero__media img {
+  .hero--overlay .hero__media img,
+  .hero--overlay .hero__ph {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    aspect-ratio: auto;
   }
 
   .hero--overlay::after {
@@ -217,12 +250,11 @@ const band = style === "band";
     letter-spacing: 0.01em;
   }
 
-  /* ---- band：KVを切らずに見せ、情報は下に置く ---- */
-  /* ヘッダーの下に潜り込ませない。絵の周りの余白が額縁がわりになる */
+  /* ---------- band ---------- */
   .hero--band .hero__media {
+    order: -1;
     display: grid;
     place-items: center;
-    padding-inline: var(--page-pad);
   }
 
   .hero--band .hero__media img {
@@ -232,18 +264,62 @@ const band = style === "band";
     object-fit: contain;
   }
 
-  .hero--band .hero__ph {
-    width: min(100%, 1100px);
-    aspect-ratio: 4 / 3;
-    max-height: min(72svh, 780px);
-  }
-
   .hero--band .hero__inner {
-    padding-top: clamp(28px, 4vw, 44px);
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--header-h) + 12px);
     padding-bottom: clamp(40px, 6vw, 64px);
   }
 
-  .hero--band .hero__catch {
-    margin-top: 12px;
+  .hero--band .hero__text {
+    margin-top: clamp(28px, 4vw, 44px);
+  }
+
+  /* ---------- split ---------- */
+  .hero--split {
+    display: flex;
+    align-items: center;
+    min-height: min(92svh, 900px);
+  }
+
+  .hero--split .hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: center;
+    gap: clamp(28px, 5vw, 64px);
+    width: 100%;
+    padding-top: calc(var(--header-h) + 24px);
+    padding-bottom: clamp(32px, 5vw, 56px);
+  }
+
+  .hero--split .hero__media img {
+    width: 100%;
+    height: auto;
+    max-height: min(74svh, 760px);
+    object-fit: contain;
+  }
+
+  /* 縦並びになる幅では、KVを先に出して画面いっぱいに広げる */
+  @media (max-width: 900px) {
+    .hero--split {
+      min-height: 0;
+    }
+
+    .hero--split .hero__inner {
+      grid-template-columns: 1fr;
+      gap: clamp(24px, 5vw, 36px);
+      padding-top: calc(var(--header-h) + 12px);
+      padding-bottom: clamp(36px, 7vw, 56px);
+    }
+
+    .hero--split .hero__media {
+      order: -1;
+      /* 左右の余白を打ち消して、KVを画面幅いっぱいに */
+      margin-inline: calc(-1 * var(--page-pad));
+    }
+
+    .hero--split .hero__media img {
+      max-height: none;
+    }
   }
 </style>
