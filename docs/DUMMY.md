@@ -10,6 +10,7 @@
 | `src/content/items/ametsuchi.md` の `video` / `gallery` | 無関係な動画と自動生成した仮画像 | 予告編URLとスチル |
 | `public/images/items/_dummy/` | 仮画像3枚 | 不要になったらフォルダごと削除 |
 | `src/content/items/` の出演者7件 | 架空の出演者名と紹介文 | 実際の出演者（`draft: true` なので本番ビルドには出ない） |
+| 同 出店6件（フード・ショップ） | 架空の出店名と紹介文 | 実際の出店（同上） |
 
 ## 会場変更にともなって空にしてあるもの
 

@@ -127,6 +127,8 @@ export const groups: Record<string, Group> = {
     jp: "フード",
     layout: "grid",
     ratio: "4 / 3",
+    cardMin: "300px",
+    detail: true,
     parent: "contents",
   },
   shops: {
@@ -134,6 +136,8 @@ export const groups: Record<string, Group> = {
     jp: "ショップ ＆ ブース",
     layout: "grid",
     ratio: "4 / 3",
+    cardMin: "300px",
+    detail: true,
     parent: "contents",
   },
   stay: {
