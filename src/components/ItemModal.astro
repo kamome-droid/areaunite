@@ -100,8 +100,12 @@
 
 <style is:global>
   .modal {
-    width: min(920px, calc(100vw - 2 * var(--page-pad)));
-    max-height: min(88svh, 860px);
+    /* 画面の端との間。狭い画面でも詰まって見えないよう、幅に応じて広げる */
+    --modal-gutter: clamp(24px, 8vw, 96px);
+    --modal-height: min(84svh, 820px);
+
+    width: min(920px, calc(100vw - 2 * var(--modal-gutter)));
+    max-height: var(--modal-height);
     padding: 0;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
@@ -133,7 +137,7 @@
   }
 
   .modal__body {
-    max-height: min(88svh, 860px);
+    max-height: var(--modal-height);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: clamp(28px, 5vw, 48px);
