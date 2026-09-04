@@ -4,7 +4,7 @@ import Section from "./Section.astro";
 import ItemLayout from "./ItemLayout.astro";
 import Card from "./Card.astro";
 import Row from "./Row.astro";
-import { getItems, itemHref } from "../lib/content";
+import { getItems, itemHref, itemThumb } from "../lib/content";
 import type { Group } from "../config/site";
 
 /** 分類ひとつ分のセクション。親ページはこれを並べるだけで組み上がる。 */
@@ -36,7 +36,7 @@ const bodies = await Promise.all(items.map((i) => render(i)));
             date: item.data.date,
             time: item.data.time,
             runtime: item.data.runtime,
-            image: item.data.image,
+            image: itemThumb(item.data),
             link: item.data.link,
             linkLabel: item.data.linkLabel,
           };

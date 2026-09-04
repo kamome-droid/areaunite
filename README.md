@@ -148,14 +148,26 @@ draft: true                      # 下書き。本番ビルドには出ない
 ### 作品ページに入れられるもの
 
 ```yaml
-image: /images/items/xxx.jpg      # 一覧のサムネイル・作品ページの主役
-video: https://youtu.be/xxxxxxx   # 入れると写真の代わりに動画が主役になる
-                                  # YouTube / Vimeo。追跡の少ない埋め込みに変換される
+image: /images/items/xxx.jpg      # 一覧のサムネイル
+video: https://youtu.be/xxxxxxx   # 予告編。YouTube / Vimeo
 gallery:                          # 本文の下に並ぶサブ画像
   - /images/items/xxx-1.jpg
   - /images/items/xxx-2.jpg
 runtime: "10 min"                 # 上映時間。日時の横に Runtime として出る
 ```
+
+**一覧のカードは必ず静止画、開いた先は動画があれば動画**になる。
+
+| | カードのサムネイル | 開いた先の主役 |
+|---|---|---|
+| 動画も静止画もある | `image` | 動画 |
+| 動画だけ | YouTubeのサムネイルを自動取得 | 動画 |
+| 静止画だけ | `image` | `image` |
+| どちらも無い | プレースホルダ | プレースホルダ |
+
+動画リンクだけもらった作品でもカードに絵が出るので、
+`image` は用意できるときだけでよい。
+YouTubeの埋め込みは追跡の少ない `youtube-nocookie` に変換している。
 
 並びは**一覧のカードと同じ**「映像 → 制作者 → タイトル → 日時 → 本文」。
 カードから開いたときに写真とタイトルの上下が入れ替わらないようにしている。

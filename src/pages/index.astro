@@ -10,7 +10,7 @@ import Card from "../components/Card.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
-import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, itemHref } from "../lib/content";
+import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, itemHref, itemThumb } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -145,7 +145,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                 date={m.data.date}
                 time={m.data.time}
                 runtime={m.data.runtime}
-                image={m.data.image}
+                image={itemThumb(m.data)}
                 link={m.data.link}
                 linkLabel={m.data.linkLabel}
                 ratio={groups.movies.ratio}

@@ -145,16 +145,34 @@ export function itemHref(group: string, id: string): string | null {
   return groups[group]?.detail ? `/${group}/${id}/` : null;
 }
 
+/** YouTubeのURLから動画IDを取り出す */
+function youtubeId(url?: string): string | null {
+  if (!url) return null;
+  const m = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/
+  );
+  return m ? m[1] : null;
+}
+
 /** YouTube / Vimeo のURLを埋め込み用に変換する。対応外ならnull。
     YouTubeは追跡の少ない nocookie ドメインを使う。 */
 export function embedUrl(url?: string): string | null {
   if (!url) return null;
-  const youtube =
-    url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/);
-  if (youtube) return `https://www.youtube-nocookie.com/embed/${youtube[1]}`;
+  const yt = youtubeId(url);
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt}`;
 
   const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
 
   return null;
+}
+
+/** 一覧のカードに出す静止画。
+    image が指定されていればそれを、無ければ YouTube のサムネイルを使う。
+    動画リンクだけもらった作品でも、カードに絵が出るようにするため。
+    （hqdefault は 4:3 だが、16:9 で切り抜くとちょうど映像部分だけが残る） */
+export function itemThumb(data: { image?: string; video?: string }): string | undefined {
+  if (data.image) return data.image;
+  const yt = youtubeId(data.video);
+  return yt ? `https://img.youtube.com/vi/${yt}/hqdefault.jpg` : undefined;
 }

@@ -5,9 +5,9 @@ subtitle: "mdm productions"
 time: "21:25"
 date: "10.17 sat."
 runtime: "10 min"
-# ↓ ここから3項目は表示確認用のダミー。実際の予告編URLとスチルに差し替える
+# ↓ 表示確認用のダミー。実際の予告編URLとスチルに差し替える。
+# image を書かない場合、カードのサムネイルは YouTube のものが自動で使われる
 video: https://www.youtube.com/watch?v=jNQXAC9IVRw
-image: /images/items/_dummy/still-1.jpg
 gallery:
   - /images/items/_dummy/still-1.jpg
   - /images/items/_dummy/still-2.jpg
