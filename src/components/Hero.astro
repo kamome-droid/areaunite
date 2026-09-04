@@ -57,14 +57,14 @@ const overlay = style === "overlay";
       {
         overlay ? (
           <>
-            {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+            {eyebrow && <p class="hero__eyebrow">{eyebrow}</p>}
             <h1 class="en hero__title">{title}</h1>
           </>
         ) : (
           <>
             {/* KVがタイトルを兼ねるので、見出しは読み上げ用にだけ置く */}
             <h1 class="visually-hidden">{title}</h1>
-            {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+            {eyebrow && <p class="hero__eyebrow">{eyebrow}</p>}
           </>
         )
       }
@@ -164,9 +164,10 @@ const overlay = style === "overlay";
   .hero__eyebrow {
     font-family: var(--font-tagline);
     font-weight: 600;
-    /* セリフ体は同じ級数でも小さく見えるので、少し上げて字間は詰める */
-    font-size: clamp(1.15rem, 2.1vw, 1.45rem);
-    letter-spacing: 0.16em;
+    /* セリフ体は同じ級数でも小さく見えるので、少し上げる。
+       大文字ではなく元の綴りのまま出すので、字間は広げない */
+    font-size: clamp(1.3rem, 2.6vw, 1.75rem);
+    letter-spacing: 0.01em;
     color: var(--brand);
     line-height: 1.4;
   }

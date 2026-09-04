@@ -35,9 +35,15 @@
     "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
   /* 数字・時刻 */
   --font-num: "Barlow", var(--font-body);
-  /* キャッチコピー（セリフ）。EB Garamond は Google Fonts にあるので
-     そのまま配信できる。別の書体にするならこの1行を差し替える */
-  --font-tagline: "EB Garamond", Garamond, "Times New Roman", serif;
+  /* キャッチコピー。
+     Optima は Linotype の商用書体で Web配信できないが、macOS には標準で
+     入っている。Windows には同じ Zapf 設計の Palatino Linotype があるので
+     そこへ、どちらも無い環境は配信している EB Garamond へ落とす。
+     つまり見る環境で書体が変わる。全員に同じ書体を見せるには、
+     ライセンスのある Optima の Webフォントを持ち込むか、
+     この行を配信できる1書体に固定する。 */
+  --font-tagline: Optima, "Optima nova", "Palatino Linotype", "Book Antiqua",
+    Palatino, "EB Garamond", serif;
 
   /* ---- 形 ---- */
   --radius: 6px;
