@@ -58,16 +58,6 @@ const tabs = [
     }
 
     {
-      map?.link && (
-        <p class="cta">
-          <a class="btn btn--ghost" href={map.link} target="_blank" rel="noopener noreferrer">
-            Google Map で開く
-          </a>
-        </p>
-      )
-    }
-
-    {
       ev && ev.accessNotes.length > 0 && (
         <div class="notes-wrap">
           <NoteList title="Information" items={ev.accessNotes} />
@@ -125,9 +115,6 @@ const tabs = [
     }
   }
 
-  .cta {
-    margin-top: 20px;
-  }
   .notes-wrap {
     margin-top: clamp(40px, 6vw, 64px);
   }
