@@ -46,7 +46,7 @@ const ticketRow = z.object({
   note: z.string().optional(),
 });
 
-/** タイムテーブルは「部」ごとに分ける（デイタイム／ナイトタイム …）。
+/** スケジュールは日ごとに分ける（DAY 1 / DAY 2 …）。
     ここに1件足すと、ナビの Schedule の子メニューも1つ増える。 */
 const schedulePart = z.object({
   /** アンカーに使うID。"daytime" など */
@@ -87,7 +87,7 @@ const event = defineCollection({
     mapUrl: z.string().optional(),
     mapEmbed: z.string().optional(),
     accessNotes: z.array(z.string()).default([]),
-    /** 当日のタイムテーブル（部ごと） */
+    /** 当日のスケジュール（日ごと） */
     schedule: z.array(schedulePart).default([]),
     /** チケット料金表 */
     tickets: z.array(ticketRow).default([]),

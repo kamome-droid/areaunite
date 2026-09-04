@@ -11,10 +11,10 @@ const ev = event?.data;
 const parts = ev?.schedule ?? [];
 ---
 
-<BaseLayout title="Schedule｜タイムテーブル" description="当日のタイムテーブル。">
+<BaseLayout title="Schedule｜スケジュール" description="当日のスケジュール。">
   <PageHero
     label="Schedule"
-    jp="タイムテーブル"
+    jp="スケジュール"
     lead={ev ? `${ev.edition}／${ev.dateLabel}` : undefined}
   />
 

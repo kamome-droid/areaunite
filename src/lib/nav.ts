@@ -4,7 +4,7 @@ import { getCurrentEvent } from "./content";
 /* =========================================================
    グローバルナビの組み立て
    親は5つに固定し、子は site.ts の groups と
-   開催回のタイムテーブルから自動で生える。
+   開催回のスケジュールから自動で生える。
    ========================================================= */
 
 export type NavChild = { label: string; href: string };
@@ -24,7 +24,7 @@ export async function getNav(): Promise<NavItem[]> {
     { label: "Ticket", jp: "チケット", href: "/ticket/", children: [] },
     {
       label: "Schedule",
-      jp: "タイムテーブル",
+      jp: "スケジュール",
       href: "/schedule/",
       children: parts.map((p) => ({ label: p.jp, href: `/schedule/#${p.id}` })),
     },

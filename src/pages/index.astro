@@ -77,7 +77,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
       <Section
         id="schedule"
         label="Schedule"
-        jp="タイムテーブル"
+        jp="スケジュール"
         surface
         moreHref="/schedule/"
         moreLabel="詳細を見る"
@@ -85,7 +85,27 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         <dl class="sched">
           <div class="sched__row">
             <dt class="en">Date</dt>
-            <dd class="num">{ev.dateLabel}</dd>
+            <dd>
+              {
+                ev.schedule.length > 0 ? (
+                  /* 日付と時刻を2列に組んで、日ごとの行を縦に揃える */
+                  <div class="days">
+                    {ev.schedule.map((part) => (
+                      <>
+                        <span class="num days__date">{part.note || part.label}</span>
+                        {partTime(part) ? (
+                          <span class="num days__time">{partTime(part)}</span>
+                        ) : (
+                          <span class="days__pending muted">準備中</span>
+                        )}
+                      </>
+                    ))}
+                  </div>
+                ) : (
+                  <span class="num days__date">{ev.dateLabel}</span>
+                )
+              }
+            </dd>
           </div>
           {ev.venue && (
             <div class="sched__row">
@@ -93,15 +113,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
               <dd>{ev.venue}</dd>
             </div>
           )}
-          {ev.schedule.map((part) => (
-            <div class="sched__row">
-              <dt class="en">{part.label}</dt>
-              <dd class="num">
-                {partTime(part) || <span class="muted">準備中</span>}
-                {part.note && <span class="sched__note">{part.note}</span>}
-              </dd>
-            </div>
-          ))}
         </dl>
       </Section>
     )
@@ -247,11 +258,33 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     line-height: 1.35;
   }
 
-  .sched__note {
-    font-size: 0.8rem;
-    font-weight: 400;
-    letter-spacing: 0.14em;
+  .days {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    align-items: baseline;
+    gap: 10px 30px;
+  }
+
+  .days__time {
     color: var(--brand);
+  }
+
+  .days__pending {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  /* 狭い画面では1行に収まらないので、時刻を日付の下に落とす */
+  @media (max-width: 480px) {
+    .days {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+
+    .days__time,
+    .days__pending {
+      margin-bottom: 8px;
+    }
   }
 
   /* ACCESS 要約 */
