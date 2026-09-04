@@ -1,0 +1,163 @@
+---
+/** 一覧に並ぶカード1枚。画像・サブタイトル・タイトル・本文・リンク。 */
+interface Props {
+  title: string;
+  subtitle?: string;
+  time?: string;
+  image?: string;
+  link?: string;
+  linkLabel?: string;
+  ratio?: string;
+}
+
+const {
+  title,
+  subtitle,
+  time,
+  image,
+  link,
+  linkLabel = "詳しく見る",
+  ratio = "4 / 3",
+} = Astro.props;
+
+const external = Boolean(link && /^https?:\/\//.test(link));
+---
+
+<article class="card">
+  <div class="card__media" style={`aspect-ratio:${ratio}`}>
+    {
+      image ? (
+        <img src={image} alt="" loading="lazy" decoding="async" />
+      ) : (
+        <span class="card__ph en" aria-hidden="true">
+          {title.slice(0, 1)}
+        </span>
+      )
+    }
+    {time && <span class="card__time num">{time}</span>}
+  </div>
+
+  <div class="card__body">
+    {subtitle && <p class="card__sub">{subtitle}</p>}
+    <h3 class="card__title">{title}</h3>
+    <div class="card__text prose">
+      <slot />
+    </div>
+    {
+      link && (
+        <a
+          class="en card__link"
+          href={link}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noopener noreferrer" : undefined}
+        >
+          {linkLabel}
+          <span aria-hidden="true">→</span>
+        </a>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .card:hover {
+    border-color: var(--border-strong);
+  }
+
+  .card__media {
+    position: relative;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .card:hover .card__media img {
+    transform: scale(1.03);
+  }
+
+  .card__ph {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 3rem;
+    font-weight: 600;
+    color: var(--border-strong);
+  }
+
+  .card__time {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 4px 12px;
+    background: var(--brand);
+    color: var(--brand-ink);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+  }
+
+  .card__body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 22px;
+  }
+
+  .card__sub {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: var(--brand);
+    line-height: 1.6;
+  }
+
+  .card__title {
+    margin-top: 4px;
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .card__text {
+    margin-top: 10px;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.85;
+  }
+
+  .card__text:empty {
+    display: none;
+  }
+
+  .card__link {
+    margin-top: auto;
+    padding-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: var(--brand);
+  }
+
+  .card__link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+</style>

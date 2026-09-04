@@ -1,0 +1,64 @@
+---
+/** 当日のタイムテーブル。時刻・内容・補足の3列。 */
+interface Props {
+  items: { time: string; title: string; note?: string }[];
+}
+const { items } = Astro.props;
+---
+
+<ol class="tt">
+  {
+    items.map((s) => (
+      <li class="tt__row">
+        <p class="tt__time num">{s.time}</p>
+        <div class="tt__body">
+          <p class="tt__title">{s.title}</p>
+          {s.note && <p class="tt__note muted">{s.note}</p>}
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .tt {
+    border-top: 1px solid var(--border);
+  }
+
+  .tt__row {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 8px 24px;
+    padding-block: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tt__time {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--brand);
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  .tt__title {
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.7;
+  }
+
+  .tt__note {
+    margin-top: 4px;
+    font-size: 0.86rem;
+  }
+
+  @media (max-width: 600px) {
+    .tt__row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .tt__time {
+      font-size: 1.15rem;
+    }
+  }
+</style>

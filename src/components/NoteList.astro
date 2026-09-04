@@ -1,0 +1,55 @@
+---
+/** 注意事項などの箇条書き。長文が続いても読み疲れないよう行間を広めに。 */
+interface Props {
+  items: string[];
+  title?: string;
+}
+const { items, title } = Astro.props;
+---
+
+<div class="notes">
+  {title && <p class="en notes__title">{title}</p>}
+  <ul>
+    {items.map((n) => <li>{n}</li>)}
+  </ul>
+</div>
+
+<style>
+  .notes {
+    padding: clamp(20px, 3vw, 28px);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .notes__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+    color: var(--brand);
+  }
+
+  .notes li {
+    position: relative;
+    padding-left: 1.15em;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.9;
+  }
+
+  .notes li + li {
+    margin-top: 10px;
+  }
+
+  .notes li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.82em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+</style>

@@ -1,0 +1,46 @@
+/* =========================================================
+   THEME — イベントごとに“ここだけ”差し替えるファイル
+   色・角丸・フォントの指定はすべてこの1枚に集約している。
+   別イベントに転用するときは
+     1. このファイルの値
+     2. src/config/site.ts
+     3. public/images/kv/ のKV画像
+   の3つを差し替えれば全ページの見た目が入れ替わる。
+   ========================================================= */
+
+:root {
+  /* ---- ブランドカラー（主役。1色変えるとサイト全体の印象が変わる） ---- */
+  --brand: #e4b95f; /* アクセント：ボタン・見出しの罫・強調 */
+  --brand-strong: #f0cd7d; /* ホバーなど、少し明るい方 */
+  --brand-ink: #101010; /* ブランド色の面にのせる文字色 */
+
+  /* ---- ベース（ダークテーマ。ライトにするならここを反転する） ---- */
+  --bg: #0b0b0c; /* ページ地 */
+  --surface: #141416; /* カード・帯 */
+  --surface-2: #1c1c20; /* さらに一段上の面 */
+  --text: #f2f1ee; /* 本文 */
+  --text-muted: #a0a0a6; /* 補助テキスト */
+  --border: rgba(255, 255, 255, 0.13);
+  --border-strong: rgba(255, 255, 255, 0.26);
+  --overlay: rgba(8, 8, 9, 0.62); /* KVの上に敷く暗幕 */
+
+  /* ---- フォント ---- */
+  /* 英字見出し：イベントらしい縦長サンセリフ */
+  --font-display: "Barlow Condensed", "Oswald", "Helvetica Neue", Arial,
+    sans-serif;
+  /* 本文（和文込み） */
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  /* 数字・時刻 */
+  --font-num: "Barlow", var(--font-body);
+
+  /* ---- 形 ---- */
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  /* ---- レイアウト ---- */
+  --page-max: 1180px; /* コンテンツ最大幅 */
+  --page-pad: clamp(20px, 5vw, 40px); /* 左右の余白 */
+  --section-gap: clamp(64px, 9vw, 120px); /* セクション間の余白 */
+  --header-h: 64px;
+}

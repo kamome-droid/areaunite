@@ -1,0 +1,110 @@
+---
+/** スポンサーロゴ。tier で大きさを変える。 */
+interface Props {
+  sponsors: {
+    name: string;
+    logo?: string;
+    url?: string;
+    tier: number;
+  }[];
+}
+const { sponsors } = Astro.props;
+---
+
+<ul class="sp">
+  {
+    sponsors.map((s) => {
+      const inner = s.logo ? (
+        <img src={s.logo} alt={s.name} loading="lazy" decoding="async" />
+      ) : (
+        <span class="en sp__name">{s.name}</span>
+      );
+      return (
+        <li class:list={["sp__item", `sp__item--t${s.tier}`]}>
+          {s.url ? (
+            <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.name}>
+              {inner}
+            </a>
+          ) : (
+            inner
+          )}
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .sp {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(14px, 2.4vw, 28px);
+  }
+
+  .sp__item {
+    display: grid;
+    place-items: center;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .sp__item a {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sp__item img {
+    width: auto;
+    max-height: 100%;
+    object-fit: contain;
+    /* ロゴの地色がまちまちでも黒背景で成立するよう、白に寄せる */
+    filter: brightness(0) invert(1);
+    opacity: 0.86;
+    transition: opacity 0.2s ease;
+  }
+
+  .sp__item a:hover img {
+    opacity: 1;
+  }
+
+  .sp__name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .sp__item--t1 {
+    min-width: 200px;
+    height: 104px;
+  }
+  .sp__item--t2 {
+    min-width: 150px;
+    height: 82px;
+  }
+  .sp__item--t3 {
+    min-width: 116px;
+    height: 64px;
+  }
+
+  @media (max-width: 520px) {
+    .sp__item--t1 {
+      min-width: 150px;
+      height: 82px;
+    }
+    .sp__item--t2 {
+      min-width: 124px;
+      height: 68px;
+    }
+    .sp__item--t3 {
+      min-width: 100px;
+      height: 56px;
+    }
+  }
+</style>

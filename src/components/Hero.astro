@@ -1,0 +1,200 @@
+---
+/**
+ * トップページのKV。
+ * 「画像を差し替えるだけで別イベントになる」よう、文字は下段の帯にまとめ、
+ * 画像そのものには一切の加工を前提としない。
+ */
+interface Props {
+  image?: string;
+  eyebrow?: string;
+  title: string;
+  catch?: string;
+  date?: string;
+  venue?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  subCtaLabel?: string;
+  subCtaHref?: string;
+}
+
+const {
+  image,
+  eyebrow,
+  title,
+  catch: catchCopy,
+  date,
+  venue,
+  ctaLabel,
+  ctaHref,
+  subCtaLabel,
+  subCtaHref,
+} = Astro.props;
+---
+
+<section class="hero">
+  <div class="hero__media">
+    {
+      image ? (
+        <img src={image} alt="" fetchpriority="high" decoding="async" />
+      ) : (
+        <div class="hero__ph" aria-hidden="true" />
+      )
+    }
+  </div>
+
+  <div class="wrap hero__inner">
+    {eyebrow && <p class="en hero__eyebrow">{eyebrow}</p>}
+    <h1 class="en hero__title">{title}</h1>
+    {catchCopy && <p class="hero__catch">{catchCopy}</p>}
+
+    {
+      (date || venue) && (
+        <dl class="hero__meta">
+          {date && (
+            <div>
+              <dt class="en">Date</dt>
+              <dd class="num">{date}</dd>
+            </div>
+          )}
+          {venue && (
+            <div>
+              <dt class="en">Venue</dt>
+              <dd>{venue}</dd>
+            </div>
+          )}
+        </dl>
+      )
+    }
+
+    {
+      (ctaHref || subCtaHref) && (
+        <div class="hero__cta">
+          {ctaHref && (
+            <a class="btn" href={ctaHref}>
+              {ctaLabel}
+            </a>
+          )}
+          {subCtaHref && (
+            <a class="btn btn--ghost" href={subCtaHref}>
+              {subCtaLabel}
+            </a>
+          )}
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    /* sticky ヘッダーの下までKVを回り込ませる */
+    margin-top: calc(-1 * var(--header-h));
+    min-height: min(88svh, 820px);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+
+  .hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* KVが未入稿でも構図が確認できるプレースホルダ */
+  .hero__ph {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        120% 90% at 20% 15%,
+        color-mix(in srgb, var(--brand) 26%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        90% 80% at 85% 80%,
+        color-mix(in srgb, var(--brand) 14%, transparent),
+        transparent 55%
+      ),
+      var(--surface-2);
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 26%,
+      color-mix(in srgb, var(--bg) 30%, transparent) 62%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 100%
+    );
+  }
+
+  .hero__inner {
+    padding-top: calc(var(--header-h) + 40px);
+    padding-bottom: clamp(48px, 7vw, 84px);
+  }
+
+  .hero__eyebrow {
+    font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+    letter-spacing: 0.28em;
+    color: var(--brand);
+    line-height: 1;
+  }
+
+  .hero__title {
+    margin-top: 16px;
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+  }
+
+  .hero__catch {
+    margin-top: 18px;
+    max-width: 26em;
+    font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+    line-height: 1.85;
+  }
+
+  .hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 48px;
+    margin-top: clamp(26px, 4vw, 40px);
+    padding-top: 22px;
+    border-top: 1px solid var(--border-strong);
+  }
+
+  .hero__meta dt {
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+
+  .hero__meta dd {
+    margin: 8px 0 0;
+    font-size: clamp(1.15rem, 2.6vw, 1.6rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+
+  .hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: clamp(26px, 4vw, 36px);
+  }
+</style>

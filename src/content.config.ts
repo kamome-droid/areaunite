@@ -1,0 +1,103 @@
+import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
+
+/* =========================================================
+   コンテンツ定義
+   将来の管理画面は、この3つのコレクションのMarkdownを
+   読み書きするだけで成立するように最小限にしている。
+   ========================================================= */
+
+/** カードとして並ぶ項目すべて（上映作品・出演者・出店・宿…）。group で置き場所が決まる */
+const items = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/items" }),
+  schema: z.object({
+    /** site.ts の groups のキー（movies / daytime / music / foods / shops / stay …） */
+    group: z.string(),
+    title: z.string(),
+    /** 作品なら監督・レーベル、出店なら業種など、タイトルの上に小さく出る文字 */
+    subtitle: z.string().optional(),
+    /** 開始時刻。"17:30" のように入れるとタイムテーブル表示になる */
+    time: z.string().optional(),
+    /** カード画像（/public 起点） */
+    image: z.string().optional(),
+    /** 外部リンク（公式サイト・Instagram など） */
+    link: z.string().optional(),
+    /** リンクのラベル */
+    linkLabel: z.string().optional(),
+    /** トップページのダイジェストに出すか */
+    featured: z.boolean().default(false),
+    /** 表示順（小さいほど先。time があれば time 優先） */
+    order: z.number().default(0),
+    /** 下書き（true は非公開） */
+    draft: z.boolean().default(false),
+  }),
+});
+
+/** 開催回ごとの基本情報。1開催 = 1ファイル */
+const timeSlot = z.object({
+  time: z.string(),
+  title: z.string(),
+  note: z.string().optional(),
+});
+
+const ticketRow = z.object({
+  label: z.string(),
+  price: z.string(),
+  note: z.string().optional(),
+});
+
+const event = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/event" }),
+  schema: z.object({
+    /** "AREA UNITE 2025" */
+    edition: z.string(),
+    /** 画面に出す日付表記 "2025.10.18 SAT" */
+    dateLabel: z.string(),
+    /** 並び替え・終了判定に使う開催日 */
+    date: z.coerce.date(),
+    /** KV画像（/public 起点） */
+    hero: z.string().default(""),
+    /** KVに重ねるキャッチ */
+    catch: z.string().default(""),
+    /** 会場名・住所・地図 */
+    venue: z.string().default(""),
+    address: z.string().default(""),
+    mapUrl: z.string().optional(),
+    mapEmbed: z.string().optional(),
+    accessNotes: z.array(z.string()).default([]),
+    /** 当日のタイムテーブル */
+    schedule: z.array(timeSlot).default([]),
+    /** チケット料金表 */
+    tickets: z.array(ticketRow).default([]),
+    /** チケット購入ボタン */
+    ticketUrl: z.string().optional(),
+    ticketUrlLabel: z.string().optional(),
+    /** チケットの注意事項 */
+    ticketNotes: z.array(z.string()).default([]),
+    /** 来場ライダー・ゲストなど、名前だけを並べる欄 */
+    guests: z.array(z.string()).default([]),
+    guestsLabel: z.string().default("来場ライダー"),
+    /** 後援・協力団体（ロゴではなく名前だけを並べる欄） */
+    supporters: z.array(z.string()).default([]),
+    supportersLabel: z.string().default("後援"),
+    /** 開催後に出すお礼メッセージ（入れると告知バナーが出る） */
+    afterMessage: z.string().optional(),
+    /** 現在のサイトで主役にする開催回か */
+    current: z.boolean().default(false),
+  }),
+});
+
+/** スポンサー・後援 */
+const sponsors = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/sponsors" }),
+  schema: z.object({
+    name: z.string(),
+    logo: z.string().optional(),
+    url: z.string().optional(),
+    /** 表示サイズの段。1が最大 */
+    tier: z.number().default(2),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { items, event, sponsors };

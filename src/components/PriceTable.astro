@@ -1,0 +1,56 @@
+---
+/** チケット料金表。券種・価格・補足。 */
+interface Props {
+  rows: { label: string; price: string; note?: string }[];
+}
+const { rows } = Astro.props;
+---
+
+<ul class="pt">
+  {
+    rows.map((r) => (
+      <li class="pt__row">
+        <div class="pt__label">
+          <p class="pt__name">{r.label}</p>
+          {r.note && <p class="pt__note muted">{r.note}</p>}
+        </div>
+        <p class="pt__price num">{r.price}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .pt {
+    border-top: 1px solid var(--border);
+  }
+
+  .pt__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pt__name {
+    font-size: 1.02rem;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .pt__note {
+    margin-top: 2px;
+    font-size: 0.82rem;
+  }
+
+  .pt__price {
+    flex: 0 0 auto;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    font-weight: 600;
+    color: var(--brand);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+</style>

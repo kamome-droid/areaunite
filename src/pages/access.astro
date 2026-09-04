@@ -1,0 +1,84 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import NoteList from "../components/NoteList.astro";
+import { getCurrentEvent } from "../lib/content";
+
+const event = await getCurrentEvent();
+const ev = event?.data;
+---
+
+<BaseLayout title="Access｜会場・アクセス" description="会場の場所と駐車場のご案内。">
+  <PageHero label="Access" jp="会場・アクセス" />
+
+  <section class="page">
+    <div class="wrap wrap--narrow">
+      <dl class="info">
+        {
+          ev?.venue && (
+            <div>
+              <dt class="en">Venue</dt>
+              <dd class="info__big">{ev.venue}</dd>
+            </div>
+          )
+        }
+        {
+          ev?.address && (
+            <div>
+              <dt class="en">Address</dt>
+              <dd>{ev.address}</dd>
+            </div>
+          )
+        }
+      </dl>
+
+      {
+        ev?.mapUrl && (
+          <p class="cta">
+            <a class="btn btn--ghost" href={ev.mapUrl} target="_blank" rel="noopener noreferrer">
+              Google Map で開く
+            </a>
+          </p>
+        )
+      }
+
+      {
+        ev && ev.accessNotes.length > 0 && (
+          <div class="notes-wrap">
+            <NoteList title="Information" items={ev.accessNotes} />
+          </div>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: clamp(40px, 6vw, 72px) 0;
+  }
+  .info > div + div {
+    margin-top: 26px;
+  }
+  .info dt {
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+  .info dd {
+    margin: 10px 0 0;
+    font-size: 1.05rem;
+  }
+  .info__big {
+    font-size: clamp(1.5rem, 4vw, 2.1rem) !important;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .cta {
+    margin-top: 30px;
+  }
+  .notes-wrap {
+    margin-top: clamp(40px, 6vw, 64px);
+  }
+</style>

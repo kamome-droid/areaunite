@@ -1,0 +1,79 @@
+---
+import { groups } from "../config/site";
+
+/** groups の定義からコンテンツ一覧への導線を自動生成する。
+    site.ts に1件足すと、ここにも自動で増える。 */
+const entries = Object.entries(groups);
+---
+
+<ul class="gnav">
+  {
+    entries.map(([key, g]) => (
+      <li>
+        <a href={`/${key}/`}>
+          <span class="en gnav__label">{g.label}</span>
+          <span class="gnav__jp">{g.jp}</span>
+          <span class="gnav__arrow" aria-hidden="true">
+            →
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .gnav {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .gnav a {
+    position: relative;
+    display: block;
+    height: 100%;
+    padding: 22px 46px 22px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .gnav a:hover {
+    border-color: var(--brand);
+    background: var(--surface-2);
+  }
+
+  .gnav__label {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+
+  .gnav__jp {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .gnav__arrow {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--brand);
+    transition: translate 0.2s ease;
+  }
+
+  .gnav a:hover .gnav__arrow {
+    translate: 4px -50%;
+  }
+</style>

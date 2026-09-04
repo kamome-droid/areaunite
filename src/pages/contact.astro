@@ -1,0 +1,197 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import { site } from "../config/site";
+
+/** 送信先が未設定のあいだは、入力できない見本として出す。
+    誤って送信され、問い合わせが消えるのを防ぐため。 */
+const endpoint = site.contact.endpoint;
+const connected = Boolean(endpoint);
+---
+
+<BaseLayout title="Contact｜お問い合わせ" description="出店・協賛・取材などのお問い合わせ。">
+  <PageHero
+    label="Contact"
+    jp="お問い合わせ"
+    lead="出店・協賛・取材などのご相談はこちらから。"
+  />
+
+  <section class="page">
+    <div class="wrap wrap--narrow">
+      {
+        !connected && (
+          <p class="notice">
+            <strong>このフォームはまだ送信先に接続されていません。</strong>
+            お問い合わせは下記の連絡先までお願いします（管理画面の実装時に接続します）。
+          </p>
+        )
+      }
+
+      <form
+        class:list={["form", !connected && "form--preview"]}
+        method="post"
+        action={endpoint || undefined}
+      >
+        <div class="form__row">
+          <label class="field">
+            <span class="field__label">姓</span>
+            <input type="text" name="lastName" autocomplete="family-name" disabled={!connected} required />
+          </label>
+          <label class="field">
+            <span class="field__label">名</span>
+            <input type="text" name="firstName" autocomplete="given-name" disabled={!connected} required />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field__label">メールアドレス</span>
+          <input type="email" name="email" autocomplete="email" disabled={!connected} required />
+        </label>
+
+        <label class="field">
+          <span class="field__label">メッセージ</span>
+          <textarea name="message" rows="7" disabled={!connected} required></textarea>
+        </label>
+
+        <button class="btn form__submit" type="submit" disabled={!connected}>
+          送信
+        </button>
+      </form>
+
+      <div class="alt">
+        <p class="en alt__label">Other ways</p>
+        <ul class="alt__list">
+          {
+            site.contact.email && (
+              <li>
+                <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+              </li>
+            )
+          }
+          {
+            site.sns.instagram && (
+              <li>
+                <a href={site.sns.instagram} target="_blank" rel="noopener noreferrer">
+                  Instagram のDM<span aria-hidden="true"> ↗</span>
+                </a>
+              </li>
+            )
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: clamp(40px, 6vw, 72px) 0;
+  }
+
+  .notice {
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    border: 1px solid var(--brand);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form--preview {
+    opacity: 0.62;
+  }
+
+  .form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .field {
+    display: block;
+  }
+
+  .field__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--brand);
+    outline: none;
+  }
+
+  .field textarea {
+    resize: vertical;
+  }
+
+  .form__submit {
+    align-self: flex-start;
+    min-width: 180px;
+    margin-top: 6px;
+  }
+
+  .form__submit:disabled {
+    cursor: not-allowed;
+  }
+
+  .alt {
+    margin-top: clamp(44px, 6vw, 68px);
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .alt__label {
+    font-size: 0.95rem;
+    letter-spacing: 0.18em;
+    color: var(--brand);
+  }
+
+  .alt__list {
+    margin-top: 12px;
+  }
+
+  .alt__list li + li {
+    margin-top: 8px;
+  }
+
+  .alt__list a {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .alt__list a:hover {
+    color: var(--brand);
+  }
+
+  @media (max-width: 560px) {
+    .form__row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

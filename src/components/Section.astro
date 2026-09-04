@@ -1,0 +1,109 @@
+---
+/**
+ * 汎用セクション。英字見出し＋日本語副題＋リード文＋中身。
+ * 見出しの形をこの1か所に閉じ込めることで全ページのリズムを揃える。
+ */
+interface Props {
+  id?: string;
+  label: string;
+  jp?: string;
+  lead?: string;
+  /** 右上に置く「一覧を見る」などのリンク */
+  moreHref?: string;
+  moreLabel?: string;
+  /** 面の色を一段上げる */
+  surface?: boolean;
+  narrow?: boolean;
+}
+
+const {
+  id,
+  label,
+  jp,
+  lead,
+  moreHref,
+  moreLabel = "View all",
+  surface = false,
+  narrow = false,
+} = Astro.props;
+---
+
+<section class:list={["sec", surface && "sec--surface"]} id={id}>
+  <div class:list={["wrap", narrow && "wrap--narrow"]}>
+    <div class="sec__head">
+      <div>
+        <h2 class="en sec__label">{label}</h2>
+        {jp && <p class="sec__jp">{jp}</p>}
+      </div>
+      {
+        moreHref && (
+          <a class="en sec__more" href={moreHref}>
+            {moreLabel}
+          </a>
+        )
+      }
+    </div>
+    {lead && <p class="sec__lead muted">{lead}</p>}
+    <div class="sec__body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .sec {
+    padding-block: var(--section-gap);
+  }
+
+  .sec--surface {
+    background: var(--surface);
+    border-block: 1px solid var(--border);
+  }
+
+  .sec__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sec__label {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+
+  .sec__jp {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    letter-spacing: 0.16em;
+    color: var(--brand);
+    line-height: 1;
+  }
+
+  .sec__more {
+    flex: 0 0 auto;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--border-strong);
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .sec__more:hover {
+    color: var(--brand);
+    border-color: var(--brand);
+  }
+
+  .sec__lead {
+    margin-top: 22px;
+    max-width: 34em;
+  }
+
+  .sec__body {
+    margin-top: clamp(28px, 4vw, 44px);
+  }
+</style>

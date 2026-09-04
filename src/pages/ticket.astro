@@ -1,0 +1,62 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import PriceTable from "../components/PriceTable.astro";
+import NoteList from "../components/NoteList.astro";
+import { getCurrentEvent } from "../lib/content";
+
+const event = await getCurrentEvent();
+const ev = event?.data;
+---
+
+<BaseLayout title="Ticket｜チケット" description="チケットの料金と注意事項。">
+  <PageHero
+    label="Ticket"
+    jp="チケット"
+    lead={ev ? `${ev.edition}／${ev.dateLabel}` : undefined}
+  />
+
+  <section class="page">
+    <div class="wrap wrap--narrow">
+      {ev && ev.tickets.length > 0 && <PriceTable rows={ev.tickets} />}
+
+      {
+        ev?.ticketUrl && (
+          <p class="cta">
+            <a class="btn" href={ev.ticketUrl} target="_blank" rel="noopener noreferrer">
+              {ev.ticketUrlLabel ?? "チケットを購入する"}
+            </a>
+          </p>
+        )
+      }
+
+      {
+        ev && ev.ticketNotes.length > 0 && (
+          <div class="notes-wrap">
+            <NoteList title="Notes" items={ev.ticketNotes} />
+          </div>
+        )
+      }
+
+      <p class="support muted">
+        応援チケットの販売もしています。AREA UNITE 運営のためにご協力をお願いいたします。
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-block: clamp(40px, 6vw, 72px) 0;
+  }
+  .cta {
+    margin-top: 30px;
+  }
+  .notes-wrap {
+    margin-top: clamp(40px, 6vw, 64px);
+  }
+  .support {
+    margin-top: 32px;
+    font-size: 0.92rem;
+  }
+</style>
