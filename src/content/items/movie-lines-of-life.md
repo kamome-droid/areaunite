@@ -3,7 +3,7 @@ group: movies
 title: "Lines of Life 特別編"
 subtitle: "Heart Films"
 time: "22:05"
-date: "10.17 SAT"
+date: "10.17 sat."
 order: 130
 featured: true
 ---

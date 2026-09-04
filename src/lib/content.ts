@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
+import { groups, parents } from "../config/site";
 
 const isProd = import.meta.env.PROD;
 
@@ -50,7 +51,13 @@ export async function getSponsors() {
    スケジュールの組み立て
    --------------------------------------------------------- */
 
-export type ProgramItem = { time: string; title: string; note?: string };
+export type ProgramItem = {
+  time: string;
+  title: string;
+  note?: string;
+  /** 該当する項目のカードへのリンク */
+  href?: string;
+};
 export type ProgramBlock = { part?: string; items: ProgramItem[] };
 
 type ScheduleDay = {
@@ -72,6 +79,10 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
 
     if (block.include) {
       const source = await getItems(block.include);
+      // 差し込み元の分類が置かれているページ。ここへ飛ばす
+      const parent = groups[block.include]?.parent;
+      const base = parent ? parents[parent].href : "";
+
       for (const entry of source) {
         if (!entry.data.time) continue;
         items.push({
@@ -80,6 +91,7 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
           title: entry.data.subtitle
             ? `${entry.data.subtitle}「${entry.data.title}」`
             : entry.data.title,
+          href: base ? `${base}#${entry.id}` : undefined,
         });
       }
     }

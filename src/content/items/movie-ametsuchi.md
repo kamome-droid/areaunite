@@ -3,7 +3,7 @@ group: movies
 title: "天地 -AMETSUCHI-"
 subtitle: "mdm productions"
 time: "21:25"
-date: "10.17 SAT"
+date: "10.17 sat."
 order: 110
 featured: true
 ---

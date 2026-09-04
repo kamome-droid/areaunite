@@ -12,16 +12,16 @@ interface Props {
 }
 const { value, emphasis = false, class: className } = Astro.props;
 
-// 年（4桁）→ 月日（1〜2桁.1〜2桁）→ 曜日 の順に拾う
+// 年（4桁）→ 月日（1〜2桁.1〜2桁）→ 曜日（略記のピリオドまで含む）の順に拾う
 const TOKEN =
-  /(\d{4}\.?|\d{1,2}\.\d{1,2}|\b(?:MON|TUE|WED|THU|FRI|SAT|SUN)\b|[（(][日月火水木金土][）)])/gi;
+  /(\d{4}\.?|\d{1,2}\.\d{1,2}|\b(?:MON|TUE|WED|THU|FRI|SAT|SUN)\b\.?|[（(][日月火水木金土][）)])/gi;
 
 const parts = value.split(TOKEN).filter((p) => p !== "" && p !== undefined);
 
 const kindOf = (t: string) => {
   if (/^\d{4}\.?$/.test(t)) return "year";
   if (/^\d{1,2}\.\d{1,2}$/.test(t)) return "md";
-  if (/^(?:MON|TUE|WED|THU|FRI|SAT|SUN)$/i.test(t)) return "dow";
+  if (/^(?:MON|TUE|WED|THU|FRI|SAT|SUN)\.?$/i.test(t)) return "dow";
   if (/^[（(][日月火水木金土][）)]$/.test(t)) return "dow";
   return null;
 };

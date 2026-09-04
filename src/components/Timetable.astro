@@ -21,7 +21,9 @@ const { blocks } = Astro.props;
                 {i > 0 && block.items[i - 1].time === s.time ? "" : s.time}
               </p>
               <div class="tt__body">
-                <p class="tt__title">{s.title}</p>
+                <p class="tt__title">
+                  {s.href ? <a href={s.href}>{s.title}</a> : s.title}
+                </p>
                 {s.note && <p class="tt__note muted">{s.note}</p>}
               </div>
             </li>
@@ -78,6 +80,17 @@ const { blocks } = Astro.props;
     font-size: 1.05rem;
     font-weight: 500;
     line-height: 1.7;
+  }
+
+  .tt__title a {
+    border-bottom: 1px solid var(--border-strong);
+    padding-bottom: 1px;
+    transition: color 0.16s ease, border-color 0.16s ease;
+  }
+
+  .tt__title a:hover {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
   }
 
   .tt__note {

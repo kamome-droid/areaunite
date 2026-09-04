@@ -1,6 +1,8 @@
 ---
 /** 一覧に並ぶカード1枚。画像・サブタイトル・タイトル・本文・リンク。 */
 interface Props {
+  /** スケジュールなど他の場所から名指しで飛んでくるためのID */
+  id?: string;
   title: string;
   subtitle?: string;
   /** 上映日など */
@@ -13,6 +15,7 @@ interface Props {
 }
 
 const {
+  id,
   title,
   subtitle,
   date,
@@ -26,7 +29,7 @@ const {
 const external = Boolean(link && /^https?:\/\//.test(link));
 ---
 
-<article class="card">
+<article class="card" id={id}>
   <div class="card__media" style={`aspect-ratio:${ratio}`}>
     {
       image ? (
@@ -45,6 +48,11 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     <div class="card__text prose">
       <slot />
     </div>
+
+    {/* 収まりきらないときだけスクリプトが出す */}
+    <button class="card__toggle" type="button" aria-expanded="false" hidden>
+      続きを読む
+    </button>
     {
       (date || time) && (
         <p class="card__when num">
@@ -69,6 +77,51 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     }
   </div>
 </article>
+
+<script>
+  const OPEN_LABEL = "閉じる";
+  const CLOSED_LABEL = "続きを読む";
+
+  const setOpen = (card: HTMLElement, open: boolean) => {
+    const toggle = card.querySelector<HTMLButtonElement>(".card__toggle");
+    card.classList.toggle("is-open", open);
+    if (!toggle) return;
+    toggle.hidden = false;
+    toggle.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+
+  const setup = () => {
+    document.querySelectorAll<HTMLElement>(".card").forEach((card) => {
+      const text = card.querySelector<HTMLElement>(".card__text");
+      const toggle = card.querySelector<HTMLButtonElement>(".card__toggle");
+      if (!text || !toggle || toggle.dataset.ready) return;
+
+      // 収まりきっている紹介文にはボタンを出さない
+      if (text.scrollHeight - text.clientHeight <= 4) return;
+
+      toggle.dataset.ready = "1";
+      toggle.hidden = false;
+      toggle.addEventListener("click", () =>
+        setOpen(card, !card.classList.contains("is-open"))
+      );
+    });
+  };
+
+  /** スケジュールなどから名指しで飛んできたカードは開いた状態で見せる */
+  const openFromHash = () => {
+    const id = location.hash.slice(1);
+    if (!id) return;
+    const card = document.getElementById(id);
+    if (card?.classList.contains("card")) setOpen(card, true);
+  };
+
+  setup();
+  openFromHash();
+  // 書体が入れ替わると行数が変わるので測り直す
+  document.fonts?.ready.then(setup);
+  window.addEventListener("hashchange", openFromHash);
+</script>
 
 <style>
   .card {
@@ -152,11 +205,45 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     line-height: 1.55;
   }
 
+  /* 紹介文は既定で数行だけ見せる。長さがまちまちでも並びが崩れない */
   .card__text {
     margin-top: 10px;
     font-size: 0.92rem;
     color: var(--text-muted);
     line-height: 1.85;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    overflow: hidden;
+  }
+
+  .card.is-open .card__text {
+    display: block;
+    overflow: visible;
+  }
+
+  .card__toggle {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 4px 0;
+    border: 0;
+    border-bottom: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: color 0.16s ease, border-color 0.16s ease;
+  }
+
+  .card__toggle:hover {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+  }
+
+  /* 名指しで飛んできたカードは、どれを開いたのか分かるようにする */
+  .card:target {
+    border-color: var(--brand);
   }
 
   .card__text:empty {
