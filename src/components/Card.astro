@@ -3,6 +3,8 @@
 interface Props {
   /** スケジュールなど他の場所から名指しで飛んでくるためのID */
   id?: string;
+  /** 個別ページのパス。あるとカード全体がその項目へのリンクになる */
+  detailHref?: string | null;
   title: string;
   subtitle?: string;
   /** 上映日など */
@@ -16,6 +18,7 @@ interface Props {
 
 const {
   id,
+  detailHref,
   title,
   subtitle,
   date,
@@ -44,15 +47,20 @@ const external = Boolean(link && /^https?:\/\//.test(link));
 
   <div class="card__body">
     {subtitle && <p class="card__sub">{subtitle}</p>}
-    <h3 class="card__title">{title}</h3>
+    <h3 class="card__title">
+      {
+        detailHref ? (
+          <a href={detailHref} data-modal>
+            {title}
+          </a>
+        ) : (
+          title
+        )
+      }
+    </h3>
     <div class="card__text prose">
       <slot />
     </div>
-
-    {/* 収まりきらないときだけスクリプトが出す */}
-    <button class="card__toggle" type="button" aria-expanded="false" hidden>
-      続きを読む
-    </button>
     {
       (date || time) && (
         <p class="card__when num">
@@ -78,50 +86,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
   </div>
 </article>
 
-<script>
-  const OPEN_LABEL = "閉じる";
-  const CLOSED_LABEL = "続きを読む";
 
-  const setOpen = (card: HTMLElement, open: boolean) => {
-    const toggle = card.querySelector<HTMLButtonElement>(".card__toggle");
-    card.classList.toggle("is-open", open);
-    if (!toggle) return;
-    toggle.hidden = false;
-    toggle.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
-    toggle.setAttribute("aria-expanded", String(open));
-  };
-
-  const setup = () => {
-    document.querySelectorAll<HTMLElement>(".card").forEach((card) => {
-      const text = card.querySelector<HTMLElement>(".card__text");
-      const toggle = card.querySelector<HTMLButtonElement>(".card__toggle");
-      if (!text || !toggle || toggle.dataset.ready) return;
-
-      // 収まりきっている紹介文にはボタンを出さない
-      if (text.scrollHeight - text.clientHeight <= 4) return;
-
-      toggle.dataset.ready = "1";
-      toggle.hidden = false;
-      toggle.addEventListener("click", () =>
-        setOpen(card, !card.classList.contains("is-open"))
-      );
-    });
-  };
-
-  /** スケジュールなどから名指しで飛んできたカードは開いた状態で見せる */
-  const openFromHash = () => {
-    const id = location.hash.slice(1);
-    if (!id) return;
-    const card = document.getElementById(id);
-    if (card?.classList.contains("card")) setOpen(card, true);
-  };
-
-  setup();
-  openFromHash();
-  // 書体が入れ替わると行数が変わるので測り直す
-  document.fonts?.ready.then(setup);
-  window.addEventListener("hashchange", openFromHash);
-</script>
 
 <style>
   .card {
@@ -136,6 +101,10 @@ const external = Boolean(link && /^https?:\/\//.test(link));
 
   .card:hover {
     border-color: var(--border-strong);
+  }
+
+  .card:has(.card__title a):hover {
+    border-color: var(--brand);
   }
 
   .card__media {
@@ -205,7 +174,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     line-height: 1.55;
   }
 
-  /* 紹介文は既定で数行だけ見せる。長さがまちまちでも並びが崩れない */
+  /* 一覧では紹介文の頭だけ見せる。続きは個別ページで読ませる */
   .card__text {
     margin-top: 10px;
     font-size: 0.92rem;
@@ -213,37 +182,25 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     line-height: 1.85;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: 2;
     overflow: hidden;
   }
 
-  .card.is-open .card__text {
-    display: block;
-    overflow: visible;
-  }
-
-  .card__toggle {
-    align-self: flex-start;
-    margin-top: 10px;
-    padding: 4px 0;
-    border: 0;
-    border-bottom: 1px solid var(--border-strong);
-    background: transparent;
-    color: var(--text);
-    font: inherit;
-    font-size: 0.88rem;
-    cursor: pointer;
-    transition: color 0.16s ease, border-color 0.16s ease;
-  }
-
-  .card__toggle:hover {
-    color: var(--brand);
-    border-bottom-color: var(--brand);
-  }
-
-  /* 名指しで飛んできたカードは、どれを開いたのか分かるようにする */
+  /* 一覧から名指しで戻ってきたとき、どれを見ていたのか分かるようにする */
   .card:target {
     border-color: var(--brand);
+  }
+
+  /* タイトルのリンクをカード全面に広げる */
+  .card__title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .card__title a:hover {
+    color: var(--brand);
   }
 
   .card__text:empty {

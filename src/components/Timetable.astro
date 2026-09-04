@@ -22,7 +22,7 @@ const { blocks } = Astro.props;
               </p>
               <div class="tt__body">
                 <p class="tt__title">
-                  {s.href ? <a href={s.href}>{s.title}</a> : s.title}
+                  {s.href ? <a href={s.href} data-modal>{s.title}</a> : s.title}
                 </p>
                 {s.note && <p class="tt__note muted">{s.note}</p>}
               </div>

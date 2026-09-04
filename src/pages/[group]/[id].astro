@@ -1,0 +1,154 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DateText from "../../components/DateText.astro";
+import { groups, parents } from "../../config/site";
+import { getItems } from "../../lib/content";
+
+/**
+ * 項目の個別ページ。site.ts の groups で detail: true にした分類だけ作られる。
+ * 画面上はモーダルで開かれるが、URLを直接叩けばこのページとして読める。
+ * モーダルは [data-detail] の中身だけを取り出して表示する。
+ */
+export async function getStaticPaths() {
+  const paths = [];
+  for (const [key, def] of Object.entries(groups)) {
+    if (!def.detail) continue;
+    const items = await getItems(key);
+    for (const item of items) {
+      paths.push({ params: { group: key, id: item.id }, props: { item, def } });
+    }
+  }
+  return paths;
+}
+
+const { item, def } = Astro.props;
+const { Content } = await render(item);
+const backHref = `${parents[def.parent].href}#${item.id}`;
+---
+
+<BaseLayout
+  title={`${item.data.title}｜${def.jp}`}
+  description={item.data.subtitle}
+  image={item.data.image}
+>
+  <article class="detail" data-detail>
+    <header class="detail__head">
+      {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
+      <h1 class="detail__title">{item.data.title}</h1>
+      {
+        (item.data.date || item.data.time) && (
+          <p class="detail__when num">
+            {item.data.date && <DateText value={item.data.date} />}
+            {item.data.time && <span class="detail__time">{item.data.time}</span>}
+          </p>
+        )
+      }
+    </header>
+
+    {
+      item.data.image && (
+        <div class="detail__media" style={`aspect-ratio:${def.ratio ?? "16 / 9"}`}>
+          <img src={item.data.image} alt="" />
+        </div>
+      )
+    }
+
+    <div class="detail__body prose">
+      <Content />
+    </div>
+
+    {
+      item.data.link && (
+        <p class="detail__link">
+          <a class="btn btn--ghost" href={item.data.link} target="_blank" rel="noopener noreferrer">
+            {item.data.linkLabel ?? "詳しく見る"}
+          </a>
+        </p>
+      )
+    }
+  </article>
+
+  <p class="detail__back">
+    <a href={backHref}>← {def.jp}の一覧へ</a>
+  </p>
+</BaseLayout>
+
+<style>
+  .detail {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding: clamp(32px, 6vw, 72px) var(--page-pad) 0;
+  }
+
+  .detail__sub {
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    color: var(--brand);
+    line-height: 1.6;
+  }
+
+  .detail__title {
+    margin-top: 6px;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .detail__when {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--brand);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .detail__time {
+    font-size: 1.35rem;
+  }
+
+  .detail__media {
+    margin-top: clamp(22px, 4vw, 32px);
+    background: var(--surface-2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .detail__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .detail__body {
+    margin-top: clamp(24px, 4vw, 36px);
+    max-width: 800px;
+    font-size: 1rem;
+  }
+
+  .detail__link {
+    margin-top: 28px;
+  }
+
+  .detail__back {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding: clamp(36px, 6vw, 64px) var(--page-pad) var(--section-gap);
+  }
+
+  .detail__back a {
+    color: var(--text-muted);
+    transition: color 0.16s ease;
+  }
+
+  .detail__back a:hover {
+    color: var(--brand);
+  }
+</style>

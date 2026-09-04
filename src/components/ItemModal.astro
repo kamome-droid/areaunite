@@ -1,0 +1,165 @@
+---
+/**
+ * 個別ページを、その場でモーダルとして開くための層。
+ *
+ * data-modal を付けたリンクを押すと、リンク先ページの [data-detail] だけを
+ * 取り出して重ねて表示する。読んでいた場所を失わずに済む。
+ * URLも書き換えるので、そのままコピーすれば作品ページのリンクになるし、
+ * 戻るボタンで閉じられる。
+ *
+ * 取得に失敗した場合や、JSが動かない場合は、普通のページ遷移になる。
+ */
+---
+
+<dialog class="modal" id="item-modal" aria-label="詳細">
+  <div class="modal__inner">
+    <button class="modal__close" type="button" aria-label="閉じる">
+      <span aria-hidden="true">✕</span>
+    </button>
+    <div class="modal__body"></div>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.getElementById("item-modal") as HTMLDialogElement | null;
+
+  if (dialog && typeof dialog.showModal === "function") {
+    const body = dialog.querySelector<HTMLElement>(".modal__body")!;
+    const closeButton = dialog.querySelector<HTMLButtonElement>(".modal__close")!;
+    const cache = new Map<string, string>();
+    let closingFromHistory = false;
+
+    const lockScroll = (lock: boolean) => {
+      document.documentElement.style.overflow = lock ? "hidden" : "";
+    };
+
+    const show = async (href: string) => {
+      body.innerHTML = '<p class="modal__loading">読み込み中…</p>';
+      if (!dialog.open) dialog.showModal();
+      lockScroll(true);
+
+      try {
+        let html = cache.get(href);
+        if (!html) {
+          const res = await fetch(href);
+          if (!res.ok) throw new Error(String(res.status));
+          html = await res.text();
+          cache.set(href, html);
+        }
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const detail = parsed.querySelector("[data-detail]");
+        if (!detail) throw new Error("no detail");
+        body.innerHTML = detail.innerHTML;
+        body.scrollTop = 0;
+        closeButton.focus();
+      } catch {
+        // 取り出せなければ、普通にそのページへ行く
+        location.href = href;
+      }
+    };
+
+    document.addEventListener("click", (event) => {
+      const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[data-modal]");
+      if (!link) return;
+      // 新しいタブで開く操作は邪魔しない
+      const e = event as MouseEvent;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+      event.preventDefault();
+      history.pushState({ modal: link.href }, "", link.getAttribute("href"));
+      show(link.href);
+    });
+
+    closeButton.addEventListener("click", () => dialog.close());
+
+    // 背景を押したら閉じる
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener("close", () => {
+      lockScroll(false);
+      body.innerHTML = "";
+      // 自分で閉じたときはURLも戻す（戻るボタン経由なら二重に戻さない）
+      if (!closingFromHistory && history.state?.modal) history.back();
+      closingFromHistory = false;
+    });
+
+    window.addEventListener("popstate", () => {
+      if (dialog.open) {
+        closingFromHistory = true;
+        dialog.close();
+      } else if (history.state?.modal) {
+        show(history.state.modal);
+      }
+    });
+  }
+</script>
+
+<style is:global>
+  .modal {
+    width: min(920px, calc(100vw - 2 * var(--page-pad)));
+    max-height: min(88svh, 860px);
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  .modal::backdrop {
+    background: rgb(0 0 0 / 0.72);
+    backdrop-filter: blur(3px);
+  }
+
+  .modal__inner {
+    position: relative;
+    max-height: inherit;
+  }
+
+  .modal__body {
+    max-height: min(88svh, 860px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: clamp(28px, 5vw, 48px);
+  }
+
+  /* 個別ページの余白はモーダル用に詰め直す */
+  .modal__body .detail {
+    padding: clamp(28px, 4vw, 44px) clamp(24px, 4vw, 44px) 0;
+  }
+
+  .modal__body .detail__body {
+    max-width: none;
+  }
+
+  .modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+
+  .modal__close:hover {
+    background: var(--bg);
+    color: var(--brand);
+  }
+
+  .modal__loading {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+</style>

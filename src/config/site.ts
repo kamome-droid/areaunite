@@ -71,6 +71,9 @@ export type Group = {
   ratio?: "16 / 9" | "4 / 3" | "1 / 1" | "3 / 4";
   /** カード1枚の最小幅。説明文が長い分類は広げる */
   cardMin?: string;
+  /** 項目ごとに個別ページを持つ。持つとカードや一覧からそのページへ飛べる
+      （画面上ではモーダルで開き、直接URLを叩けばページとして開く） */
+  detail?: boolean;
   /** どの親ページに置くか */
   parent: Parent;
 };
@@ -82,8 +85,9 @@ export const groups: Record<string, Group> = {
     lead: "夜の部で上映するフィルムのラインナップ。",
     layout: "grid",
     ratio: "16 / 9",
-    // 作品紹介は長くなるので、カードを広めにとって2列で見せる
-    cardMin: "420px",
+    // 一覧では作品名と上映日時まで。紹介文は個別ページで読ませる
+    cardMin: "300px",
+    detail: true,
     parent: "contents",
   },
   live: {

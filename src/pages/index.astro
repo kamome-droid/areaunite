@@ -10,7 +10,7 @@ import Card from "../components/Card.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
-import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors } from "../lib/content";
+import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, itemHref } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -139,6 +139,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
             const Body = movieBodies[i].Content;
             return (
               <Card
+                detailHref={itemHref("movies", m.id)}
                 title={m.data.title}
                 subtitle={m.data.subtitle}
                 date={m.data.date}

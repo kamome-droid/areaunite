@@ -91,7 +91,7 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
           title: entry.data.subtitle
             ? `${entry.data.subtitle}「${entry.data.title}」`
             : entry.data.title,
-          href: base ? `${base}#${entry.id}` : undefined,
+          href: itemHref(block.include, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
         });
       }
     }
@@ -138,4 +138,9 @@ export function mapLinks(ev?: {
       ev?.mapUrl ||
       (query ? `https://www.google.com/maps/search/?api=1&query=${q}` : ""),
   };
+}
+
+/** 項目の個別ページのパス。個別ページを持たない分類なら null */
+export function itemHref(group: string, id: string): string | null {
+  return groups[group]?.detail ? `/${group}/${id}/` : null;
 }
