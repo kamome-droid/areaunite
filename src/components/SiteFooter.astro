@@ -106,11 +106,16 @@ const year = new Date().getFullYear();
     margin-left: -8px;
   }
 
+  /* 段組みで流し込む。格子にすると、子の多い項目に行の高さが引っ張られて
+     ほかの項目のあいだが間延びする */
   .ft__nav > ul {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 28px 24px;
-    align-items: start;
+    columns: 3 150px;
+    column-gap: clamp(20px, 3vw, 36px);
+  }
+
+  .ft__nav > ul > li {
+    break-inside: avoid;
+    margin-bottom: 18px;
   }
 
   .ft__parent {

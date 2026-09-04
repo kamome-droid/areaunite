@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import DateText from "../../components/DateText.astro";
 import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
 import { groups, parents } from "../../config/site";
-import { getItems, embedUrl } from "../../lib/content";
+import { getItems, getEventDays, embedUrl } from "../../lib/content";
 
 /**
  * 項目の個別ページ。site.ts の groups で detail: true にした分類だけ作られる。
@@ -31,6 +31,9 @@ const { Content } = await render(item);
 const backHref = `${parents[def.parent].href}#${item.id}`;
 const ratio = def.ratio ?? "16 / 9";
 const video = embedUrl(item.data.video);
+const days = await getEventDays();
+const showDate =
+  item.data.date ?? (item.data.day ? days.get(item.data.day)?.label : undefined);
 ---
 
 <BaseLayout
@@ -62,9 +65,9 @@ const video = embedUrl(item.data.video);
         {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
         <h1 class="detail__title">{item.data.title}</h1>
         {
-          (item.data.date || item.data.time || item.data.runtime) && (
+          (showDate || item.data.time || item.data.runtime) && (
             <p class="detail__when num">
-              {item.data.date && <DateText value={item.data.date} />}
+              {showDate && <DateText value={showDate} />}
               {item.data.time && <span class="detail__time">{item.data.time}</span>}
               {item.data.runtime && (
                 <span class="detail__runtime">

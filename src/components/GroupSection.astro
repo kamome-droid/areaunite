@@ -4,7 +4,7 @@ import Section from "./Section.astro";
 import ItemLayout from "./ItemLayout.astro";
 import Card from "./Card.astro";
 import Row from "./Row.astro";
-import { getItems, itemHref, itemThumb } from "../lib/content";
+import { getItemsView, itemHref, itemThumb } from "../lib/content";
 import type { Group } from "../config/site";
 
 /** 分類ひとつ分のセクション。親ページはこれを並べるだけで組み上がる。 */
@@ -16,24 +16,24 @@ interface Props {
 
 const { id, def, surface = false } = Astro.props;
 
-const items = await getItems(id);
-const bodies = await Promise.all(items.map((i) => render(i)));
+const rows = await getItemsView(id);
+const bodies = await Promise.all(rows.map((r) => render(r.entry)));
 ---
 
 <Section id={id} label={def.label} jp={def.jp} lead={def.lead} surface={surface}>
   {
-    items.length === 0 ? (
+    rows.length === 0 ? (
       <p class="empty muted">準備中です。決まりしだい公開します。</p>
     ) : (
       <ItemLayout layout={def.layout} min={def.cardMin}>
-        {items.map((item, i) => {
+        {rows.map(({ entry: item, date }, i) => {
           const Body = bodies[i].Content;
           const common = {
             id: item.id,
             detailHref: itemHref(id, item.id),
             title: item.data.title,
             subtitle: item.data.subtitle,
-            date: item.data.date,
+            date,
             time: item.data.time,
             runtime: item.data.runtime,
             image: itemThumb(item.data),

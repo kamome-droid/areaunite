@@ -3,7 +3,7 @@ group: talk
 title: "トークショー（登壇者調整中）"
 subtitle: "TALK SHOW"
 time: "14:00"
-date: "10.17 sat."
+day: day1
 order: 10
 # 表示確認用のダミー。実際の出演者が決まったら差し替える
 draft: true

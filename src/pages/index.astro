@@ -11,7 +11,7 @@ import Card from "../components/Card.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
-import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, itemHref, itemThumb } from "../lib/content";
+import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, itemHref, itemThumb } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -31,6 +31,7 @@ const days = ev
   : [];
 
 const movies = await getFeaturedItems("movies", 4);
+const eventDays = await getEventDays();
 const movieBodies = await Promise.all(movies.map((m) => render(m)));
 const sponsors = await getSponsors();
 
@@ -71,8 +72,14 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref="/about/"
         moreLabel="もっと見る"
       >
-        {ev?.prVideo && <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />}
         <p class="about">{aboutLead}</p>
+        {
+          ev?.prVideo && (
+            <div class="about__video">
+              <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />
+            </div>
+          )
+        }
       </Section>
     )
   }
@@ -144,7 +151,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                 detailHref={itemHref("movies", m.id)}
                 title={m.data.title}
                 subtitle={m.data.subtitle}
-                date={m.data.date}
+                date={m.data.date ?? (m.data.day ? eventDays.get(m.data.day)?.label : undefined)}
                 time={m.data.time}
                 runtime={m.data.runtime}
                 image={itemThumb(m.data)}
@@ -200,8 +207,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     font-size: clamp(1rem, 1.8vw, 1.08rem);
   }
 
-  /* PRムービーの下に本文を置く */
-  .sec__body :global(.embed) + .about {
+  .about__video {
     margin-top: clamp(24px, 4vw, 36px);
   }
 

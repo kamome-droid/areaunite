@@ -12,14 +12,36 @@ export async function getCurrentEvent(): Promise<CollectionEntry<"event"> | unde
   return all.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())[0];
 }
 
-/** 指定グループの項目。time があれば時刻順、なければ order 順。 */
+/** 開催日の索引。id から「何日目か」と「画面に出す日付」を引く。
+    日付を項目ごとに書かず、開催回のデータ1か所で持つための仕組み。 */
+export async function getEventDays(): Promise<
+  Map<string, { order: number; label: string }>
+> {
+  const event = await getCurrentEvent();
+  const map = new Map<string, { order: number; label: string }>();
+  (event?.data.schedule ?? []).forEach((day, order) => {
+    map.set(day.id, { order, label: day.note || day.label });
+  });
+  return map;
+}
+
+/** 指定グループの項目。開催日 → 時刻 → order の順に並ぶ。
+    日をまたぐ開催でも、2日目の朝が1日目の夜より前に来ないようにする。 */
 export async function getItems(group: string): Promise<CollectionEntry<"items">[]> {
   const all = await getCollection("items", ({ data }) => {
     if (data.group !== group) return false;
     return isProd ? !data.draft : true;
   });
 
+  const days = await getEventDays();
+  const dayOrder = (id?: string) =>
+    id && days.has(id) ? days.get(id)!.order : Number.MAX_SAFE_INTEGER;
+
   return all.sort((a, b) => {
+    const ad = dayOrder(a.data.day);
+    const bd = dayOrder(b.data.day);
+    if (ad !== bd) return ad - bd;
+
     const at = a.data.time ?? "";
     const bt = b.data.time ?? "";
     if (at && bt && at !== bt) return at.localeCompare(bt);
@@ -28,6 +50,16 @@ export async function getItems(group: string): Promise<CollectionEntry<"items">[
     if (a.data.order !== b.data.order) return a.data.order - b.data.order;
     return a.data.title.localeCompare(b.data.title, "ja");
   });
+}
+
+/** 一覧に出すための項目。画面に出す日付を解決して添える。 */
+export async function getItemsView(group: string) {
+  const days = await getEventDays();
+  const items = await getItems(group);
+  return items.map((entry) => ({
+    entry,
+    date: entry.data.date ?? (entry.data.day ? days.get(entry.data.day)?.label : undefined),
+  }));
 }
 
 /** トップページのダイジェスト用。featured を優先し、足りなければ先頭から補う。 */
@@ -61,6 +93,7 @@ export type ProgramItem = {
 export type ProgramBlock = { part?: string; items: ProgramItem[] };
 
 type ScheduleDay = {
+  id?: string;
   time?: string;
   program: {
     part?: string;
@@ -91,6 +124,8 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
 
       for (const entry of source) {
         if (!entry.data.time) continue;
+        // その日のものだけ差し込む。日の指定がない項目はどの日にも出す
+        if (entry.data.day && day.id && entry.data.day !== day.id) continue;
         const bracket =
           groups[group]?.scheduleFormat === "bracket" && entry.data.subtitle;
 
@@ -106,7 +141,10 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
 
     // 時刻は "HH:MM" 固定なので文字列比較で並ぶ。同時刻は書いた順のまま
     items.sort((a, b) => a.time.localeCompare(b.time));
-    blocks.push({ part: block.part, items });
+
+    // 中身が無い部は見出しごと出さない
+    // （その日に該当する項目がまだ無い、というだけで枠を見せても仕方ない）
+    if (items.length > 0) blocks.push({ part: block.part, items });
   }
 
   return blocks;

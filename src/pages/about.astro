@@ -17,7 +17,14 @@ const About = event ? (await render(event)).Content : null;
   <section class="page">
     <div class="wrap">
       <div class="measure">
-            <p class="tagline">{site.tagline}</p>
+        <p class="tagline">{site.tagline}</p>
+        {
+          About && (
+            <div class="prose body">
+              <About />
+            </div>
+          )
+        }
         {
           ev?.prVideo && (
             <div class="video">
@@ -25,11 +32,6 @@ const About = event ? (await render(event)).Content : null;
             </div>
           )
         }
-            {About && (
-              <div class="prose body">
-                <About />
-              </div>
-            )}
       </div>
     </div>
   </section>

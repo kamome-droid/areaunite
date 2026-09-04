@@ -3,7 +3,7 @@ group: movies
 title: "天地 -AMETSUCHI-"
 subtitle: "mdm productions"
 time: "21:25"
-date: "10.17 sat."
+day: day1
 runtime: "10 min"
 # ↓ 表示確認用のダミー。実際の予告編URLとスチルに差し替える。
 # image を書かない場合、カードのサムネイルは YouTube のものが自動で使われる

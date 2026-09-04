@@ -18,7 +18,11 @@ const items = defineCollection({
     subtitle: z.string().optional(),
     /** 開始時刻。"17:30" のように入れるとタイムテーブル表示になる */
     time: z.string().optional(),
-    /** 上映日など。"10.17 sat." のように入れるとカードに時刻と並べて出る */
+    /** どの開催日か。開催回の schedule の id（day1 / day2 …）を指す。
+        並び順と日付表示はここから引くので、日付を直接書く必要はない。
+        複数日ある開催では必ず指定する（未指定はすべての日に出る）。 */
+    day: z.string().optional(),
+    /** 日付を個別に上書きしたいときだけ使う。通常は day から自動で決まる */
     date: z.string().optional(),
     /** 上映時間。"10 min" のように入れると日時の横に出る */
     runtime: z.string().optional(),
