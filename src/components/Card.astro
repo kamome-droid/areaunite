@@ -90,6 +90,8 @@ const external = Boolean(link && /^https?:\/\//.test(link));
 
 <style>
   .card {
+    /* 全面リンクの基準。指定がないと当たり判定がカードの外へ広がる */
+    position: relative;
     display: flex;
     flex-direction: column;
     background: var(--surface);
