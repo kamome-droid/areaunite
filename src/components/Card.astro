@@ -1,5 +1,6 @@
 ---
 import ImagePlaceholder from "./ImagePlaceholder.astro";
+import ItemMeta from "./ItemMeta.astro";
 
 /** 一覧に並ぶカード1枚。画像・サブタイトル・タイトル・本文・リンク。 */
 interface Props {
@@ -31,7 +32,7 @@ const {
   image,
   link,
   linkLabel = "詳しく見る",
-  ratio = "4 / 3",
+  ratio = "16 / 9",
 } = Astro.props;
 
 const external = Boolean(link && /^https?:\/\//.test(link));
@@ -64,19 +65,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     <div class="card__text prose">
       <slot />
     </div>
-    {
-      (date || time || runtime) && (
-        <p class="card__when num">
-          {date && <span>{date}</span>}
-          {time && <span class="card__time">{time}</span>}
-          {runtime && (
-            <span class="card__runtime">
-              <span class="en card__runtime-label">Runtime</span> {runtime}
-            </span>
-          )}
-        </p>
-      )
-    }
+    <ItemMeta date={date} time={time} runtime={runtime} class="card__when" />
 
     {
       link && (
@@ -136,86 +125,8 @@ const external = Boolean(link && /^https?:\/\//.test(link));
 
   /* 上映日時。本文のあとに置き、下端で揃える */
   .card__when {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 4px 14px;
     margin-top: auto;
     padding-top: 18px;
-    color: var(--brand);
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    line-height: 1.4;
-  }
-
-  .card__time {
-    font-size: 1.25rem;
-  }
-
-  /* 数字が並ぶので、上映時間だけはラベルを添えて取り違えないようにする */
-  .card__runtime {
-    color: var(--text-muted);
-    font-weight: 400;
-  }
-
-  .card__runtime-label {
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-  }
-
-  .card__body {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 20px 22px;
-  }
-
-  .card__sub {
-    font-size: 0.78rem;
-    letter-spacing: 0.12em;
-    color: var(--brand);
-    line-height: 1.6;
-  }
-
-  .card__title {
-    margin-top: 4px;
-    font-size: 1.12rem;
-    font-weight: 700;
-    line-height: 1.55;
-  }
-
-  /* 一覧では紹介文の頭だけ見せる。続きは個別ページで読ませる */
-  .card__text {
-    margin-top: 10px;
-    font-size: 0.92rem;
-    color: var(--text-muted);
-    line-height: 1.85;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-  }
-
-  /* 一覧から名指しで戻ってきたとき、どれを見ていたのか分かるようにする */
-  .card:target {
-    border-color: var(--brand);
-  }
-
-  /* タイトルのリンクをカード全面に広げる */
-  .card__title a::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-  }
-
-  .card__title a:hover {
-    color: var(--brand);
-  }
-
-  .card__text:empty {
-    display: none;
   }
 
   .card__link {

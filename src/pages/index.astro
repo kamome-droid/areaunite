@@ -1,17 +1,15 @@
 ---
-import { render } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
 import VideoEmbed from "../components/VideoEmbed.astro";
 import DateText from "../components/DateText.astro";
-import ItemLayout from "../components/ItemLayout.astro";
-import Card from "../components/Card.astro";
+import CardGrid from "../components/CardGrid.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
-import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, itemHref, itemThumb } from "../lib/content";
+import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, displayDate } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -30,9 +28,11 @@ const days = ev
     )
   : [];
 
-const movies = await getFeaturedItems("movies", 4);
 const eventDays = await getEventDays();
-const movieBodies = await Promise.all(movies.map((m) => render(m)));
+const movieRows = (await getFeaturedItems("movies", 4)).map((entry) => ({
+  entry,
+  date: displayDate(entry.data, eventDays),
+}));
 const sponsors = await getSponsors();
 
 const contentsNav = groupsOf("contents").map(([key, g]) => ({
@@ -135,7 +135,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   </Section>
 
   {
-    movies.length > 0 && (
+    movieRows.length > 0 && (
       <Section
         id="movies"
         label="Pick Up Movie"
@@ -143,27 +143,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref={`${parents.contents.href}#movies`}
         moreLabel="もっと見る"
       >
-        <ItemLayout layout="grid" min={groups.movies.cardMin}>
-          {movies.map((m, i) => {
-            const Body = movieBodies[i].Content;
-            return (
-              <Card
-                detailHref={itemHref("movies", m.id)}
-                title={m.data.title}
-                subtitle={m.data.subtitle}
-                date={m.data.date ?? (m.data.day ? eventDays.get(m.data.day)?.label : undefined)}
-                time={m.data.time}
-                runtime={m.data.runtime}
-                image={itemThumb(m.data)}
-                link={m.data.link}
-                linkLabel={m.data.linkLabel}
-                ratio={groups.movies.ratio}
-              >
-                <Body />
-              </Card>
-            );
-          })}
-        </ItemLayout>
+        <CardGrid group="movies" def={groups.movies} rows={movieRows} />
       </Section>
     )
   }

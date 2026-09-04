@@ -1,0 +1,71 @@
+---
+import DateText from "./DateText.astro";
+
+/**
+ * 項目の日時。日付・開始時刻・所要時間を1行にまとめる。
+ * 一覧のカードでも個別ページでも同じ見え方にするため、ここに集約している。
+ *
+ * 数字が3つ並ぶと取り違えるので、所要時間だけラベルを添える。
+ */
+interface Props {
+  date?: string;
+  time?: string;
+  runtime?: string;
+  /** 所要時間のラベル。映画なら Runtime、他の用途なら書き換える */
+  runtimeLabel?: string;
+  class?: string;
+}
+const {
+  date,
+  time,
+  runtime,
+  runtimeLabel = "Runtime",
+  class: className,
+} = Astro.props;
+
+const has = Boolean(date || time || runtime);
+---
+
+{
+  has && (
+    <p class:list={["itemmeta", "num", className]}>
+      {date && <DateText value={date} />}
+      {time && <span class="itemmeta__time">{time}</span>}
+      {runtime && (
+        <span class="itemmeta__runtime">
+          <span class="en itemmeta__label">{runtimeLabel}</span>
+          {" "}
+          {runtime}
+        </span>
+      )}
+    </p>
+  )
+}
+
+<style>
+  .itemmeta {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    color: var(--brand);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+  }
+
+  .itemmeta__time {
+    font-size: 1.25rem;
+  }
+
+  .itemmeta__runtime {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .itemmeta__label {
+    margin-right: 0.15em;
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+  }
+</style>

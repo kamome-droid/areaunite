@@ -1,21 +1,30 @@
 ---
 /**
- * ページ内の目次。押すとその見出しへ移動し、
+ * ページ内の目次バー。
+ * ヘッダーの下に貼り付き、押すとその見出しへ移動し、
  * スクロール位置に応じていま読んでいるところを示す。
- * 囲みは持たせない（押せる要素として過剰に見えるため）。
+ *
+ * 開催日の切り替え（スケジュール）にも、分類の目次（コンテンツ）にも使う。
+ * 囲み（ピル・カード）は持たせない。押せる要素として過剰に見えるため。
  */
 interface Props {
-  items: { href: string; label: string }[];
+  items: { href: string; label: string; sub?: string }[];
+  ariaLabel?: string;
 }
-const { items } = Astro.props;
+const { items, ariaLabel = "ページ内メニュー" } = Astro.props;
 ---
 
-<nav class="secindex" aria-label="ページ内メニュー">
-  <div class="wrap secindex__inner">
+<nav class="pageindex" aria-label={ariaLabel}>
+  <div class="wrap pageindex__inner">
     {
-      items.map((i) => (
-        <a class="secindex__item" href={i.href} data-target={i.href.replace("#", "")}>
-          {i.label}
+      items.map((item) => (
+        <a
+          class="pageindex__item"
+          href={item.href}
+          data-target={item.href.replace("#", "")}
+        >
+          <span class="pageindex__label">{item.label}</span>
+          {item.sub && <span class="num pageindex__sub">{item.sub}</span>}
         </a>
       ))
     }
@@ -23,9 +32,9 @@ const { items } = Astro.props;
 </nav>
 
 <script>
-  const bar = document.querySelector<HTMLElement>(".secindex");
+  const bar = document.querySelector<HTMLElement>(".pageindex");
   const items = Array.from(
-    document.querySelectorAll<HTMLAnchorElement>(".secindex__item")
+    document.querySelectorAll<HTMLAnchorElement>(".pageindex__item")
   );
 
   if (bar && items.length > 0) {
@@ -34,14 +43,15 @@ const { items } = Astro.props;
       .map((item) => document.getElementById(item.dataset.target ?? ""))
       .filter((el): el is HTMLElement => Boolean(el));
 
-    const stickyHeight = () =>
-      (header?.offsetHeight ?? 0) + bar.offsetHeight;
+    /** ヘッダーと目次バーが重なっている高さ */
+    const stickyHeight = () => (header?.offsetHeight ?? 0) + bar.offsetHeight;
 
     /** アンカーで飛んだとき、見出しがバーの下に隠れないようにする */
     const syncScrollPadding = () => {
       document.documentElement.style.scrollPaddingTop = `${stickyHeight() + 8}px`;
     };
 
+    /** いま読んでいるところを目次に反映する */
     const markCurrent = () => {
       const line = stickyHeight() + 12;
       let current = targets[0];
@@ -78,7 +88,7 @@ const { items } = Astro.props;
 </script>
 
 <style>
-  .secindex {
+  .pageindex {
     position: sticky;
     top: var(--header-h);
     z-index: 20;
@@ -86,33 +96,52 @@ const { items } = Astro.props;
     border-bottom: 1px solid var(--border);
   }
 
-  .secindex__inner {
+  .pageindex__inner {
     display: flex;
     gap: clamp(18px, 3vw, 40px);
     overflow-x: auto;
     scrollbar-width: none;
   }
 
-  .secindex__inner::-webkit-scrollbar {
+  .pageindex__inner::-webkit-scrollbar {
     display: none;
   }
 
-  .secindex__item {
-    padding-block: 15px;
+  .pageindex__item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-block: 14px;
     border-bottom: 2px solid transparent;
-    font-size: 0.95rem;
-    line-height: 1.6;
     color: var(--text-muted);
     white-space: nowrap;
     transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .secindex__item:hover {
+  .pageindex__item:hover {
     color: var(--text);
   }
 
-  .secindex__item[aria-current] {
+  .pageindex__item[aria-current] {
     color: var(--text);
     border-bottom-color: var(--brand);
+  }
+
+  .pageindex__label {
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+  }
+
+  .pageindex__sub {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+  }
+
+  .pageindex__item[aria-current] .pageindex__sub {
+    color: var(--brand);
   }
 </style>

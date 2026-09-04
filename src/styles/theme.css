@@ -27,12 +27,12 @@
   --overlay: rgba(8, 8, 9, 0.62); /* KVの上に敷く暗幕 */
 
   /* ---- フォント ---- */
-  /* 英字見出し：イベントらしい縦長サンセリフ */
-  --font-display: "Barlow Condensed", "Oswald", "Helvetica Neue", Arial,
-    sans-serif;
   /* 本文（和文込み） */
   --font-body: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  /* 英字見出し：イベントらしい縦長サンセリフ。
+     和文が混じったときに既定フォントへ落ちないよう、本文の指定を後ろに繋ぐ */
+  --font-display: "Barlow Condensed", "Oswald", var(--font-body);
   /* 数字・時刻 */
   --font-num: "Barlow", var(--font-body);
   /* キャッチコピー。

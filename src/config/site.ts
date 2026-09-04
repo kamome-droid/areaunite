@@ -66,8 +66,6 @@ export type Group = {
   /** セクション冒頭のリード文。見出しから分かることは書かない。
       補足が要るときだけ入れる（例：入場に条件がある、など） */
   lead?: string;
-  /** カードの並べ方 */
-  layout: "grid" | "list";
   /** カード画像の比率 */
   ratio?: "16 / 9" | "4 / 3" | "1 / 1" | "3 / 4";
   /** カード1枚の最小幅。説明文が長い分類は広げる */
@@ -87,7 +85,6 @@ export const groups: Record<string, Group> = {
   movies: {
     label: "Movies",
     jp: "ムービー",
-    layout: "grid",
     ratio: "16 / 9",
     // 一覧では作品名と上映日時まで。紹介文は個別ページで読ませる
     cardMin: "300px",
@@ -98,7 +95,6 @@ export const groups: Record<string, Group> = {
   live: {
     label: "Live",
     jp: "ライブ",
-    layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
     detail: true,
@@ -107,7 +103,6 @@ export const groups: Record<string, Group> = {
   talk: {
     label: "Talk Show",
     jp: "トークショー",
-    layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
     detail: true,
@@ -116,7 +111,6 @@ export const groups: Record<string, Group> = {
   dj: {
     label: "DJ",
     jp: "DJ",
-    layout: "grid",
     ratio: "1 / 1",
     cardMin: "300px",
     detail: true,
@@ -125,7 +119,6 @@ export const groups: Record<string, Group> = {
   foods: {
     label: "Foods",
     jp: "フード",
-    layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
     detail: true,
@@ -134,7 +127,6 @@ export const groups: Record<string, Group> = {
   shops: {
     label: "Shop & Booth",
     jp: "ショップ ＆ ブース",
-    layout: "grid",
     ratio: "4 / 3",
     cardMin: "300px",
     detail: true,
@@ -143,7 +135,6 @@ export const groups: Record<string, Group> = {
   stay: {
     label: "Stay",
     jp: "宿泊",
-    layout: "grid",
     ratio: "16 / 9",
     parent: "access",
   },

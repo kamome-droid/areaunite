@@ -1,0 +1,57 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Card from "./Card.astro";
+import { itemHref, itemThumb } from "../lib/content";
+import type { Group } from "../config/site";
+
+/**
+ * 項目をカードで並べる。一覧ページでもトップのダイジェストでも使う。
+ * カード1枚に渡す値の組み立てはここに1本化している。
+ */
+interface Props {
+  /** 分類のキー。個別ページへのリンクを組み立てるのに使う */
+  group: string;
+  def: Group;
+  rows: { entry: CollectionEntry<"items">; date?: string }[];
+}
+const { group, def, rows } = Astro.props;
+
+const bodies = await Promise.all(rows.map((r) => render(r.entry)));
+---
+
+<div class="cardgrid" style={`--card-min:${def.cardMin ?? "270px"}`}>
+  {
+    rows.map(({ entry, date }, i) => {
+      const Body = bodies[i].Content;
+      return (
+        <Card
+          id={entry.id}
+          detailHref={itemHref(group, entry.id)}
+          title={entry.data.title}
+          subtitle={entry.data.subtitle}
+          date={date}
+          time={entry.data.time}
+          runtime={entry.data.runtime}
+          image={itemThumb(entry.data)}
+          link={entry.data.link}
+          linkLabel={entry.data.linkLabel}
+          ratio={def.ratio}
+        >
+          <Body />
+        </Card>
+      );
+    })
+  }
+</div>
+
+<style>
+  .cardgrid {
+    display: grid;
+    /* min() を挟まないと、画面幅がカード最小幅を下回ったときに横へはみ出す */
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--card-min), 100%), 1fr)
+    );
+    gap: clamp(16px, 2.2vw, 26px);
+  }
+</style>

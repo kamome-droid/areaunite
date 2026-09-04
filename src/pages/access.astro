@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
-import SubNav from "../components/SubNav.astro";
 import Section from "../components/Section.astro";
 import NoteList from "../components/NoteList.astro";
 import GroupSection from "../components/GroupSection.astro";
@@ -13,10 +12,6 @@ const ev = event?.data;
 const list = groupsOf("access");
 const map = mapLinks(ev);
 
-const tabs = [
-  { href: "#map", label: "会場・アクセス" },
-  ...list.map(([key, g]) => ({ href: `#${key}`, label: g.jp })),
-];
 ---
 
 <BaseLayout
@@ -24,10 +19,6 @@ const tabs = [
   description="会場の場所と駐車場、周辺の宿泊施設のご案内。"
 >
   <PageHero label={parents.access.label} jp={parents.access.jp} />
-
-  {/* 2つだけだと帯にポツンと浮いて弱いので、3つ以上のときだけ目次を出す。
-      少ない項目はそのまま下へ読み進めればよい（ナビの子メニューからは飛べる） */}
-  {tabs.length > 2 && <SubNav items={tabs} />}
 
   <Section id="map" label="Venue" jp="会場・アクセス" narrow>
     {ev?.venue && <p class="venue">{ev.venue}</p>}

@@ -91,15 +91,6 @@ ol {
   margin-inline: 0 auto;
 }
 
-/* 長文だけはもう少し狭く（和文で1行 34字前後） */
-.measure--text {
-  max-width: 34em;
-}
-
-.stack > * + * {
-  margin-top: 1em;
-}
-
 .muted {
   color: var(--text-muted);
 }
@@ -266,31 +257,9 @@ ol {
 }
 
 .detail__when {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 16px;
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
-  color: var(--brand);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-.detail__time {
-  font-size: 1.35rem;
-}
-
-/* 数字が並ぶので、上映時間だけはラベルを添えて取り違えないようにする */
-.detail__runtime {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-.detail__runtime-label {
-  font-size: 0.74rem;
-  letter-spacing: 0.14em;
 }
 
 .detail__body {

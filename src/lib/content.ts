@@ -13,15 +13,21 @@ export async function getCurrentEvent(): Promise<CollectionEntry<"event"> | unde
 }
 
 /** 開催日の索引。id から「何日目か」と「画面に出す日付」を引く。
-    日付を項目ごとに書かず、開催回のデータ1か所で持つための仕組み。 */
+    日付を項目ごとに書かず、開催回のデータ1か所で持つための仕組み。
+    1ページで何度も引くので、組み立ては1回だけにする。 */
+let eventDaysCache: Map<string, { order: number; label: string }> | null = null;
+
 export async function getEventDays(): Promise<
   Map<string, { order: number; label: string }>
 > {
+  if (eventDaysCache) return eventDaysCache;
+
   const event = await getCurrentEvent();
   const map = new Map<string, { order: number; label: string }>();
   (event?.data.schedule ?? []).forEach((day, order) => {
     map.set(day.id, { order, label: day.note || day.label });
   });
+  eventDaysCache = map;
   return map;
 }
 
@@ -52,13 +58,21 @@ export async function getItems(group: string): Promise<CollectionEntry<"items">[
   });
 }
 
+/** 画面に出す日付。date の直接指定があればそれを、無ければ day から引く。 */
+export function displayDate(
+  data: { date?: string; day?: string },
+  days: Map<string, { label: string }>
+): string | undefined {
+  return data.date ?? (data.day ? days.get(data.day)?.label : undefined);
+}
+
 /** 一覧に出すための項目。画面に出す日付を解決して添える。 */
 export async function getItemsView(group: string) {
   const days = await getEventDays();
   const items = await getItems(group);
   return items.map((entry) => ({
     entry,
-    date: entry.data.date ?? (entry.data.day ? days.get(entry.data.day)?.label : undefined),
+    date: displayDate(entry.data, days),
   }));
 }
 

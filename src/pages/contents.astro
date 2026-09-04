@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
-import SubNav from "../components/SubNav.astro";
+import PageIndex from "../components/PageIndex.astro";
 import GroupSection from "../components/GroupSection.astro";
 import { parents, groupsOf } from "../config/site";
 
@@ -19,7 +19,7 @@ const list = groupsOf("contents");
     jp={parents.contents.jp}
   />
 
-  <SubNav items={list.map(([key, g]) => ({ href: `#${key}`, label: g.jp }))} />
+  <PageIndex items={list.map(([key, g]) => ({ href: `#${key}`, label: g.jp }))} />
 
   {list.map(([key, g], i) => <GroupSection id={key} def={g} surface={i % 2 === 1} />)}
 </BaseLayout>
