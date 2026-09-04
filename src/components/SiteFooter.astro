@@ -13,7 +13,12 @@ const year = new Date().getFullYear();
       <a href="/" class="ft__logo">
         {
           site.logo ? (
-            <img src={site.logo} alt={site.name} width="220" height="42" />
+            <img
+            src={site.logo}
+            alt={site.name}
+            width={site.logoSize.w}
+            height={site.logoSize.h}
+          />
           ) : (
             <span class="en">{site.name}</span>
           )
@@ -72,7 +77,7 @@ const year = new Date().getFullYear();
   }
 
   .ft__logo img {
-    height: 34px;
+    height: 42px;
     width: auto;
   }
 

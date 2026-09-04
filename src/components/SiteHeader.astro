@@ -23,7 +23,12 @@ const isCurrent = (href: string) => {
     <a class="hd__logo" href="/">
       {
         site.logo ? (
-          <img src={site.logo} alt={site.name} width="200" height="38" />
+          <img
+            src={site.logo}
+            alt={site.name}
+            width={site.logoSize.w}
+            height={site.logoSize.h}
+          />
         ) : (
           <span class="en">{site.name}</span>
         )
@@ -173,8 +178,15 @@ const isCurrent = (href: string) => {
   }
 
   .hd__logo img {
-    height: 30px;
+    /* 実寸ではなく高さで揃える。差し替えても収まりが変わらない */
+    height: 34px;
     width: auto;
+  }
+
+  @media (max-width: 400px) {
+    .hd__logo img {
+      height: 28px;
+    }
   }
 
   .hd__logo .en {
