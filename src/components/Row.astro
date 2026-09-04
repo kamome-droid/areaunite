@@ -1,4 +1,6 @@
 ---
+import ImagePlaceholder from "./ImagePlaceholder.astro";
+
 /** 一覧の1行（時刻つきのラインナップ向け）。左に時刻、次にサムネイル、右に情報。 */
 interface Props {
   title: string;
@@ -21,9 +23,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
       image ? (
         <img src={image} alt="" loading="lazy" decoding="async" />
       ) : (
-        <span class="row__ph en" aria-hidden="true">
-          {title.slice(0, 1)}
-        </span>
+        <ImagePlaceholder />
       )
     }
   </div>
@@ -86,15 +86,6 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .row__ph {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font-size: 1.8rem;
-    color: var(--border-strong);
   }
 
   .row__sub {

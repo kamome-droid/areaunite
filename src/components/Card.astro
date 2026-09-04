@@ -1,4 +1,6 @@
 ---
+import ImagePlaceholder from "./ImagePlaceholder.astro";
+
 /** 一覧に並ぶカード1枚。画像・サブタイトル・タイトル・本文・リンク。 */
 interface Props {
   /** スケジュールなど他の場所から名指しで飛んでくるためのID */
@@ -10,6 +12,8 @@ interface Props {
   /** 上映日など */
   date?: string;
   time?: string;
+  /** 上映時間 */
+  runtime?: string;
   image?: string;
   link?: string;
   linkLabel?: string;
@@ -23,6 +27,7 @@ const {
   subtitle,
   date,
   time,
+  runtime,
   image,
   link,
   linkLabel = "詳しく見る",
@@ -38,9 +43,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
       image ? (
         <img src={image} alt="" loading="lazy" decoding="async" />
       ) : (
-        <span class="card__ph en" aria-hidden="true">
-          {title.slice(0, 1)}
-        </span>
+        <ImagePlaceholder />
       )
     }
   </div>
@@ -62,10 +65,15 @@ const external = Boolean(link && /^https?:\/\//.test(link));
       <slot />
     </div>
     {
-      (date || time) && (
+      (date || time || runtime) && (
         <p class="card__when num">
           {date && <span>{date}</span>}
           {time && <span class="card__time">{time}</span>}
+          {runtime && (
+            <span class="card__runtime">
+              <span class="en card__runtime-label">Runtime</span> {runtime}
+            </span>
+          )}
         </p>
       )
     }
@@ -126,16 +134,6 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     transform: scale(1.03);
   }
 
-  .card__ph {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font-size: 3rem;
-    font-weight: 600;
-    color: var(--border-strong);
-  }
-
   /* 上映日時。本文のあとに置き、下端で揃える */
   .card__when {
     display: flex;
@@ -153,6 +151,17 @@ const external = Boolean(link && /^https?:\/\//.test(link));
 
   .card__time {
     font-size: 1.25rem;
+  }
+
+  /* 数字が並ぶので、上映時間だけはラベルを添えて取り違えないようにする */
+  .card__runtime {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .card__runtime-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
   }
 
   .card__body {

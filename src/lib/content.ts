@@ -144,3 +144,17 @@ export function mapLinks(ev?: {
 export function itemHref(group: string, id: string): string | null {
   return groups[group]?.detail ? `/${group}/${id}/` : null;
 }
+
+/** YouTube / Vimeo のURLを埋め込み用に変換する。対応外ならnull。
+    YouTubeは追跡の少ない nocookie ドメインを使う。 */
+export function embedUrl(url?: string): string | null {
+  if (!url) return null;
+  const youtube =
+    url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/);
+  if (youtube) return `https://www.youtube-nocookie.com/embed/${youtube[1]}`;
+
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+
+  return null;
+}

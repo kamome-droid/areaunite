@@ -49,7 +49,9 @@
         const parsed = new DOMParser().parseFromString(html, "text/html");
         const detail = parsed.querySelector("[data-detail]");
         if (!detail) throw new Error("no detail");
-        body.innerHTML = detail.innerHTML;
+        // 要素ごと差し込む。中身だけにすると .detail に当てた
+        // モーダル用の指定が効かなくなる
+        body.replaceChildren(document.importNode(detail, true));
         body.scrollTop = 0;
         closeButton.focus();
       } catch {
@@ -79,7 +81,7 @@
 
     dialog.addEventListener("close", () => {
       lockScroll(false);
-      body.innerHTML = "";
+      body.replaceChildren();
       // 自分で閉じたときはURLも戻す（戻るボタン経由なら二重に戻さない）
       if (!closingFromHistory && history.state?.modal) history.back();
       closingFromHistory = false;
@@ -137,9 +139,19 @@
     padding-bottom: clamp(28px, 5vw, 48px);
   }
 
-  /* 個別ページの余白はモーダル用に詰め直す */
+  /* 個別ページの余白はモーダル用に組み直す。
+     映像は上端いっぱいに出し、文字まわりだけ余白をとる */
   .modal__body .detail {
-    padding: clamp(28px, 4vw, 44px) clamp(24px, 4vw, 44px) 0;
+    max-width: none;
+    padding: 0;
+  }
+
+  .modal__body .detail__media {
+    border-radius: 0;
+  }
+
+  .modal__body .detail__main {
+    padding: clamp(22px, 4vw, 34px) clamp(22px, 4vw, 40px) 0;
   }
 
   .modal__body .detail__body {

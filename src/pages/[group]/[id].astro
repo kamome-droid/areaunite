@@ -2,13 +2,17 @@
 import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DateText from "../../components/DateText.astro";
+import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
 import { groups, parents } from "../../config/site";
-import { getItems } from "../../lib/content";
+import { getItems, embedUrl } from "../../lib/content";
 
 /**
  * 項目の個別ページ。site.ts の groups で detail: true にした分類だけ作られる。
  * 画面上はモーダルで開かれるが、URLを直接叩けばこのページとして読める。
  * モーダルは [data-detail] の中身だけを取り出して表示する。
+ *
+ * 並びは一覧のカードと揃えて「映像 → 制作者 → タイトル → 日時 → 本文」。
+ * カードから開いたときに上下が入れ替わらないようにするため。
  */
 export async function getStaticPaths() {
   const paths = [];
@@ -25,6 +29,8 @@ export async function getStaticPaths() {
 const { item, def } = Astro.props;
 const { Content } = await render(item);
 const backHref = `${parents[def.parent].href}#${item.id}`;
+const ratio = def.ratio ?? "16 / 9";
+const video = embedUrl(item.data.video);
 ---
 
 <BaseLayout
@@ -33,43 +39,91 @@ const backHref = `${parents[def.parent].href}#${item.id}`;
   image={item.data.image}
 >
   <article class="detail" data-detail>
-    <header class="detail__head">
-      {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
-      <h1 class="detail__title">{item.data.title}</h1>
+    <div class="detail__media" style={`aspect-ratio:${video ? "16 / 9" : ratio}`}>
       {
-        (item.data.date || item.data.time) && (
-          <p class="detail__when num">
-            {item.data.date && <DateText value={item.data.date} />}
-            {item.data.time && <span class="detail__time">{item.data.time}</span>}
+        video ? (
+          <iframe
+            src={video}
+            title={item.data.title}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          />
+        ) : item.data.image ? (
+          <img src={item.data.image} alt="" />
+        ) : (
+          <ImagePlaceholder />
+        )
+      }
+    </div>
+
+    <div class="detail__main">
+      <header class="detail__head">
+        {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
+        <h1 class="detail__title">{item.data.title}</h1>
+        {
+          (item.data.date || item.data.time || item.data.runtime) && (
+            <p class="detail__when num">
+              {item.data.date && <DateText value={item.data.date} />}
+              {item.data.time && <span class="detail__time">{item.data.time}</span>}
+              {item.data.runtime && (
+                <span class="detail__runtime">
+                  <span class="en detail__runtime-label">Runtime</span>{" "}
+                  {item.data.runtime}
+                </span>
+              )}
+            </p>
+          )
+        }
+      </header>
+
+      <div class="detail__body prose">
+        <Content />
+      </div>
+
+      {
+        item.data.gallery.length > 0 && (
+          <ul class="detail__gallery">
+            {item.data.gallery.map((src) => (
+              <li style={`aspect-ratio:${ratio}`}>
+                <img src={src} alt="" loading="lazy" decoding="async" />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      {
+        item.data.link && (
+          <p class="detail__link">
+            <a class="btn btn--ghost" href={item.data.link} target="_blank" rel="noopener noreferrer">
+              {item.data.linkLabel ?? "詳しく見る"}
+            </a>
           </p>
         )
       }
-    </header>
-
-    {
-      item.data.image && (
-        <div class="detail__media" style={`aspect-ratio:${def.ratio ?? "16 / 9"}`}>
-          <img src={item.data.image} alt="" />
-        </div>
-      )
-    }
-
-    <div class="detail__body prose">
-      <Content />
     </div>
-
-    {
-      item.data.link && (
-        <p class="detail__link">
-          <a class="btn btn--ghost" href={item.data.link} target="_blank" rel="noopener noreferrer">
-            {item.data.linkLabel ?? "詳しく見る"}
-          </a>
-        </p>
-      )
-    }
   </article>
 
   <p class="detail__back">
     <a href={backHref}>← {def.jp}の一覧へ</a>
   </p>
 </BaseLayout>
+
+<style>
+  .detail__back {
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding: clamp(36px, 6vw, 64px) var(--page-pad) var(--section-gap);
+  }
+
+  .detail__back a {
+    color: var(--text-muted);
+    transition: color 0.16s ease;
+  }
+
+  .detail__back a:hover {
+    color: var(--brand);
+  }
+</style>
