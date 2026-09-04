@@ -75,7 +75,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         <p class="about">{aboutLead}</p>
         {
           ev?.prVideo && (
-            <div class="about__video">
+            <div class="about__video" slot="after">
               <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />
             </div>
           )
@@ -208,7 +208,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   .about__video {
-    margin-top: clamp(24px, 4vw, 36px);
+    margin-top: clamp(28px, 4vw, 40px);
   }
 
   /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約 */
