@@ -3,9 +3,12 @@ import Timetable from "./Timetable.astro";
 import type { ProgramBlock } from "../lib/content";
 
 /**
- * 開催日の切り替えタブ。選んだ日のプログラムだけを出す。
- * 2日以上あるイベントで、来場者が「自分が行く日」だけを見られるようにする。
- * JSが動かない環境では全日が縦に並ぶ（内容は欠けない）。
+ * 開催日ごとのプログラム。
+ *
+ * 日はすべて縦に並べ、切り替えは行わない。上のバーは「いまどの日を
+ * 読んでいるか」を示す目次で、押すとその日へスクロールする。
+ * スクロール量に応じて勝手に表示が入れ替わると、自分で動かしていない
+ * のに画面が動くことになり落ち着かないため、その仕組みは持たせていない。
  */
 interface Props {
   days: {
@@ -16,329 +19,169 @@ interface Props {
 const { days } = Astro.props;
 ---
 
-<div class="daytabs">
-  <div class="wrap">
-    <div class="daytabs__list" role="tablist" aria-label="開催日">
-      {
-        days.map(({ day }, i) => (
-          <button
-            type="button"
-            class:list={["daytab", i % 2 === 0 ? "daytab--a" : "daytab--b"]}
-            role="tab"
-            id={`tab-${day.id}`}
-            aria-controls={`panel-${day.id}`}
-            aria-selected={i === 0 ? "true" : "false"}
-            data-day={day.id}
-          >
-            <span class="en daytab__label">{day.label}</span>
-            {day.note && <span class="num daytab__date">{day.note}</span>}
-          </button>
-        ))
-      }
-    </div>
+<nav class="dayindex" aria-label="開催日">
+  <div class="wrap dayindex__inner">
+    {
+      days.map(({ day }) => (
+        <a class="dayindex__item" href={`#${day.id}`} data-day={day.id}>
+          <span class="en dayindex__label">{day.label}</span>
+          {day.note && <span class="num dayindex__date">{day.note}</span>}
+        </a>
+      ))
+    }
   </div>
-</div>
+</nav>
 
 {
-  days.map(({ day, blocks }, i) => {
-    const prev = days[i - 1]?.day;
-    const next = days[i + 1]?.day;
-    return (
-      <section
-        class:list={["daypanel", i % 2 === 0 ? "daypanel--a" : "daypanel--b"]}
-        id={`panel-${day.id}`}
-        role="tabpanel"
-        aria-labelledby={`tab-${day.id}`}
-        data-day={day.id}
-      >
-        <div class="wrap">
-          <h2 class="visually-hidden">
-            {day.label} {day.note}
+  days.map(({ day, blocks }, i) => (
+    <section
+      class:list={["daypanel", i % 2 === 0 ? "daypanel--a" : "daypanel--b"]}
+      id={day.id}
+      data-day={day.id}
+      aria-labelledby={`head-${day.id}`}
+    >
+      <div class="wrap">
+        <header class="daypanel__head">
+          <h2 class="en daypanel__label" id={`head-${day.id}`}>
+            {day.label}
           </h2>
+          {day.note && <p class="num daypanel__date">{day.note}</p>}
+        </header>
 
-          {/* 端に置いた検知用の目印。見た目は持たない */}
-          {prev && <div class="daysentinel" data-sentinel="prev" aria-hidden="true" />}
-
-          {blocks.length > 0 ? (
-            <Timetable blocks={blocks} />
-          ) : (
-            <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
-          )}
-
-          {next && <div class="daysentinel" data-sentinel="next" aria-hidden="true" />}
-        </div>
-      </section>
-    );
-  })
+        {blocks.length > 0 ? (
+          <Timetable blocks={blocks} />
+        ) : (
+          <p class="daypanel__empty muted">準備中です。決まりしだい公開します。</p>
+        )}
+      </div>
+    </section>
+  ))
 }
 
 <script>
-  const tabs = Array.from(
-    document.querySelectorAll<HTMLButtonElement>(".daytab")
+  const bar = document.querySelector<HTMLElement>(".dayindex");
+  const items = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>(".dayindex__item")
   );
   const panels = Array.from(
     document.querySelectorAll<HTMLElement>(".daypanel")
   );
 
-  if (tabs.length > 0) {
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+  if (bar && items.length > 0) {
+    const header = document.querySelector<HTMLElement>(".hd");
 
-    const select = (id: string) => {
-      tabs.forEach((t) =>
-        t.setAttribute("aria-selected", String(t.dataset.day === id))
-      );
-      panels.forEach((p) => {
-        p.hidden = p.dataset.day !== id;
-      });
-    };
-
-    /** ヘッダーとタブが重なっている高さ。切り替え後はこの真下に頭出しする */
+    /** ヘッダーと目次バーが重なっている高さ。アンカーの着地位置に使う */
     const stickyHeight = () =>
-      (document.querySelector<HTMLElement>(".hd")?.offsetHeight ?? 0) +
-      (document.querySelector<HTMLElement>(".daytabs")?.offsetHeight ?? 0);
+      (header?.offsetHeight ?? 0) + bar.offsetHeight;
 
-    /** 目印が「一度画面から出てから戻ってきた」ときだけ反応させるための状態。
-        切り替え直後に反対側へ弾き返されるのを防ぐ */
-    const armed = new WeakMap<Element, boolean>();
-    const disarmAll = () =>
-      document
-        .querySelectorAll("[data-sentinel]")
-        .forEach((el) => armed.set(el, false));
-
-    /** 直前に切り替えた時刻。勢い余った小さな逆スクロールで戻されるのを防ぐ */
-    let lastSwitchAt = 0;
-
-    /** align: "top" はその日の頭出し、"bottom" は末尾に着地させる。
-        上へ戻るときに末尾へ着けることで、前の日から読み続けていたように見せる。 */
-    const goTo = (
-      id: string,
-      { smooth = false, align = "top" }: { smooth?: boolean; align?: "top" | "bottom" } = {}
-    ) => {
-      select(id);
-      disarmAll();
-
-      const panel = panels.find((p) => p.dataset.day === id);
-      if (panel) {
-        const top =
-          align === "bottom"
-            ? panel.offsetTop + panel.offsetHeight - window.innerHeight
-            : panel.offsetTop - stickyHeight();
-
-        window.scrollTo({
-          top: Math.max(0, top),
-          behavior: smooth && !reduceMotion ? "smooth" : "instant",
-        });
-
-        // 頭出しした直後でも「上へ戻る」だけは効かせたいので、
-        // 上端の目印だけは構えた状態にしておく
-        if (align === "top") {
-          const back = panel.querySelector('[data-sentinel="prev"]');
-          if (back) armed.set(back, true);
-        }
-      }
-      history.replaceState(null, "", `#${id}`);
-      // 自分で動かしたぶんを向きの判定に混ぜない
-      lastY = window.scrollY;
-      lastSwitchAt = performance.now();
-    };
-
-    // ---- タブ ----
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => goTo(tab.dataset.day!, { smooth: true }));
-    });
-
-    document
-      .querySelector(".daytabs__list")
-      ?.addEventListener("keydown", (e) => {
-        const key = (e as KeyboardEvent).key;
-        if (key !== "ArrowLeft" && key !== "ArrowRight") return;
-        const current = tabs.findIndex(
-          (t) => t.getAttribute("aria-selected") === "true"
-        );
-        const next =
-          (current + (key === "ArrowRight" ? 1 : -1) + tabs.length) %
-          tabs.length;
-        goTo(tabs[next].dataset.day!, { smooth: true });
-        tabs[next].focus();
-      });
-
-    // ---- スクロールでの切り替え ----
-    // 端に置いた目印に到達したかを毎フレーム位置で見る。
-    // 交差監視だと、一気にスクロールしたときに通過を取りこぼす。
-    let lastY = window.scrollY;
-    let direction: "up" | "down" = "down";
-    let ticking = false;
-
-    const liveSentinels = () =>
-      Array.from(
-        document.querySelectorAll<HTMLElement>(
-          ".daypanel:not([hidden]) [data-sentinel]"
-        )
+    const syncOffset = () =>
+      document.documentElement.style.setProperty(
+        "--day-offset",
+        `${stickyHeight()}px`
       );
 
-    const check = () => {
-      ticking = false;
-
-      for (const el of liveSentinels()) {
-        const kind = el.dataset.sentinel;
-        const rect = el.getBoundingClientRect();
-        // next は下端の目印。画面に入った瞬間だと最後の数行を読む前に
-        // 送られてしまうので、画面の3/4まで上がってきたら到達とみなす。
-        // prev は上端の目印で、画面上端に戻ってきたら到達。
-        const reached =
-          kind === "next"
-            ? rect.top <= window.innerHeight * 0.75
-            : rect.bottom >= 0;
-
-        // 届いていないあいだに構えておく（＝一度離れないと再発火しない）
-        if (!reached) {
-          armed.set(el, true);
-          continue;
-        }
-        if (!armed.get(el)) continue;
-        // 切り替えた直後の跳ね返りを避ける
-        if (performance.now() - lastSwitchAt < 500) continue;
-
-        // 読み進めている向きと一致するときだけ切り替える
-        if (kind === "next" && direction !== "down") continue;
-        if (kind === "prev" && direction !== "up") continue;
-
-        const panel = el.closest<HTMLElement>(".daypanel");
-        const index = panels.indexOf(panel!);
-        const target = panels[kind === "next" ? index + 1 : index - 1];
-        if (!target) continue;
-
-        // 下へ送るときは次の日の頭、上へ戻すときは前の日の末尾へ
-        goTo(target.dataset.day!, { align: kind === "next" ? "top" : "bottom" });
-        return;
+    /** いま読んでいる日を目次に反映する */
+    const markCurrent = () => {
+      const line = stickyHeight() + 8;
+      let current = panels[0];
+      for (const panel of panels) {
+        if (panel.getBoundingClientRect().top - line <= 0) current = panel;
       }
+      items.forEach((item) => {
+        if (item.dataset.day === current?.dataset.day) {
+          item.setAttribute("aria-current", "location");
+        } else {
+          item.removeAttribute("aria-current");
+        }
+      });
     };
 
-    window.addEventListener(
-      "scroll",
-      () => {
-        const y = window.scrollY;
-        if (y > lastY) direction = "down";
-        else if (y < lastY) direction = "up";
-        lastY = y;
+    let ticking = false;
+    const request = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        markCurrent();
+      });
+    };
 
-        if (!ticking) {
-          ticking = true;
-          requestAnimationFrame(check);
-        }
-      },
-      { passive: true }
-    );
-
+    syncOffset();
+    markCurrent();
+    window.addEventListener("scroll", request, { passive: true });
     window.addEventListener("resize", () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(check);
-      }
-    });
-
-    // ---- 初期表示 ----
-    const fromHash = () => {
-      const id = location.hash.slice(1);
-      return tabs.some((t) => t.dataset.day === id) ? id : null;
-    };
-
-    const initial = fromHash();
-    select(initial ?? tabs[0].dataset.day!);
-    disarmAll();
-    requestAnimationFrame(check);
-
-    window.addEventListener("hashchange", () => {
-      const id = fromHash();
-      if (id) goTo(id);
+      syncOffset();
+      request();
     });
   }
 </script>
 
 <style>
-  .daytabs {
+  /* ---- 目次バー ---- */
+  .dayindex {
     position: sticky;
     top: var(--header-h);
     z-index: 20;
     background: var(--bg);
+    border-bottom: 1px solid var(--border);
   }
 
-  .daytabs__list {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(150px, 250px);
-    justify-content: start;
+  .dayindex__inner {
+    display: flex;
+    gap: clamp(18px, 3vw, 40px);
     overflow-x: auto;
     scrollbar-width: none;
   }
 
-  .daytabs__list::-webkit-scrollbar {
+  .dayindex__inner::-webkit-scrollbar {
     display: none;
   }
 
-  .daytab {
+  .dayindex__item {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 15px 20px 16px;
-    margin: 0;
-    border: 0;
-    /* 選択中の印。未選択のときも高さを確保して位置をずらさない */
-    border-top: 3px solid transparent;
-    border-radius: 8px 8px 0 0;
-    background: transparent;
+    align-items: baseline;
+    gap: 10px;
+    padding-block: 14px;
+    border-bottom: 2px solid transparent;
     color: var(--text-muted);
-    text-align: left;
-    cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease,
-      background-color 0.2s ease;
+    white-space: nowrap;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .daytab__label {
+  .dayindex__item:hover {
+    color: var(--text);
+  }
+
+  .dayindex__item[aria-current] {
+    color: var(--text);
+    border-bottom-color: var(--brand);
+  }
+
+  .dayindex__label {
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    font-size: 1.15rem;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     line-height: 1;
   }
 
-  .daytab__date {
-    font-size: 0.85rem;
+  .dayindex__date {
+    font-size: 0.8rem;
     letter-spacing: 0.1em;
     line-height: 1;
   }
 
-  .daytab:hover {
-    color: var(--text);
-    background: color-mix(in srgb, var(--text) 5%, transparent);
-  }
-
-  /* 選択中のタブは、その日のパネルと同じ面で塗って地続きに見せる。
-     どの日を見ているかが、タブと本文の両方から分かる。 */
-  .daytab[aria-selected="true"] {
-    color: var(--text);
-    border-top-color: var(--brand);
-  }
-
-  .daytab--a[aria-selected="true"] {
-    background: var(--surface);
-  }
-
-  .daytab--b[aria-selected="true"] {
-    background: var(--surface-2);
-  }
-
-  .daytab[aria-selected="true"] .daytab__date {
+  .dayindex__item[aria-current] .dayindex__date {
     color: var(--brand);
   }
 
+  /* ---- 各日 ---- */
   .daypanel {
-    padding-block: clamp(40px, 6vw, 72px);
+    padding-block: clamp(44px, 7vw, 80px);
+    /* アンカーで飛んだとき、見出しがバーの下に隠れないようにする */
+    scroll-margin-top: var(--day-offset, 140px);
   }
 
-  /* 日ごとに面を変える。切り替わったことが本文の地の色でも分かる */
   .daypanel--a {
     background: var(--surface);
   }
@@ -347,31 +190,29 @@ const { days } = Astro.props;
     background: var(--surface-2);
   }
 
-  /* 切り替わった瞬間を捉えられるよう、ひと呼吸だけ動かす */
-  @media (prefers-reduced-motion: no-preference) {
-    .daypanel:not([hidden]) {
-      animation: dayin 0.3s ease both;
-    }
+  .daypanel__head {
+    margin-bottom: clamp(26px, 4vw, 40px);
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
   }
 
-  @keyframes dayin {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+  .daypanel__label {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+
+  .daypanel__date {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    letter-spacing: 0.16em;
+    color: var(--brand);
+    line-height: 1;
   }
 
   .daypanel__empty {
     padding-block: 40px;
     text-align: center;
-  }
-
-  /* 切り替えの検知点。高さを持たせないので表示には影響しない */
-  .daysentinel {
-    height: 0;
   }
 </style>
