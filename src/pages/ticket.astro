@@ -17,30 +17,32 @@ const ev = event?.data;
   />
 
   <section class="page">
-    <div class="wrap wrap--narrow">
-      {ev && ev.tickets.length > 0 && <PriceTable rows={ev.tickets} />}
+    <div class="wrap">
+      <div class="measure">
+            {ev && ev.tickets.length > 0 && <PriceTable rows={ev.tickets} />}
 
-      {
-        ev?.ticketUrl && (
-          <p class="cta">
-            <a class="btn" href={ev.ticketUrl} target="_blank" rel="noopener noreferrer">
-              {ev.ticketUrlLabel ?? "チケットを購入する"}
-            </a>
-          </p>
-        )
-      }
+            {
+              ev?.ticketUrl && (
+                <p class="cta">
+                  <a class="btn" href={ev.ticketUrl} target="_blank" rel="noopener noreferrer">
+                    {ev.ticketUrlLabel ?? "チケットを購入する"}
+                  </a>
+                </p>
+              )
+            }
 
-      {
-        ev && ev.ticketNotes.length > 0 && (
-          <div class="notes-wrap">
-            <NoteList title="Notes" items={ev.ticketNotes} />
-          </div>
-        )
-      }
+            {
+              ev && ev.ticketNotes.length > 0 && (
+                <div class="notes-wrap">
+                  <NoteList title="Notes" items={ev.ticketNotes} />
+                </div>
+              )
+            }
 
-      <p class="support muted">
-        応援チケットの販売もしています。AREA UNITE 運営のためにご協力をお願いいたします。
-      </p>
+            <p class="support muted">
+              応援チケットの販売もしています。AREA UNITE 運営のためにご協力をお願いいたします。
+            </p>
+      </div>
     </div>
   </section>
 </BaseLayout>

@@ -13,6 +13,7 @@ interface Props {
   moreLabel?: string;
   /** 面の色を一段上げる */
   surface?: boolean;
+  /** 中身の行長を抑える。左端は他のセクションと揃ったまま */
   narrow?: boolean;
 }
 
@@ -29,7 +30,7 @@ const {
 ---
 
 <section class:list={["sec", surface && "sec--surface"]} id={id}>
-  <div class:list={["wrap", narrow && "wrap--narrow"]}>
+  <div class="wrap">
     <div class="sec__head">
       <div>
         <h2 class="en sec__label">{label}</h2>
@@ -37,7 +38,7 @@ const {
       </div>
     </div>
     {lead && <p class="sec__lead muted">{lead}</p>}
-    <div class="sec__body">
+    <div class:list={["sec__body", narrow && "measure"]}>
       <slot />
     </div>
     {

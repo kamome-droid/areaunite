@@ -83,8 +83,17 @@ ol {
   padding-inline: var(--page-pad);
 }
 
-.wrap--narrow {
+/* 本文・表・フォームの行長を抑える箱。必ず .wrap の内側で使う。
+   幅を狭めても左端はページのマージンに揃うので、
+   セクションごとに文字の始まりがずれない。 */
+.measure {
   max-width: 820px;
+  margin-inline: 0 auto;
+}
+
+/* 長文だけはもう少し狭く（和文で1行 34字前後） */
+.measure--text {
+  max-width: 34em;
 }
 
 .stack > * + * {
