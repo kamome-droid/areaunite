@@ -28,7 +28,8 @@ const About = event ? (await render(event)).Content : null;
 
 <style>
   .page {
-    padding-block: clamp(40px, 6vw, 72px) 0;
+    /* 下はフッターとの間。セクションの下余白と同じだけ空ける */
+    padding-block: clamp(40px, 6vw, 72px) var(--section-gap);
   }
 
   .tagline {

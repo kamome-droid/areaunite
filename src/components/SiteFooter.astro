@@ -35,7 +35,6 @@ const year = new Date().getFullYear();
             <li>
               <a class="ft__parent" href={item.href}>
                 <span class="en">{item.label}</span>
-                <span class="ft__jp">{item.jp}</span>
               </a>
               {item.children.length > 0 && (
                 <ul class="ft__children">
@@ -108,9 +107,7 @@ const year = new Date().getFullYear();
   }
 
   .ft__parent {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+    display: block;
   }
 
   .ft__parent .en {
@@ -124,14 +121,8 @@ const year = new Date().getFullYear();
     color: var(--brand);
   }
 
-  .ft__jp {
-    font-size: 0.72rem;
-    line-height: 1.5;
-    color: var(--text-muted);
-  }
-
   .ft__children {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   .ft__children a {
