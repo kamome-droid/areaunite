@@ -53,6 +53,8 @@ export interface CollectionDef {
   /** 一覧でグループ分けに使う項目 */
   groupBy?: string;
   intro?: string;
+  /** 右に出すプレビューの行き先。編集中の内容が実際どう出るかを見せる */
+  preview?: (id: string, data: Record<string, any>) => string;
 }
 
 /* ---------------------------------------------------------
@@ -78,8 +80,8 @@ export const collections: Record<string, CollectionDef> = {
     labelOne: "トップページ",
     hasBody: true,
     bodyLabel: "ABOUT の本文",
-    intro:
-      "KV・キャッチコピー・ABOUT・チケット・ゲスト・協賛が入ります。ABOUTの本文は、トップでは冒頭だけ出て、続きは ABOUT ページで読めます。",
+    intro: "KV・キャッチコピー・ゲスト・協賛が入ります。",
+    preview: () => "/",
     fields: [
       { name: "edition", label: "開催回の名前", type: "text", placeholder: "AREA UNITE 2026" },
       {
@@ -121,29 +123,71 @@ export const collections: Record<string, CollectionDef> = {
         type: "text",
         help: "書くとKVの下に告知帯が出ます。ふだんは空のまま",
       },
-      {
-        name: "prVideo",
-        label: "PRムービー",
-        type: "text",
-        placeholder: "https://youtu.be/xxxxxxx",
-        help: "YouTube / Vimeo のURL。ABOUTに埋め込まれます",
-      },
-
-      { name: "tickets", label: "チケット料金", type: "rows", columns: [
-        { name: "label", label: "券種", width: "2fr" },
-        { name: "price", label: "料金", width: "1fr" },
-        { name: "note", label: "補足", width: "2fr" },
-      ] },
-      { name: "ticketUrl", label: "チケット購入先URL", type: "text", help: "書くとチケットページに購入ボタンが出ます" },
-      { name: "ticketUrlLabel", label: "購入ボタンの文字", type: "text", placeholder: "チケットを購入する" },
-      { name: "ticketNotes", label: "チケットの注意事項", type: "lines", help: "1行に1件" },
-
       { name: "guestsLabel", label: "ゲスト欄の見出し", type: "text", placeholder: "来場ライダー" },
       { name: "guests", label: "ゲストの名前", type: "lines", help: "1行に1名" },
       { name: "supportersLabel", label: "後援欄の見出し", type: "text", placeholder: "後援" },
       { name: "supporters", label: "後援・協力団体", type: "lines", help: "1行に1件" },
 
       { name: "current", label: "この開催回をサイトに出す", type: "boolean" },
+    ],
+  },
+
+  /* ---- ABOUT ---- */
+  about: {
+    ...eventBase,
+    key: "about",
+    label: "アバウト",
+    labelOne: "アバウト",
+    hasBody: true,
+    bodyLabel: "続きの文",
+    intro:
+      "冒頭の文はトップページのABOUTにも出ます。続きの文はアバウトページだけに出ます。",
+    preview: () => "/about/",
+    fields: [
+      {
+        name: "aboutLead",
+        label: "冒頭の文",
+        type: "textarea",
+        help: "トップページのABOUTに出るのはここまでです",
+      },
+      {
+        name: "prVideo",
+        label: "PRムービー",
+        type: "text",
+        placeholder: "https://youtu.be/xxxxxxx",
+        help: "YouTube / Vimeo のURL。トップページとアバウトページに埋め込まれます",
+      },
+    ],
+  },
+
+  /* ---- チケット ---- */
+  ticket: {
+    ...eventBase,
+    key: "ticket",
+    label: "チケット",
+    labelOne: "チケット",
+    hasBody: true,
+    intro: "料金と注意事項です。KV下の案内ボタンはトップページで編集します。",
+    preview: () => "/ticket/",
+    fields: [
+      {
+        name: "tickets",
+        label: "チケット料金",
+        type: "rows",
+        columns: [
+          { name: "label", label: "券種", width: "2fr" },
+          { name: "price", label: "料金", width: "1fr" },
+          { name: "note", label: "補足", width: "2fr" },
+        ],
+      },
+      {
+        name: "ticketUrl",
+        label: "チケット購入先URL",
+        type: "text",
+        help: "書くとチケットページに購入ボタンが出ます",
+      },
+      { name: "ticketUrlLabel", label: "購入ボタンの文字", type: "text", placeholder: "チケットを購入する" },
+      { name: "ticketNotes", label: "注意事項", type: "lines", help: "1行に1件" },
     ],
   },
 
@@ -156,6 +200,7 @@ export const collections: Record<string, CollectionDef> = {
     hasBody: true,
     intro:
       "開催日ごとのプログラムです。上映作品や出演者は「コンテンツ」で登録した項目を差し込むので、ここに書き写す必要はありません。",
+    preview: () => "/schedule/",
     fields: [{ name: "schedule", label: "開催日", type: "schedule" }],
   },
 
@@ -167,6 +212,7 @@ export const collections: Record<string, CollectionDef> = {
     labelOne: "アクセス",
     hasBody: true,
     intro: "会場の場所と行き方です。宿泊施設は「コンテンツ」から登録します。",
+    preview: () => "/access/",
     fields: [
       { name: "venue", label: "会場名", type: "text", placeholder: "白馬五竜 HAKUBA GORYU" },
       { name: "address", label: "住所", type: "text" },
@@ -196,6 +242,8 @@ export const collections: Record<string, CollectionDef> = {
     slug: { mode: "field", field: "title" },
     intro:
       "上映作品・出演者・出店・宿泊です。日と時刻を入れると、スケジュールにも自動で並びます。",
+    preview: (id, data) =>
+      data.group === "stay" ? "/access/#stay" : `/contents/#${id}`,
     fields: [
       { name: "group", label: "分類", type: "select", options: [] }, // 起動時に site.ts から埋める
       { name: "title", label: "名前・作品名", type: "text" },
@@ -231,6 +279,7 @@ export const collections: Record<string, CollectionDef> = {
     order: "order",
     slug: { mode: "field", field: "name" },
     intro: "ロゴは黒背景に合わせて白抜きで表示されます。ロゴが無いときは社名の文字で出ます。",
+    preview: () => "/#sponsors",
     fields: [
       { name: "name", label: "社名・団体名", type: "text" },
       { name: "logo", label: "ロゴ画像", type: "image" },
@@ -251,4 +300,11 @@ export const collections: Record<string, CollectionDef> = {
 };
 
 /** サイドメニューに出す順番 */
-export const menu = ["top", "schedule", "items", "access"] as const;
+export const menu = [
+  "top",
+  "about",
+  "schedule",
+  "items",
+  "ticket",
+  "access",
+] as const;

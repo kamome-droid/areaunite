@@ -13,11 +13,6 @@ import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDa
 
 const event = await getCurrentEvent();
 const ev = event?.data;
-/** トップは冒頭だけ見せる。本文まるごとは /about/ に置く */
-const aboutLead = event
-  ? event.body.split(/\n\s*\n/)[0].replace(/\*\*/g, "").trim()
-  : "";
-
 /** 日付と「何時から何時まで」。時間帯はスケジュールから組み立てる */
 const days = ev
   ? await Promise.all(
@@ -63,7 +58,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   {
-    aboutLead && (
+    ev?.aboutLead && (
       <Section
         id="about"
         label="About"
@@ -73,7 +68,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref="/about/"
         moreLabel="もっと見る"
       >
-        <p class="about">{aboutLead}</p>
+        <p class="about">{ev.aboutLead}</p>
         {
           ev?.prVideo && (
             <div class="about__video" slot="after">

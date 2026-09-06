@@ -18,13 +18,10 @@ const About = event ? (await render(event)).Content : null;
     <div class="wrap">
       <div class="measure">
         <p class="tagline">{site.tagline}</p>
-        {
-          About && (
-            <div class="prose body">
-              <About />
-            </div>
-          )
-        }
+        <div class="prose body">
+          {ev?.aboutLead && <p>{ev.aboutLead}</p>}
+          {About && <About />}
+        </div>
         {
           ev?.prVideo && (
             <div class="video">

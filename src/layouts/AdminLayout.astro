@@ -10,8 +10,10 @@ interface Props {
   current?: string;
   /** 画面の説明。何を編集する場所か1行で伝える */
   intro?: string;
+  /** プレビューを横に並べる画面は幅いっぱいを使う */
+  wide?: boolean;
 }
-const { title, current, intro } = Astro.props;
+const { title, current, intro, wide = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -49,7 +51,7 @@ const { title, current, intro } = Astro.props;
         </div>
       </aside>
 
-      <main class="main">
+      <main class:list={["main", wide && "main--wide"]}>
         <header class="head">
           <h1>{title}</h1>
           {intro && <p class="head__intro">{intro}</p>}
@@ -177,6 +179,10 @@ const { title, current, intro } = Astro.props;
       .main {
         padding: 28px clamp(20px, 4vw, 44px) 80px;
         max-width: 1000px;
+      }
+
+      .main--wide {
+        max-width: none;
       }
 
       .head {

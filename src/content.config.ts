@@ -129,7 +129,9 @@ const event = defineCollection({
     /** 開催後に出すお礼メッセージ（入れるとKVの下に告知帯が出る） */
     afterMessage: z.string().optional(),
 
-    /* ---- 紹介 ---- */
+    /* ---- 紹介（ABOUT） ---- */
+    /** トップページのABOUTに出る冒頭の文。ABOUTページでは本文の先頭に置かれる */
+    aboutLead: z.string().default(""),
     /** PRムービー（YouTube / Vimeo）。ABOUTに埋め込まれる */
     prVideo: z.string().optional(),
 
