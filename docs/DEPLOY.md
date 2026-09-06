@@ -35,12 +35,11 @@ Vercel の Settings → Environment Variables に入れる（Production と Prev
 
 ## 4. 見せる
 
-デプロイのURLを開くと、ブラウザがパスワードを聞く。
+デプロイのURLを開くとパスワードの入力画面が出る。入れるのは `SITE_PASSWORD` の値だけ。
+一度入れると30日は聞かれない。
 
-- ユーザー名 … `areaunite`（`SITE_USER` で変えられる）
-- パスワード … `SITE_PASSWORD` に入れた値
-
-管理画面は `/admin/` で、そこからさらに `ADMIN_PASSWORD` を聞かれる。
+管理画面は `/admin/` で、そこで `ADMIN_PASSWORD` を聞かれる。
+2つを同じ値にしておけば、覚えるのは1つで済む。
 
 ## 5. 一般公開するとき
 

@@ -1,0 +1,103 @@
+---
+export const prerender = false;
+
+/** 公開前の入口。パスワードだけ聞く（ユーザー名は無い） */
+const to = Astro.url.searchParams.get("to") ?? "/";
+const failed = Astro.url.searchParams.has("error");
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>AREA UNITE</title>
+  </head>
+  <body>
+    <form class="box" method="post" action="/api/gate">
+      <h1>AREA UNITE<span>公開前のページです</span></h1>
+      <input type="hidden" name="to" value={to} />
+      <label>
+        パスワード
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          autofocus
+          required
+        />
+      </label>
+      <button type="submit">見る</button>
+      {failed && <p class="error">パスワードが違います</p>}
+    </form>
+
+    <style>
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        background: #0a0a0c;
+        color: #f2f1ee;
+        font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+      }
+
+      .box {
+        width: min(320px, calc(100vw - 40px));
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        letter-spacing: 0.06em;
+      }
+
+      h1 span {
+        display: block;
+        margin-top: 6px;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.14em;
+        color: #a0a0a6;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13px;
+        color: #a0a0a6;
+      }
+
+      input {
+        padding: 11px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.26);
+        border-radius: 8px;
+        background: #1a1a1f;
+        color: #f2f1ee;
+        font: inherit;
+      }
+
+      button {
+        min-height: 42px;
+        border: 0;
+        border-radius: 8px;
+        background: #e4b95f;
+        color: #101010;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .error {
+        margin: 0;
+        color: #ff9e97;
+        font-size: 13px;
+      }
+    </style>
+  </body>
+</html>
