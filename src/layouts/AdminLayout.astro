@@ -1,5 +1,6 @@
 ---
-import { collections, menu } from "../lib/admin/schema";
+import { collections, menu, tools } from "../lib/admin/schema";
+import "../styles/admin.css";
 
 /**
  * 管理画面の外枠。公開ページとは別の見た目にしている。
@@ -9,11 +10,10 @@ interface Props {
   title: string;
   current?: string;
   /** 画面の説明。何を編集する場所か1行で伝える */
-  intro?: string;
   /** プレビューを横に並べる画面は幅いっぱいを使う */
   wide?: boolean;
 }
-const { title, current, intro, wide = false } = Astro.props;
+const { title, current, wide = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -41,6 +41,13 @@ const { title, current, intro, wide = false } = Astro.props;
               </a>
             ))
           }
+          {
+            tools.map((t) => (
+              <a href={t.href} aria-current={current === t.key ? "page" : undefined}>
+                {t.label}
+              </a>
+            ))
+          }
         </nav>
 
         <div class="side__foot">
@@ -54,10 +61,39 @@ const { title, current, intro, wide = false } = Astro.props;
       <main class:list={["main", wide && "main--wide"]}>
         <header class="head">
           <h1>{title}</h1>
-          {intro && <p class="head__intro">{intro}</p>}
         </header>
         <slot />
       </main>
+
+    <dialog id="ask" class="ask">
+      <p id="askText" class="ask__text" />
+      <div class="ask__btns">
+        <button type="button" class="btn btn--ghost" data-ask="no">やめる</button>
+        <button type="button" class="btn btn--danger" data-ask="yes">削除する</button>
+      </div>
+    </dialog>
+
+    <script is:inline>
+      /** 管理画面共通の確認ダイアログ。ブラウザの confirm は使わない */
+      window.adminConfirm = (text, label) => {
+        const box = document.getElementById("ask");
+        const yes = box.querySelector('[data-ask="yes"]');
+        document.getElementById("askText").textContent = text;
+        yes.textContent = label ?? "削除する";
+        return new Promise((done) => {
+          const close = (ok) => {
+            box.removeEventListener("close", onClose);
+            box.close();
+            done(ok);
+          };
+          const onClose = () => done(false);
+          box.addEventListener("close", onClose, { once: true });
+          yes.onclick = () => close(true);
+          box.querySelector('[data-ask="no"]').onclick = () => close(false);
+          box.showModal();
+        });
+      };
+    </script>
     </div>
 
     <style is:global>
@@ -138,6 +174,7 @@ const { title, current, intro, wide = false } = Astro.props;
         text-decoration: none;
       }
 
+
       .side__nav a:hover {
         background: rgb(255 255 255 / 0.08);
         color: #fff;
@@ -195,12 +232,6 @@ const { title, current, intro, wide = false } = Astro.props;
         letter-spacing: 0.02em;
       }
 
-      .head__intro {
-        margin: 8px 0 0;
-        max-width: 60ch;
-        color: var(--a-muted);
-        font-size: 13.5px;
-      }
 
       /* ---- 共通部品 ---- */
       .panel {
@@ -229,6 +260,12 @@ const { title, current, intro, wide = false } = Astro.props;
         font-size: 14px;
         text-decoration: none;
         cursor: pointer;
+      }
+
+      .btn--small {
+        min-height: 30px;
+        padding: 0 12px;
+        font-size: 13px;
       }
 
       .btn--ghost {

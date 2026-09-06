@@ -1,11 +1,9 @@
 ---
 group: movies
-title: "白松さぶにゅま"
-subtitle: ""
+title: 白松さぶにゅま
 time: "19:10"
 day: day1
-# 仮の値。実際の上映時間に差し替える
-runtime: "8 min"
+runtime: 8 min
 order: 60
 featured: false
 ---

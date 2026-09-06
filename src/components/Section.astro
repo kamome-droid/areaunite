@@ -36,6 +36,8 @@ const {
         <h2 class="en sec__label">{label}</h2>
         {jp && <p class="sec__jp">{jp}</p>}
       </div>
+      {/* 見出しの右端。「画像で保存」など */}
+      <slot name="head" />
     </div>
     {lead && <p class="sec__lead muted">{lead}</p>}
     <div class:list={["sec__body", narrow && "measure"]}>

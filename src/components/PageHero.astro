@@ -18,8 +18,14 @@ const { label, jp, lead, image } = Astro.props;
     )
   }
   <div class="wrap phero__inner">
-    <h1 class="en phero__label">{label}</h1>
-    {jp && <p class="phero__jp">{jp}</p>}
+    <div class="headshare">
+      <div>
+        <h1 class="en phero__label">{label}</h1>
+        {jp && <p class="phero__jp">{jp}</p>}
+      </div>
+      {/* 見出しの右端。「画像で保存」など */}
+      <slot />
+    </div>
     {lead && <p class="phero__lead muted">{lead}</p>}
   </div>
 </section>

@@ -61,36 +61,32 @@ const ticketRow = z.object({
   note: z.string().optional(),
 });
 
-/** 1日のプログラムは「部」のかたまりの並び。
-    items に直接書くか、include で items コレクションの分類を丸ごと差し込む。
-    include を使うと、上映作品などを一覧ページと二重に持たなくて済む。 */
-const programBlock = z.object({
-  /** 「第2部 ／ ムービー」など。省略すると見出しなしで行だけ並ぶ */
-  part: z.string().optional(),
-  /** items コレクションの group キー。その日の項目が時刻順に入る。
-      配列で複数の分類をまとめて差し込むこともできる（第1部にトークとライブ、など）。
-      名前の書き方は分類ごとの scheduleFormat で決まる */
-  include: z.union([z.string(), z.array(z.string())]).optional(),
-  /** 直接書く行 */
-  items: z.array(timeSlot).default([]),
+/** 区切りの見出し。「第2部 ／ ムービー」など。
+    startsAt から次の見出しまでが1つの「部」になる。
+    コンテンツは時刻順に自動で並ぶので、決めるのは見出しを差し込む位置だけ。 */
+const schedulePart = z.object({
+  label: z.string(),
+  /** この見出しが始まる時刻。"17:30" のかたち */
+  startsAt: z.string().optional(),
 });
 
 /** スケジュールは日ごとに分ける（DAY 1 / DAY 2 …）。
     ここに1件足すと、スケジュールページに日が1つ増える。 */
 const scheduleDay = z.object({
-  /** アンカーに使うID。"daytime" など */
+  /** アンカーに使うID。"day1" など */
   id: z.string(),
-  /** 英字見出し */
+  /** 見出し。DAY 1 / DAY 2 のように並び順から自動で決まる */
   label: z.string(),
-  /** 日本語見出し（ナビに出るのはこちら） */
-  jp: z.string(),
-  /** その日の日付など、見出しに添える文字 */
+  /** その日の日付。画面に出る日付はここから引く */
   note: z.string().optional(),
   /** "12:00 - LATE" のような開催時間帯。トップページの要約に出る。
-      空なら items の最初と最後の時刻から組み立てる */
+      空なら最初と最後の時刻から組み立てる */
   time: z.string().optional(),
-  /** その日のプログラム */
-  program: z.array(programBlock).default([]),
+  /** その日の区切りの見出し */
+  parts: z.array(schedulePart).default([]),
+  /** コンテンツに登録しない行。ゲートオープンやアフターパーティ開始など。
+      コンテンツと混ぜて時刻順に並ぶ */
+  extras: z.array(timeSlot).default([]),
 });
 
 const event = defineCollection({
@@ -101,7 +97,7 @@ const event = defineCollection({
     edition: z.string(),
     /** 画面に出す日付表記。"2026.10.17 sat. - 10.18 sun." のように書く。
         月日は大きくキーカラー、年と曜日は小さく組まれる */
-    dateLabel: z.string(),
+
     /** 並び替え・終了判定に使う開催日 */
     date: z.coerce.date(),
     /** サイトの主役にする開催回か。複数の回があるとき1つだけ true にする */
@@ -126,8 +122,6 @@ const event = defineCollection({
         href: z.string(),
       })
       .optional(),
-    /** 開催後に出すお礼メッセージ（入れるとKVの下に告知帯が出る） */
-    afterMessage: z.string().optional(),
 
     /* ---- 紹介（ABOUT） ---- */
     /** トップページのABOUTに出る冒頭の文。ABOUTページでは本文の先頭に置かれる */
@@ -147,20 +141,27 @@ const event = defineCollection({
     /* ---- スケジュール ---- */
     schedule: z.array(scheduleDay).default([]),
 
+    /** 全ページの先頭に出すお知らせの帯。アンケート依頼や急な告知に使う。
+        text が空なら何も出ない */
+    notice: z
+      .object({
+        text: z.string().optional(),
+        label: z.string().optional(),
+        href: z.string().optional(),
+      })
+      .optional(),
+
     /* ---- チケット ---- */
     tickets: z.array(ticketRow).default([]),
-    /** 購入ボタン。書かなければボタンは出ない */
+    /** 購入ボタンの行き先。書かなければボタンは出ない。文字は「購入する」で固定 */
     ticketUrl: z.string().optional(),
-    ticketUrlLabel: z.string().optional(),
     ticketNotes: z.array(z.string()).default([]),
 
     /* ---- 出演・協賛 ---- */
     /** 名前だけを並べる欄（来場ライダーなど） */
     guests: z.array(z.string()).default([]),
-    guestsLabel: z.string().default("来場ライダー"),
     /** ロゴではなく名前だけを並べる欄（後援・協力） */
     supporters: z.array(z.string()).default([]),
-    supportersLabel: z.string().default("後援"),
   }),
 });
 

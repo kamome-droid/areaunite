@@ -2,6 +2,7 @@
 import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ItemMeta from "../../components/ItemMeta.astro";
+import ShareImage from "../../components/ShareImage.astro";
 import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
 import { groups, parents } from "../../config/site";
 import { getItems, getEventDays, displayDate, embedUrl } from "../../lib/content";
@@ -30,7 +31,8 @@ const { item, def } = Astro.props;
 const { Content } = await render(item);
 const backHref = `${parents[def.parent].href}#${item.id}`;
 const ratio = def.ratio ?? "16 / 9";
-const video = embedUrl(item.data.video);
+// 映像を使わない分類は、動画があっても画像だけで見せる
+const video = def.video === false ? null : embedUrl(item.data.video);
 const showDate = displayDate(item.data, await getEventDays());
 ---
 
@@ -59,16 +61,25 @@ const showDate = displayDate(item.data, await getEventDays());
     </div>
 
     <div class="detail__main">
-      <header class="detail__head">
-        {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
-        <h1 class="detail__title">{item.data.title}</h1>
-        <ItemMeta
-          date={showDate}
-          time={item.data.time}
-          runtime={item.data.runtime}
-          class="detail__when"
+      <header class="detail__head headshare">
+        <div>
+          {item.data.subtitle && <p class="detail__sub">{item.data.subtitle}</p>}
+          <h1 class="detail__title">{item.data.title}</h1>
+        </div>
+        <ShareImage
+          srcs={[`/api/og/item.png?id=${item.id}`]}
+          name={`areaunite-${item.id}`}
+          title={item.data.title}
         />
       </header>
+
+      <ItemMeta
+        date={showDate}
+        time={item.data.time}
+        runtime={item.data.runtime}
+        runtimeLabel={def.runtimeLabel}
+        class="detail__when"
+      />
 
       <div class="detail__body prose">
         <Content />

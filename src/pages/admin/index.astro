@@ -2,20 +2,20 @@
 export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { collections, menu } from "../../lib/admin/schema";
+import { collections, menu, tools } from "../../lib/admin/schema";
 import { readAll } from "../../lib/admin/store";
 
 /** 各画面の件数を出して、いまサイトに何が載っているか一目で分かるようにする */
 const items = await readAll(collections.items);
-const sponsors = await readAll(collections.sponsors);
 const event = (await readAll(collections.top))[0];
 
-const published = items.filter((i) => !i.data.draft).length;
-const drafts = items.length - published;
+const rows = items.filter((i) => collections.items.filter?.(i.data) ?? true);
+const published = rows.filter((i) => !i.data.draft).length;
+const drafts = rows.length - published;
 const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length : 0;
 ---
 
-<AdminLayout title="編集する場所" intro="編集したいページを選んでください。">
+<AdminLayout title="編集する場所">
   <div class="cards">
     {
       menu.map((key) => {
@@ -39,11 +39,17 @@ const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length :
         );
       })
     }
-  </div>
-
-  <div class="panel sub">
-    <h2>そのほか</h2>
-    <a href="/admin/sponsors/">協賛（{sponsors.length}件）</a>
+    {
+      tools.map((t) => (
+        <a class="card" href={t.href}>
+          <span class="card__label">{t.label}</span>
+          <span class="card__note">Instagram用（1080×1350）を作る</span>
+          <span class="card__arrow" aria-hidden="true">
+            →
+          </span>
+        </a>
+      ))
+    }
   </div>
 </AdminLayout>
 
@@ -89,14 +95,4 @@ const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length :
     color: var(--a-muted);
   }
 
-  .sub {
-    margin-top: 24px;
-  }
-
-  .sub h2 {
-    margin: 0 0 8px;
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    color: var(--a-muted);
-  }
 </style>

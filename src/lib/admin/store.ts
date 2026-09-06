@@ -73,11 +73,7 @@ function clean(value: any): any {
   return value;
 }
 
-export function buildFile(
-  data: Record<string, any>,
-  body: string,
-  def: CollectionDef
-): string {
+export function buildFile(data: Record<string, any>, body: string): string {
   const cleaned = clean(data) ?? {};
   const front = yaml.dump(cleaned, {
     lineWidth: -1,
@@ -86,7 +82,8 @@ export function buildFile(
     forceQuotes: false,
   });
   let out = `---\n${front}---\n`;
-  if (def.hasBody) out += `\n${(body || "").trim()}\n`;
+  const text = (body || "").trim();
+  if (text) out += `\n${text}\n`;
   return out;
 }
 
@@ -147,8 +144,12 @@ export async function saveEntry(
   const existing = id ? await readOne(def, slug) : null;
   const merged = { ...(existing?.data ?? {}), ...data };
 
+  // 本文を編集しない画面から保存したときに、本文を消さない。
+  // 開催回のように1ファイルを複数の画面で分担しているため
+  const nextBody = def.hasBody ? body : (existing?.body ?? "");
+
   const repoPath = `${def.dir}/${slug}.md`;
-  await writeText(repoPath, buildFile(merged, body, def), `admin: save ${def.key}/${slug}`);
+  await writeText(repoPath, buildFile(merged, nextBody), `admin: save ${def.key}/${slug}`);
   return { slug };
 }
 

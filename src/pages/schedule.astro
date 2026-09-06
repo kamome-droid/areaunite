@@ -3,7 +3,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
 import DayTabs from "../components/DayTabs.astro";
 import Timetable from "../components/Timetable.astro";
+import ShareImage from "../components/ShareImage.astro";
 import { getCurrentEvent, resolveProgram } from "../lib/content";
+import { schedulePageCount } from "../lib/og/templates";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -29,7 +31,19 @@ const single = days.length === 1 ? days[0] : null;
       <section class="single">
         <div class="wrap">
           {single.blocks.length > 0 ? (
-            <Timetable blocks={single.blocks} />
+            <>
+              <Timetable blocks={single.blocks} />
+              <p class="share">
+                <ShareImage
+                  srcs={Array.from(
+                    { length: schedulePageCount(single.blocks) },
+                    (_, n) => `/api/og/schedule.png?id=${single.day.id}&page=${n + 1}`
+                  )}
+                  name={`areaunite-${single.day.id}`}
+                  title="スケジュール"
+                />
+              </p>
+            </>
           ) : (
             <p class="empty muted">準備中です。決まりしだい公開します。</p>
           )}
@@ -42,6 +56,10 @@ const single = days.length === 1 ? days[0] : null;
 <style>
   .single {
     padding-block: clamp(40px, 6vw, 72px);
+  }
+
+  .share {
+    margin-top: clamp(28px, 4vw, 44px);
   }
 
   .empty {

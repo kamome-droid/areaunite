@@ -15,7 +15,10 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/vercel": "^10.0.8",
-    "astro": "^6.2.1"
+    "@resvg/resvg-js": "^2.6.2",
+    "astro": "^6.2.1",
+    "jszip": "^3.10.1",
+    "satori": "^0.33.4"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9"

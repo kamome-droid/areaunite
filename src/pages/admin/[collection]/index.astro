@@ -13,7 +13,7 @@ if (!def) return Astro.redirect("/admin/");
 // 単一ファイルを編集する画面は、一覧を挟まず直接フォームへ
 if (def.singleton) return Astro.redirect(`/admin/${key}/${def.singleton}`);
 
-const entries = await readAll(def);
+const entries = (await readAll(def)).filter((e) => def.filter?.(e.data) ?? true);
 entries.sort((a, b) => {
   if (def.groupBy) {
     const ga = String(a.data[def.groupBy] ?? "");
@@ -39,19 +39,37 @@ const sections = def.groupBy
   : [{ key: "", label: "", rows: entries }];
 ---
 
-<AdminLayout title={def.label} current={key} intro={def.intro}>
-  <p class="tools">
+<AdminLayout title={def.label} current={key}>
+  <div class="tools">
     <a class="btn" href={`/admin/${key}/new`}>＋ 新しく追加</a>
-  </p>
+    <span id="orderStatus" class="tools__status"></span>
+  </div>
 
   {
     sections.map((section) =>
       section.rows.length === 0 && section.key ? null : (
         <div class="panel">
-          {section.label && <h2 class="group">{section.label}</h2>}
-          <ul class="rows">
+          <div class="group">
+            <h2 class="group__name">{section.label}</h2>
+            <span class="group__sort">
+              並べ替え
+              {section.rows.some((r) => r.data.time) && (
+                <button type="button" class="group__btn" data-sort="time">
+                  時刻順
+                </button>
+              )}
+              <button type="button" class="group__btn" data-sort="title">
+                名前順
+              </button>
+            </span>
+          </div>
+          <div class="panel__body">
+          <ul class="rows" data-list>
             {section.rows.map((entry) => (
-              <li>
+              <li data-id={entry.id} data-time={entry.data.time ?? ""} data-title={entry.data[def.titleField] ?? entry.id}>
+                <button type="button" class="rows__grip" title="ドラッグで並べ替え" aria-label="並べ替え">
+                  ☰
+                </button>
                 <a href={`/admin/${key}/${entry.id}`}>
                   <span class="rows__title">
                     {entry.data[def.titleField] || entry.id}
@@ -64,25 +82,170 @@ const sections = def.groupBy
                   )}
                   {entry.data.draft && <span class="rows__draft">下書き</span>}
                 </a>
+                <button
+                  type="button"
+                  class="rows__del"
+                  data-del={entry.id}
+                  data-title={entry.data[def.titleField] ?? entry.id}
+                  title="削除"
+                  aria-label="削除"
+                >
+                  ✕
+                </button>
               </li>
             ))}
           </ul>
+          </div>
         </div>
       )
     )
   }
 </AdminLayout>
 
+<script define:vars={{ collection: key }}>
+  const status = document.getElementById("orderStatus");
+  const say = (text) => {
+    if (status) status.textContent = text;
+  };
+
+  /** その並びを order として書き戻す */
+  const save = async (list) => {
+    const ids = [...list.children].map((li) => li.dataset.id);
+    say("並び順を保存中…");
+    const res = await fetch("/api/admin/order", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ collection, ids }),
+    });
+    say(res.ok ? "並び順を保存しました" : "保存できませんでした");
+  };
+
+  document.querySelectorAll("[data-list]").forEach((list) => {
+    let from = null;
+
+    list.querySelectorAll("li").forEach((li) => {
+      const grip = li.querySelector(".rows__grip");
+      // つまみを押したときだけ動かせるようにする
+      grip?.addEventListener("pointerdown", () => (li.draggable = true));
+      grip?.addEventListener("pointerup", () => (li.draggable = false));
+
+      li.addEventListener("dragstart", (e) => {
+        from = li;
+        li.classList.add("is-dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+      li.addEventListener("dragend", () => {
+        li.draggable = false;
+        li.classList.remove("is-dragging");
+        from = null;
+        list.querySelectorAll(".is-over").forEach((n) => n.classList.remove("is-over"));
+      });
+      li.addEventListener("dragover", (e) => {
+        // 同じ分類の中でだけ動かす
+        if (!from || from === li || from.parentElement !== list) return;
+        e.preventDefault();
+        li.classList.add("is-over");
+      });
+      li.addEventListener("dragleave", () => li.classList.remove("is-over"));
+      li.addEventListener("drop", (e) => {
+        e.preventDefault();
+        li.classList.remove("is-over");
+        if (!from || from === li || from.parentElement !== list) return;
+        const rows = [...list.children];
+        const before = rows.indexOf(from) < rows.indexOf(li);
+        li.insertAdjacentElement(before ? "afterend" : "beforebegin", from);
+        save(list);
+      });
+    });
+  });
+
+  /** 一覧から直接消す。中身を開かずに片づけられるように */
+  document.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.del;
+      const name = btn.dataset.title;
+      if (!(await window.adminConfirm(`「${name}」を削除します。元に戻せません。`))) return;
+      const res = await fetch("/api/admin/delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ collection, id }),
+      });
+      if (!res.ok) return say("削除できませんでした");
+      btn.closest("li")?.remove();
+      say("削除しました");
+    });
+  });
+
+  /** その分類の中だけを、時刻順か名前順へ並べ直す */
+  document.querySelectorAll("[data-sort]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const by = btn.dataset.sort;
+      const list = btn.closest(".panel")?.querySelector("[data-list]");
+      if (!list) return;
+      const rows = [...list.children];
+      rows.sort((a, b) => {
+        if (by === "time") {
+          const ta = a.dataset.time || "zz";
+          const tb = b.dataset.time || "zz";
+          if (ta !== tb) return ta.localeCompare(tb);
+        }
+        return (a.dataset.title || "").localeCompare(b.dataset.title || "", "ja");
+      });
+      rows.forEach((row) => list.append(row));
+      await save(list);
+    });
+  });
+</script>
+
 <style>
-  .tools {
-    margin: 0 0 16px;
+  /* 分類ごとに1枠。上に見出しの帯を敷いて、枠の中身だと分かるようにする */
+  .panel {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .panel__body {
+    padding: 4px 16px 12px;
   }
 
   .group {
-    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    padding: 12px 16px;
+    background: #f4f4f2;
+    border-bottom: 1px solid var(--a-line);
+  }
+
+  .group__name {
+    margin: 0;
     font-size: 13px;
     letter-spacing: 0.1em;
     color: var(--a-muted);
+  }
+
+  .group__sort {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--a-muted);
+  }
+
+  .group__btn {
+    padding: 4px 11px;
+    border: 1px solid var(--a-line);
+    border-radius: 999px;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .group__btn:hover {
+    border-color: var(--a-ink);
   }
 
   .rows {
@@ -93,6 +256,57 @@ const sections = def.groupBy
 
   .rows li + li {
     border-top: 1px solid var(--a-line);
+  }
+
+  .rows li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    align-items: center;
+  }
+
+  .rows__del {
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--a-muted);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .rows__del:hover {
+    color: var(--a-danger);
+  }
+
+  .rows li.is-dragging {
+    opacity: 0.45;
+  }
+
+  .rows li.is-over {
+    box-shadow: 0 -2px 0 var(--a-ink);
+  }
+
+  .rows__grip {
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--a-muted);
+    font-size: 13px;
+    line-height: 1;
+    cursor: grab;
+  }
+
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 16px;
+  }
+
+
+  .tools__status {
+    font-size: 13px;
+    color: var(--a-muted);
   }
 
   .rows a {

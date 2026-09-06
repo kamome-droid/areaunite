@@ -32,6 +32,7 @@ const bodies = await Promise.all(rows.map((r) => render(r.entry)));
           date={date}
           time={entry.data.time}
           runtime={entry.data.runtime}
+          runtimeLabel={def.runtimeLabel}
           image={itemThumb(entry.data)}
           link={entry.data.link}
           linkLabel={entry.data.linkLabel}

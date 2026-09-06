@@ -1,13 +1,13 @@
 ---
 group: talk
-title: "トークショー（登壇者調整中）"
-subtitle: "TALK SHOW"
+title: トークショー（登壇者調整中）
+subtitle: TALK SHOW
 time: "14:00"
 day: day1
-order: 10
-# 表示確認用のダミー。実際の出演者が決まったら差し替える
+order: 20
 draft: true
 ---
+
 雪山と自然の関わりをテーマにしたトークセッション。ライダー、映像作家、地域で活動する人たちが登壇します。
 
 テーマと登壇者が決まりしだい差し替えます。

@@ -31,31 +31,32 @@ export async function getEventDays(): Promise<
   return map;
 }
 
-/** 指定グループの項目。開催日 → 時刻 → order の順に並ぶ。
-    日をまたぐ開催でも、2日目の朝が1日目の夜より前に来ないようにする。 */
+/** 指定グループの項目。管理画面の一覧で並べ替えた順（order）に並ぶ。
+    スケジュールは時刻で組み直すので、ここは一覧ページの見え方だけを決める。 */
 export async function getItems(group: string): Promise<CollectionEntry<"items">[]> {
   const all = await getCollection("items", ({ data }) => {
     if (data.group !== group) return false;
     return isProd ? !data.draft : true;
   });
 
-  const days = await getEventDays();
-  const dayOrder = (id?: string) =>
-    id && days.has(id) ? days.get(id)!.order : Number.MAX_SAFE_INTEGER;
-
   return all.sort((a, b) => {
-    const ad = dayOrder(a.data.day);
-    const bd = dayOrder(b.data.day);
-    if (ad !== bd) return ad - bd;
-
-    const at = a.data.time ?? "";
-    const bt = b.data.time ?? "";
-    if (at && bt && at !== bt) return at.localeCompare(bt);
-    if (at && !bt) return -1;
-    if (!at && bt) return 1;
     if (a.data.order !== b.data.order) return a.data.order - b.data.order;
     return a.data.title.localeCompare(b.data.title, "ja");
   });
+}
+
+/** 開催期間の表記。開催日の日付から組み立てる。
+    2日以上あるときは、後ろの日から重なる年を省く。
+    例）2026.10.17 sat. / 2026.10.18 sun. → 2026.10.17 sat. - 10.18 sun. */
+export function dateRangeLabel(days?: { note?: string }[]): string {
+  const notes = (days ?? []).map((d) => d.note?.trim()).filter(Boolean) as string[];
+  if (notes.length === 0) return "";
+  if (notes.length === 1) return notes[0];
+
+  const first = notes[0];
+  const last = notes[notes.length - 1];
+  const year = first.match(/^\d{4}\./)?.[0];
+  return `${first} - ${year && last.startsWith(year) ? last.slice(year.length) : last}`;
 }
 
 /** 画面に出す日付。date の直接指定があればそれを、無ければ day から引く。 */
@@ -101,6 +102,8 @@ export type ProgramItem = {
   time: string;
   title: string;
   note?: string;
+  /** 「ムービー」「DJ」など、その項目の分類名 */
+  tag?: string;
   /** 該当する項目のカードへのリンク */
   href?: string;
 };
@@ -109,59 +112,61 @@ export type ProgramBlock = { part?: string; items: ProgramItem[] };
 type ScheduleDay = {
   id?: string;
   time?: string;
-  program: {
-    part?: string;
-    include?: string | string[];
-    items: { time: string; title: string; note?: string }[];
-  }[];
+  parts: { label: string; startsAt?: string }[];
+  extras: { time: string; title: string; note?: string }[];
 };
 
-/** include を実データに展開して、その日のプログラムを組み立てる。
-    上映作品などを一覧ページとスケジュールの二重管理にしないための仕組み。 */
+/** その日のコンテンツを分類を問わず時刻順に並べ、見出しで区切ってプログラムにする。
+    上映作品などを一覧ページとスケジュールで二重に持たないための仕組みで、
+    コンテンツ側に日と時刻を入れれば、ここには何も書かなくても並ぶ。 */
 export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> {
-  const blocks: ProgramBlock[] = [];
+  // 自由記述の行。コンテンツに載せないもの（ゲートオープンなど）
+  const items: ProgramItem[] = (day.extras ?? []).map((it) => ({ ...it }));
 
-  for (const block of day.program) {
-    const items: ProgramItem[] = [...block.items];
+  for (const group of Object.keys(groups)) {
+    const source = await getItems(group);
+    // その分類が置かれているページ。個別ページが無ければそこへ飛ばす
+    const parent = groups[group].parent;
+    const base = parent ? parents[parent].href : "";
 
-    const includes = block.include
-      ? Array.isArray(block.include)
-        ? block.include
-        : [block.include]
-      : [];
+    for (const entry of source) {
+      if (!entry.data.time) continue;
+      // その日のものだけ。日の指定がない項目はどの日にも出す
+      if (entry.data.day && day.id && entry.data.day !== day.id) continue;
+      const bracket = groups[group].scheduleFormat === "bracket" && entry.data.subtitle;
 
-    for (const group of includes) {
-      const source = await getItems(group);
-      // 差し込み元の分類が置かれているページ。個別ページが無ければそこへ飛ばす
-      const parent = groups[group]?.parent;
-      const base = parent ? parents[parent].href : "";
-
-      for (const entry of source) {
-        if (!entry.data.time) continue;
-        // その日のものだけ差し込む。日の指定がない項目はどの日にも出す
-        if (entry.data.day && day.id && entry.data.day !== day.id) continue;
-        const bracket =
-          groups[group]?.scheduleFormat === "bracket" && entry.data.subtitle;
-
-        items.push({
-          time: entry.data.time,
-          title: bracket
-            ? `${entry.data.subtitle}「${entry.data.title}」`
-            : entry.data.title,
-          href: itemHref(group, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
-        });
-      }
+      items.push({
+        tag: groups[group].jp,
+        time: entry.data.time,
+        title: bracket
+          ? `${entry.data.subtitle}「${entry.data.title}」`
+          : entry.data.title,
+        href: itemHref(group, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
+      });
     }
-
-    // 時刻は "HH:MM" 固定なので文字列比較で並ぶ。同時刻は書いた順のまま
-    items.sort((a, b) => a.time.localeCompare(b.time));
-
-    // 中身が無い部は見出しごと出さない
-    // （その日に該当する項目がまだ無い、というだけで枠を見せても仕方ない）
-    if (items.length > 0) blocks.push({ part: block.part, items });
   }
 
-  return blocks;
+  // 時刻は "HH:MM" 固定なので文字列比較で並ぶ。同時刻は書いた順のまま
+  items.sort((a, b) => a.time.localeCompare(b.time));
+
+  // 見出しも時刻で置き場所が決まる。ある見出しから次の見出しの手前までが1つの部
+  const parts = [...(day.parts ?? [])].sort((a, b) =>
+    (a.startsAt ?? "").localeCompare(b.startsAt ?? "")
+  );
+
+  const blocks: ProgramBlock[] = [{ items: [] }];
+  let next = 0;
+  for (const item of items) {
+    while (next < parts.length && (parts[next].startsAt ?? "") <= item.time) {
+      blocks.push({ part: parts[next].label, items: [] });
+      next += 1;
+    }
+    blocks[blocks.length - 1].items.push(item);
+  }
+
+  // 中身が無い部は見出しごと出さない
+  // （その日に該当する項目がまだ無い、というだけで枠を見せても仕方ない）
+  return blocks.filter((b) => b.items.length > 0);
 }
 
 /** トップページに出す「何時から何時まで」。
@@ -191,12 +196,26 @@ export function mapLinks(ev?: {
   const query = ev?.address?.trim() || ev?.venue?.trim() || "";
   if (!query && !ev?.mapEmbed && !ev?.mapUrl) return null;
 
-  const q = encodeURIComponent(query);
+  // 片方だけ入っていれば、そこから場所を取り出してもう片方を組み立てる。
+  // 2つのURLを手で入れずに済ませるため
+  const fromUrl = (url?: string) => {
+    if (!url) return "";
+    try {
+      const p = new URL(url).searchParams;
+      return p.get("q") ?? p.get("query") ?? "";
+    } catch {
+      return "";
+    }
+  };
+
+  const place = query || fromUrl(ev?.mapEmbed) || fromUrl(ev?.mapUrl);
+  const q = encodeURIComponent(place);
+
   return {
-    embed: ev?.mapEmbed || (query ? `https://www.google.com/maps?q=${q}&output=embed` : ""),
+    embed: ev?.mapEmbed || (place ? `https://www.google.com/maps?q=${q}&output=embed` : ""),
     link:
       ev?.mapUrl ||
-      (query ? `https://www.google.com/maps/search/?api=1&query=${q}` : ""),
+      (place ? `https://www.google.com/maps/search/?api=1&query=${q}` : ""),
   };
 }
 

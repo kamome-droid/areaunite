@@ -1,5 +1,5 @@
 ---
-name: "CHAMINGO"
+name: CHAMINGO
 tier: 3
-order: 70
+order: 30
 ---

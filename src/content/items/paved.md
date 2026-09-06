@@ -1,11 +1,10 @@
 ---
 group: movies
-title: "PAVEd"
-subtitle: "BURTON AND RED BULL MEDIA HOUSE"
+title: PAVEd
+subtitle: BURTON AND RED BULL MEDIA HOUSE
 time: "19:20"
 day: day1
-# 仮の値。実際の上映時間に差し替える
-runtime: "42 min"
+runtime: 42 min
 order: 70
 featured: true
 ---

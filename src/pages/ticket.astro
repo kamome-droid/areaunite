@@ -1,9 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
+import ShareImage from "../components/ShareImage.astro";
 import PriceTable from "../components/PriceTable.astro";
 import NoteList from "../components/NoteList.astro";
-import { getCurrentEvent } from "../lib/content";
+import { dateRangeLabel, getCurrentEvent } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
@@ -13,8 +14,14 @@ const ev = event?.data;
   <PageHero
     label="Ticket"
     jp="チケット"
-    lead={ev ? `${ev.edition}／${ev.dateLabel}` : undefined}
-  />
+    lead={ev ? `${ev.edition}／${dateRangeLabel(ev.schedule)}` : undefined}
+  >
+    <ShareImage
+      srcs={["/api/og/ticket.png", "/api/og/ticketnotes.png"]}
+      name="areaunite-ticket"
+      title="チケット"
+    />
+  </PageHero>
 
   <section class="page">
     <div class="wrap">
@@ -25,7 +32,7 @@ const ev = event?.data;
               ev?.ticketUrl && (
                 <p class="cta">
                   <a class="btn" href={ev.ticketUrl} target="_blank" rel="noopener noreferrer">
-                    {ev.ticketUrlLabel ?? "チケットを購入する"}
+                    購入する
                   </a>
                 </p>
               )
@@ -48,6 +55,7 @@ const ev = event?.data;
 </BaseLayout>
 
 <style>
+
   .page {
     /* 下はフッターとの間。セクションの下余白と同じだけ空ける */
     padding-block: clamp(40px, 6vw, 72px) var(--section-gap);

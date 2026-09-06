@@ -9,10 +9,12 @@ import CardGrid from "../components/CardGrid.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
-import { getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, displayDate } from "../lib/content";
+import { dateRangeLabel, getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, displayDate } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+/** 開催日から組み立てた「2026.10.17 sat. - 10.18 sun.」 */
+const dateLabel = dateRangeLabel(ev?.schedule);
 /** 日付と「何時から何時まで」。時間帯はスケジュールから組み立てる */
 const days = ev
   ? await Promise.all(
@@ -44,18 +46,10 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     eyebrow={site.tagline}
     title={ev?.edition ?? site.name}
     catch={ev?.catch}
-    date={ev?.dateLabel}
+    date={dateLabel}
     venue={ev?.venue}
     cta={ev?.heroCta}
   />
-
-  {
-    ev?.afterMessage && (
-      <p class="thanks">
-        <span class="wrap">{ev.afterMessage}</span>
-      </p>
-    )
-  }
 
   {
     ev?.aboutLead && (
@@ -107,7 +101,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                     ))}
                   </div>
                 ) : (
-                  <DateText class="num days__date" value={ev.dateLabel} />
+                  <DateText class="num days__date" value={dateLabel} />
                 )
             }
           </div>
@@ -143,7 +137,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 
   {
     ev && ev.guests.length > 0 && (
-      <Section id="guests" label="Guests" jp={ev.guestsLabel} surface>
+      <Section id="guests" label="Guests" jp="来場ライダー" surface>
         <NameList names={ev.guests} />
       </Section>
     )
@@ -155,7 +149,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         {sponsors.length > 0 && <SponsorGrid sponsors={sponsors.map((s) => s.data)} />}
         {ev && ev.supporters.length > 0 && (
           <div class="supporters">
-            <p class="en supporters__label">{ev.supportersLabel}</p>
+            <p class="en supporters__label">後援</p>
             <p class="supporters__list muted">{ev.supporters.join("　/　")}</p>
           </div>
         )}
@@ -166,15 +160,6 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 </BaseLayout>
 
 <style>
-  .thanks {
-    background: color-mix(in srgb, var(--brand) 12%, var(--bg));
-    border-block: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
-    color: var(--brand);
-    font-weight: 500;
-    text-align: center;
-    padding-block: 14px;
-    letter-spacing: 0.04em;
-  }
 
   .about {
     font-size: clamp(1rem, 1.8vw, 1.08rem);
@@ -184,11 +169,8 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     margin-top: clamp(28px, 4vw, 40px);
   }
 
-  /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約 */
-  .sched {
-    border-top: 1px solid var(--border);
-  }
-
+  /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約。
+     上の罫線は見出しが持っているので、ここでは引かない */
   .sched__row {
     padding-block: 18px;
     border-bottom: 1px solid var(--border);

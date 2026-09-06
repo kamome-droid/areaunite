@@ -13,8 +13,10 @@ interface Props {
   /** 上映日など */
   date?: string;
   time?: string;
-  /** 上映時間 */
+  /** 所要時間 */
   runtime?: string;
+  /** 所要時間に添えるラベル */
+  runtimeLabel?: string;
   image?: string;
   link?: string;
   linkLabel?: string;
@@ -29,6 +31,7 @@ const {
   date,
   time,
   runtime,
+  runtimeLabel,
   image,
   link,
   linkLabel = "詳しく見る",
@@ -65,7 +68,13 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     <div class="card__text prose">
       <slot />
     </div>
-    <ItemMeta date={date} time={time} runtime={runtime} class="card__when" />
+    <ItemMeta
+      date={date}
+      time={time}
+      runtime={runtime}
+      runtimeLabel={runtimeLabel}
+      class="card__when"
+    />
 
     {
       link && (

@@ -1,0 +1,97 @@
+---
+/**
+ * SNS用の画像（1080×1350）を落とすリンク。
+ *
+ * 見た目はボタンだが中身はただのダウンロードリンクにしてある。
+ * JSに頼らないので、ブラウザの標準のダウンロードがそのまま働く。
+ * スマホのときだけ、押した瞬間に共有シートへ差し替える（Instagramへ直接送れる）。
+ */
+interface Props {
+  /** 画像のURL。複数渡すとzipにまとめて落とす */
+  srcs: string[];
+  /** 保存するときのファイル名 */
+  name: string;
+  /** 共有シートに出す見出し */
+  title?: string;
+  label?: string;
+}
+const { srcs, name, title, label = "画像で保存" } = Astro.props;
+
+/** 1枚ならその画像、複数枚ならzip。どちらもサーバー側が添付として返す */
+const href =
+  srcs.length === 1
+    ? `${srcs[0]}${srcs[0].includes("?") ? "&" : "?"}dl=1`
+    : `/api/og/zip?${new URLSearchParams([
+        ...srcs.map((src) => ["src", src] as [string, string]),
+        ["name", name],
+      ])}`;
+
+const filename = srcs.length === 1 ? `${name}.png` : `${name}.zip`;
+---
+
+<a
+  class="shareimg"
+  href={href}
+  download={filename}
+  data-share-image
+  data-srcs={JSON.stringify(srcs)}
+  data-name={name}
+  data-title={title}
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+    <path
+      d="M12 3v12M12 3l-4 4M12 3l4 4M4 14v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+  </svg>
+  <span class="shareimg__label">{label}</span>
+</a>
+
+<script>
+  /** 指で操作する画面か。Macの共有シートには「保存」が無く行き止まりになるので、
+      共有シートを出すのはスマホ・タブレットだけにする */
+  const onPhone = () =>
+    matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 1;
+
+  /** モーダルで後から差し込まれたボタンにも効くよう、まとめて受ける */
+  document.addEventListener("click", async (e) => {
+    const link = (e.target as HTMLElement)?.closest<HTMLAnchorElement>("[data-share-image]");
+    if (!link) return;
+    if (!onPhone() || !navigator.canShare || !navigator.share) return; // ふつうのダウンロード
+
+    const srcs: string[] = JSON.parse(link.dataset.srcs ?? "[]");
+    const name = link.dataset.name ?? "areaunite";
+    if (srcs.length === 0) return;
+
+    e.preventDefault();
+
+    const text = link.querySelector(".shareimg__label")!;
+    const original = text.textContent;
+    text.textContent = "画像を作っています…";
+
+    try {
+      const files = await Promise.all(
+        srcs.map(async (src, i) => {
+          const blob = await (await fetch(src)).blob();
+          return new File([blob], `${name}${srcs.length > 1 ? `-${i + 1}` : ""}.png`, {
+            type: "image/png",
+          });
+        })
+      );
+
+      if (navigator.canShare({ files })) {
+        await navigator.share({ files, title: link.dataset.title || name });
+      } else {
+        // 共有できない端末は、そのままダウンロードへ戻す
+        location.href = link.href;
+      }
+    } catch (err) {
+      if ((err as Error)?.name !== "AbortError") location.href = link.href;
+    } finally {
+      text.textContent = original;
+    }
+  });
+</script>

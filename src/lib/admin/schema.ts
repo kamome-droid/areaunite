@@ -7,14 +7,32 @@ export type Field =
   | {
       name: string;
       label: string;
-      type: "text" | "textarea" | "markdown" | "number" | "datetime";
+      type: "text" | "textarea";
       placeholder?: string;
       help?: string;
+      /** この分類のときは出さない */
+      hideFor?: string[];
     }
   | { name: string; label: string; type: "image"; help?: string }
   | { name: string; label: string; type: "images"; help?: string }
   | { name: string; label: string; type: "boolean"; help?: string }
   | { name: string; label: string; type: "select"; options: { value: string; label: string }[]; help?: string }
+  /** select と同じだが、押して選ぶボタンの並びで出す */
+  | { name: string; label: string; type: "pills"; options: { value: string; label: string }[]; help?: string }
+  /** 本文。置いた位置に出す（省略すると一番下） */
+  | { name: string; label: string; type: "body" }
+  /** 別コレクションの項目を、この画面の中で直接編集する */
+  | {
+      name: string;
+      label: string;
+      type: "sub";
+      collection: string;
+      addLabel?: string;
+      /** その場で中身まで編集する。項目が少ないものはこちら */
+      inline?: boolean;
+      /** 1件を1行に収める。ロゴ一覧のように件数が多いとき */
+      layout?: "line";
+    }
   /** 文字列の並び（注意事項・ゲスト名など）。1行1件 */
   | { name: string; label: string; type: "lines"; placeholder?: string; help?: string }
   /** 決まった列を持つ行の並び（チケット料金など） */
@@ -27,6 +45,8 @@ export type Field =
     }
   /** 入れ子の1かたまり（KV下の案内など） */
   | { name: string; label: string; type: "group"; fields: Field[]; help?: string }
+  /** 開催日そのもの（日付と時間帯）。ここに1件足すと DAY が1日増える */
+  | { name: string; label: string; type: "days"; help?: string }
   /** 開催日ごとのプログラム。専用のエディタで編集する */
   | { name: string; label: string; type: "schedule"; help?: string }
   /** 画面に出さずそのまま保持する */
@@ -52,7 +72,12 @@ export interface CollectionDef {
   fields: Field[];
   /** 一覧でグループ分けに使う項目 */
   groupBy?: string;
-  intro?: string;
+  /** 同じフォルダを複数の画面で分け合うときの絞り込み */
+  filter?: (data: Record<string, any>) => boolean;
+  /** 新規作成のときに入れておく値 */
+  defaults?: Record<string, any>;
+  /** 「一覧へ戻る」の行き先。別の画面に属している項目のため */
+  backTo?: string;
   /** 右に出すプレビューの行き先。編集中の内容が実際どう出るかを見せる */
   preview?: (id: string, data: Record<string, any>) => string;
 }
@@ -78,57 +103,51 @@ export const collections: Record<string, CollectionDef> = {
     key: "top",
     label: "トップページ",
     labelOne: "トップページ",
-    hasBody: true,
-    bodyLabel: "ABOUT の本文",
-    intro: "KV・キャッチコピー・ゲスト・協賛が入ります。",
+    hasBody: false,
     preview: () => "/",
+    // 並びはトップページの見た目と同じ順（上から順に画面へ出る）
     fields: [
-      { name: "edition", label: "開催回の名前", type: "text", placeholder: "AREA UNITE 2026" },
       {
-        name: "dateLabel",
-        label: "日付の表記",
-        type: "text",
-        placeholder: "2026.10.17 sat. - 10.18 sun.",
-        help: "月日が大きくキーカラーで、年と曜日は小さく出ます",
-      },
-      { name: "date", label: "開催日（並び替え用）", type: "datetime" },
-
-      { name: "hero", label: "KV画像", type: "image" },
-      {
-        name: "heroStyle",
-        label: "KVの見せ方",
-        type: "select",
-        options: [
-          { value: "split", label: "左に情報・右にKV（ロゴ入りのKV向け）" },
-          { value: "band", label: "KVを丸ごと見せ、情報は下（ロゴ入りのKV向け）" },
-          { value: "overlay", label: "KVに文字を重ねる（文字なしの写真向け）" },
+        name: "notice",
+        label: "お知らせの帯（全ページの一番上）",
+        type: "group",
+        fields: [
+          { name: "text", label: "文言", type: "text", placeholder: "アンケートにご協力ください" },
+          { name: "label", label: "ボタンの文字", type: "text", placeholder: "回答する" },
+          { name: "href", label: "リンク先", type: "text" },
         ],
-        help: "KVにロゴやタイトルが描き込まれている場合、重ねると二重になります",
       },
+      { name: "hero", label: "KV画像", type: "image" },
+      { name: "edition", label: "開催回の名前", type: "text", placeholder: "AREA UNITE 2026" },
       { name: "catch", label: "キャッチコピー", type: "textarea" },
       {
         name: "heroCta",
         label: "KV下の案内ボタン",
         type: "group",
-        help: "空にすると出ません",
         fields: [
           { name: "note", label: "説明文", type: "text", placeholder: "入場にはチケットが必要です" },
           { name: "label", label: "ボタンの文字", type: "text", placeholder: "Ticket" },
           { name: "href", label: "リンク先", type: "text", placeholder: "/ticket/" },
         ],
       },
+      { name: "schedule", label: "開催日", type: "days" },
+      { name: "guests", label: "ゲストの名前", type: "lines" },
       {
-        name: "afterMessage",
-        label: "開催後のお礼メッセージ",
-        type: "text",
-        help: "書くとKVの下に告知帯が出ます。ふだんは空のまま",
+        name: "sponsors",
+        label: "協賛",
+        type: "sub",
+        collection: "sponsors",
+        addLabel: "＋ 協賛を追加",
+        inline: true,
+        layout: "line",
       },
-      { name: "guestsLabel", label: "ゲスト欄の見出し", type: "text", placeholder: "来場ライダー" },
-      { name: "guests", label: "ゲストの名前", type: "lines", help: "1行に1名" },
-      { name: "supportersLabel", label: "後援欄の見出し", type: "text", placeholder: "後援" },
-      { name: "supporters", label: "後援・協力団体", type: "lines", help: "1行に1件" },
+      { name: "supporters", label: "後援・協力団体", type: "lines" },
 
-      { name: "current", label: "この開催回をサイトに出す", type: "boolean" },
+      // 画面には出さない。開催回が増えたとき、どれが新しいかを決めるためだけの値
+      { name: "date", label: "開催日", type: "hidden" },
+      // 画面には出さない。開催回が1つしか無いあいだは意味が無く、
+      // 増えたときは日付の新しいものが自動で選ばれる
+      { name: "current", label: "この開催回をサイトに出す", type: "hidden" },
     ],
   },
 
@@ -140,22 +159,16 @@ export const collections: Record<string, CollectionDef> = {
     labelOne: "アバウト",
     hasBody: true,
     bodyLabel: "続きの文",
-    intro:
-      "冒頭の文はトップページのABOUTにも出ます。続きの文はアバウトページだけに出ます。",
     preview: () => "/about/",
+    // 並びはアバウトページの見た目と同じ順
     fields: [
-      {
-        name: "aboutLead",
-        label: "冒頭の文",
-        type: "textarea",
-        help: "トップページのABOUTに出るのはここまでです",
-      },
+      { name: "aboutLead", label: "冒頭の文（トップページにも出ます）", type: "textarea" },
+      { name: "body", label: "続きの文", type: "body" },
       {
         name: "prVideo",
-        label: "PRムービー",
+        label: "PRムービーのリンク",
         type: "text",
         placeholder: "https://youtu.be/xxxxxxx",
-        help: "YouTube / Vimeo のURL。トップページとアバウトページに埋め込まれます",
       },
     ],
   },
@@ -166,8 +179,7 @@ export const collections: Record<string, CollectionDef> = {
     key: "ticket",
     label: "チケット",
     labelOne: "チケット",
-    hasBody: true,
-    intro: "料金と注意事項です。KV下の案内ボタンはトップページで編集します。",
+    hasBody: false,
     preview: () => "/ticket/",
     fields: [
       {
@@ -180,14 +192,8 @@ export const collections: Record<string, CollectionDef> = {
           { name: "note", label: "補足", width: "2fr" },
         ],
       },
-      {
-        name: "ticketUrl",
-        label: "チケット購入先URL",
-        type: "text",
-        help: "書くとチケットページに購入ボタンが出ます",
-      },
-      { name: "ticketUrlLabel", label: "購入ボタンの文字", type: "text", placeholder: "チケットを購入する" },
-      { name: "ticketNotes", label: "注意事項", type: "lines", help: "1行に1件" },
+      { name: "ticketUrl", label: "チケット購入先URL", type: "text" },
+      { name: "ticketNotes", label: "注意事項", type: "lines" },
     ],
   },
 
@@ -197,9 +203,7 @@ export const collections: Record<string, CollectionDef> = {
     key: "schedule",
     label: "スケジュール",
     labelOne: "スケジュール",
-    hasBody: true,
-    intro:
-      "開催日ごとのプログラムです。上映作品や出演者は「コンテンツ」で登録した項目を差し込むので、ここに書き写す必要はありません。",
+    hasBody: false,
     preview: () => "/schedule/",
     fields: [{ name: "schedule", label: "開催日", type: "schedule" }],
   },
@@ -210,20 +214,14 @@ export const collections: Record<string, CollectionDef> = {
     key: "access",
     label: "アクセス",
     labelOne: "アクセス",
-    hasBody: true,
-    intro: "会場の場所と行き方です。宿泊施設は「コンテンツ」から登録します。",
+    hasBody: false,
     preview: () => "/access/",
     fields: [
       { name: "venue", label: "会場名", type: "text", placeholder: "白馬五竜 HAKUBA GORYU" },
       { name: "address", label: "住所", type: "text" },
-      {
-        name: "mapUrl",
-        label: "地図のリンク先",
-        type: "text",
-        help: "空にすると住所（なければ会場名）で検索した地図になります",
-      },
-      { name: "mapEmbed", label: "埋め込み地図のURL", type: "text", help: "同上" },
-      { name: "accessNotes", label: "駐車場・行き方の案内", type: "lines", help: "1行に1件" },
+      { name: "mapEmbed", label: "地図のURL", type: "text" },
+      { name: "accessNotes", label: "駐車場・行き方の案内", type: "lines" },
+      { name: "stay", label: "宿泊", type: "sub", collection: "stay", addLabel: "＋ 宿泊先を追加" },
     ],
   },
 
@@ -240,27 +238,22 @@ export const collections: Record<string, CollectionDef> = {
     order: "order",
     groupBy: "group",
     slug: { mode: "field", field: "title" },
-    intro:
-      "上映作品・出演者・出店・宿泊です。日と時刻を入れると、スケジュールにも自動で並びます。",
-    preview: (id, data) =>
-      data.group === "stay" ? "/access/#stay" : `/contents/#${id}`,
+    // 宿泊はアクセス画面から編集するので、ここには出さない
+    filter: (data) => data.group !== "stay",
+    // 個別ページと見比べられるようにする
+    preview: (id, data) => (data.group ? `/${data.group}/${id}/` : `/contents/#${id}`),
+    // 並びは個別ページの見た目と同じ順にしてある（上から順に画面へ出る）
     fields: [
-      { name: "group", label: "分類", type: "select", options: [] }, // 起動時に site.ts から埋める
-      { name: "title", label: "名前・作品名", type: "text" },
-      {
-        name: "subtitle",
-        label: "肩書き・制作者",
-        type: "text",
-        help: "作品なら制作チーム名、出店なら業種など。名前の上に小さく出ます",
-      },
+      { name: "group", label: "分類", type: "pills", options: [] }, // 起動時に site.ts から埋める
+      { name: "video", label: "動画", type: "text", placeholder: "https://youtu.be/xxxxxxx", hideFor: ["foods", "shops"] },
+      { name: "image", label: "画像", type: "image" },
+      { name: "subtitle", label: "制作者・チーム名", type: "text" },
+      { name: "title", label: "作品タイトル", type: "text" },
       { name: "day", label: "開催日", type: "select", options: [] }, // 起動時に開催回から埋める
-      { name: "time", label: "開始時刻", type: "text", placeholder: "17:30", help: "入れるとスケジュールに並びます" },
-      { name: "runtime", label: "上映時間", type: "text", placeholder: "10 min" },
-      { name: "image", label: "画像", type: "image", help: "動画がある場合は、未指定でもYouTubeのサムネイルが使われます" },
-      { name: "video", label: "動画", type: "text", placeholder: "https://youtu.be/xxxxxxx", help: "YouTube / Vimeo。入れると個別ページの主役になります" },
-      { name: "gallery", label: "サブ画像", type: "images", help: "紹介文の下に並びます" },
-      { name: "link", label: "外部リンク", type: "text", help: "公式サイトなど" },
-      { name: "linkLabel", label: "リンクの文字", type: "text", placeholder: "公式サイトで予約" },
+      { name: "time", label: "開始時刻", type: "text", placeholder: "17:30", help: "入れると[スケジュール](/admin/schedule/)に並びます" },
+      { name: "runtime", label: "所要時間", type: "text", placeholder: "10 min" },
+      { name: "body", label: "紹介文", type: "body" },
+      { name: "gallery", label: "キャプチャ画像", type: "images" },
       { name: "featured", label: "トップページの「注目」に出す", type: "boolean" },
       { name: "draft", label: "下書き（公開しない）", type: "boolean" },
       { name: "order", label: "表示順", type: "hidden" },
@@ -278,10 +271,13 @@ export const collections: Record<string, CollectionDef> = {
     titleField: "name",
     order: "order",
     slug: { mode: "field", field: "name" },
-    intro: "ロゴは黒背景に合わせて白抜きで表示されます。ロゴが無いときは社名の文字で出ます。",
+    // 協賛はトップページ画面から開く
+    backTo: "/admin/top/2026",
     preview: () => "/#sponsors",
     fields: [
-      { name: "name", label: "社名・団体名", type: "text" },
+      // 社名は打たせない。ロゴの画像ファイル名から自動で入れて、
+      // 画像の代替テキストとファイル名にだけ使う
+      { name: "name", label: "社名・団体名", type: "hidden" },
       { name: "logo", label: "ロゴ画像", type: "image" },
       { name: "url", label: "リンク先", type: "text" },
       {
@@ -297,7 +293,40 @@ export const collections: Record<string, CollectionDef> = {
       { name: "order", label: "表示順", type: "hidden" },
     ],
   },
+
+  /* ---- 宿泊（アクセスページに出る） ---- */
+  stay: {
+    key: "stay",
+    label: "宿泊",
+    labelOne: "宿泊施設",
+    dir: "src/content/items",
+    media: "items",
+    hasBody: true,
+    bodyLabel: "紹介文",
+    titleField: "title",
+    order: "order",
+    slug: { mode: "field", field: "title" },
+    filter: (data) => data.group === "stay",
+    defaults: { group: "stay" },
+    // 宿泊はアクセス画面から開く
+    backTo: "/admin/access/2026",
+    preview: () => "/access/#stay",
+    fields: [
+      { name: "group", label: "分類", type: "hidden" },
+      { name: "title", label: "施設名", type: "text" },
+      { name: "subtitle", label: "エリア・種別", type: "text" },
+      { name: "image", label: "画像", type: "image" },
+      { name: "body", label: "紹介文", type: "body" },
+      { name: "link", label: "外部リンク", type: "text" },
+      { name: "linkLabel", label: "リンクの文字", type: "text", placeholder: "公式サイトで予約" },
+      { name: "draft", label: "下書き（公開しない）", type: "boolean" },
+      { name: "order", label: "表示順", type: "hidden" },
+    ],
+  },
 };
+
+/** コレクションではないが、メニューに並べる画面 */
+export const tools = [{ key: "share", label: "SNS画像ダウンロード", href: "/admin/share/" }] as const;
 
 /** サイドメニューに出す順番 */
 export const menu = [

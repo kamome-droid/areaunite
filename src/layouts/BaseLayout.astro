@@ -1,8 +1,10 @@
 ---
 import PageHead from "../components/PageHead.astro";
+import NoticeBar from "../components/NoticeBar.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import ItemModal from "../components/ItemModal.astro";
+import { getCurrentEvent } from "../lib/content";
 import "../styles/global.css";
 
 interface Props {
@@ -12,6 +14,9 @@ interface Props {
 }
 
 const { title, description, image } = Astro.props;
+
+/** 全ページの先頭に出すお知らせ。開催回のデータ1か所で持つ */
+const notice = (await getCurrentEvent())?.data.notice;
 ---
 
 <!doctype html>
@@ -21,6 +26,7 @@ const { title, description, image } = Astro.props;
   </head>
   <body>
     <a class="skip" href="#main">メインコンテンツへスキップ</a>
+    <NoticeBar text={notice?.text} label={notice?.label} href={notice?.href} />
     <SiteHeader />
     <main id="main">
       <slot />

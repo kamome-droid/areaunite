@@ -1,7 +1,9 @@
 ---
 import Timetable from "./Timetable.astro";
 import PageIndex from "./PageIndex.astro";
+import ShareImage from "./ShareImage.astro";
 import type { ProgramBlock } from "../lib/content";
+import { schedulePageCount } from "../lib/og/templates";
 
 /**
  * 開催日ごとのプログラム。
@@ -13,7 +15,7 @@ import type { ProgramBlock } from "../lib/content";
  */
 interface Props {
   days: {
-    day: { id: string; label: string; jp: string; note?: string };
+    day: { id: string; label: string; note?: string };
     blocks: ProgramBlock[];
   }[];
 }
@@ -38,11 +40,23 @@ const { days } = Astro.props;
       aria-labelledby={`head-${day.id}`}
     >
       <div class="wrap">
-        <header class="daypanel__head">
-          <h2 class="en daypanel__label" id={`head-${day.id}`}>
-            {day.label}
-          </h2>
-          {day.note && <p class="num daypanel__date">{day.note}</p>}
+        <header class="daypanel__head headshare">
+          <div>
+            <h2 class="en daypanel__label" id={`head-${day.id}`}>
+              {day.label}
+            </h2>
+            {day.note && <p class="num daypanel__date">{day.note}</p>}
+          </div>
+          {blocks.length > 0 && (
+            <ShareImage
+              srcs={Array.from(
+                { length: schedulePageCount(blocks) },
+                (_, n) => `/api/og/schedule.png?id=${day.id}&page=${n + 1}`
+              )}
+              name={`areaunite-${day.id}`}
+              title={`${day.label} ${day.note ?? ""}`}
+            />
+          )}
         </header>
 
         {blocks.length > 0 ? (
@@ -58,6 +72,7 @@ const { days } = Astro.props;
 
 
 <style>
+
   .daypanel {
     padding-block: clamp(44px, 7vw, 80px);
   }

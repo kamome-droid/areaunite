@@ -8,9 +8,10 @@ export default defineConfig({
   // 本番URL（sitemap・OGの絶対URL用）。独自ドメイン確定後にここを差し替える
   site: "https://www.areaunite.jp",
 
-  // 公開ページは静的のまま。管理画面と保存用APIだけ、
-  // 各ファイルで prerender = false にしてサーバー側で動かす
-  output: "static",
+  // 公開前はサイト全体をパスワードで隠したいので、全ページをサーバー側で返す。
+  // （静的に書き出したページはミドルウェアを通らず、ゲートが効かないため）
+  // 一般公開してゲートを外すときは "static" に戻すと速くて安い
+  output: "server",
   adapter: vercel(),
 
   integrations: [sitemap()],

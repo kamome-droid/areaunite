@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
+import ShareImage from "../components/ShareImage.astro";
 import Section from "../components/Section.astro";
 import NoteList from "../components/NoteList.astro";
 import GroupSection from "../components/GroupSection.astro";
@@ -21,6 +22,12 @@ const map = mapLinks(ev);
   <PageHero label={parents.access.label} jp={parents.access.jp} />
 
   <Section id="map" label="Venue" jp="会場・アクセス" narrow>
+    <ShareImage
+      slot="head"
+      srcs={["/api/og/access.png", "/api/og/stay.png"]}
+      name="areaunite-access"
+      title="会場・アクセス"
+    />
     {ev?.venue && <p class="venue">{ev.venue}</p>}
 
     {
@@ -61,6 +68,7 @@ const map = mapLinks(ev);
 </BaseLayout>
 
 <style>
+
   .info > div + div {
     margin-top: 26px;
   }

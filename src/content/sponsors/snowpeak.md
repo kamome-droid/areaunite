@@ -1,5 +1,5 @@
 ---
-name: "SNOW PEAK"
+name: SNOW PEAK
 tier: 2
-order: 60
+order: 20
 ---

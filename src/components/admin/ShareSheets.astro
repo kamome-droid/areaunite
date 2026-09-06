@@ -1,0 +1,94 @@
+---
+import type { Sheet } from "../../lib/og/templates";
+
+/** SNS画像を並べて、1枚ずつ落とせるようにする */
+interface Props {
+  sheets: Sheet[];
+}
+const { sheets } = Astro.props;
+
+/** 一覧は小さい画像で足りる。落とすときだけ原寸を作る */
+const thumb = (src: string) => `${src}${src.includes("?") ? "&" : "?"}w=360`;
+---
+
+<div class="sheets">
+  {
+    sheets.map((s) => (
+      <div class="sheet">
+        <img src={thumb(s.src)} alt="" loading="lazy" width="1080" height="1350" />
+        <div class="sheet__foot">
+          <div class="sheet__text">
+            <span class="sheet__label">{s.label}</span>
+            <span class="sheet__note">{s.note}</span>
+          </div>
+          <a class="btn btn--small" href={s.src} download={`${s.key}.png`}>
+            保存
+          </a>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .sheets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    gap: 18px;
+  }
+
+  .sheet {
+    display: flex;
+    flex-direction: column;
+    background: var(--a-panel);
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-radius);
+    overflow: hidden;
+  }
+
+  .sheet img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #111;
+  }
+
+  .sheet__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--a-line);
+  }
+
+  .sheet__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  /* 幅が狭いカードでも、ボタンの文字を折り返さない */
+  .sheet__foot .btn {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .sheet__label,
+  .sheet__note {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sheet__label {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .sheet__note {
+    font-size: 12px;
+    color: var(--a-muted);
+  }
+</style>

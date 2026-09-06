@@ -1,0 +1,41 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import ShareSheets from "../../../../components/admin/ShareSheets.astro";
+import { ogSet } from "../../../../lib/og/templates";
+
+/** まとまり1つぶんの画像を並べる。1枚ずつでも、まとめてでも落とせる */
+const key = Astro.params.set!;
+const set = await ogSet(key);
+if (!set) return Astro.redirect("/admin/share/");
+---
+
+<AdminLayout title={set.label} current="share">
+  <div class="tools">
+    {
+      set.sheets.length > 1 && (
+        <a class="btn" href={`/api/og/zip?set=${set.key}`} download>
+          まとめて保存（{set.sheets.length}枚）
+        </a>
+      )
+    }
+    <a class="back" href="/admin/share/">← 一覧へ戻る</a>
+  </div>
+
+  <ShareSheets sheets={set.sheets} />
+</AdminLayout>
+
+<style>
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .back {
+    font-size: 13px;
+    color: var(--a-muted);
+  }
+</style>
