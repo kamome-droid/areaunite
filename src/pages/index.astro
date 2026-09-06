@@ -51,7 +51,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     catch={ev?.catch}
     date={ev?.dateLabel}
     venue={ev?.venue}
-    note={ev?.heroNote}
+    cta={ev?.heroCta}
   />
 
   {
@@ -94,11 +94,9 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref="/schedule/"
         moreLabel="詳細を見る"
       >
-        <dl class="sched">
+        <div class="sched">
           <div class="sched__row">
-            <dt class="en">Date</dt>
-            <dd>
-              {
+            {
                 days.length > 0 ? (
                   /* 日付と時刻を2列に組んで、日ごとの行を縦に揃える */
                   <div class="days">
@@ -116,10 +114,9 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
                 ) : (
                   <DateText class="num days__date" value={ev.dateLabel} />
                 )
-              }
-            </dd>
+            }
           </div>
-        </dl>
+        </div>
       </Section>
     )
   }
@@ -198,27 +195,8 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   .sched__row {
-    display: grid;
-    grid-template-columns: 120px minmax(0, 1fr);
-    align-items: baseline;
-    gap: 8px 28px;
     padding-block: 18px;
     border-bottom: 1px solid var(--border);
-  }
-
-  .sched__row dt {
-    font-size: 0.8rem;
-    letter-spacing: 0.18em;
-    color: var(--text-muted);
-    line-height: 1.6;
-  }
-
-  .sched__row dd {
-    margin: 0;
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 6px 16px;
     font-size: clamp(1.2rem, 2.8vw, 1.6rem);
     font-weight: 600;
     letter-spacing: 0.03em;
@@ -273,9 +251,14 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   @media (max-width: 560px) {
-    .sched__row {
+    .days {
       grid-template-columns: 1fr;
-      gap: 4px;
+      gap: 2px;
+    }
+
+    .days__time,
+    .days__pending {
+      margin-bottom: 8px;
     }
   }
 </style>

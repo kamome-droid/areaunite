@@ -21,8 +21,8 @@ interface Props {
   catch?: string;
   date?: string;
   venue?: string;
-  /** 情報のすぐ下に出す案内ボタン（入場条件など） */
-  note?: { label: string; href: string };
+  /** キャッチのすぐ下に出す案内。note は小さな説明文 */
+  cta?: { note?: string; label: string; href: string };
   ctaLabel?: string;
   ctaHref?: string;
   subCtaLabel?: string;
@@ -37,7 +37,7 @@ const {
   catch: catchCopy,
   date,
   venue,
-  note,
+  cta,
   ctaLabel,
   ctaHref,
   subCtaLabel,
@@ -75,33 +75,22 @@ const overlay = style === "overlay";
       {catchCopy && <p class="hero__catch">{catchCopy}</p>}
 
       {
-        (date || venue) && (
-          <dl class="hero__meta">
-            {date && (
-              <div>
-                <dt class="en">Date</dt>
-                <dd class="num">
-                  <DateText value={date} emphasis />
-                </dd>
-              </div>
-            )}
-            {venue && (
-              <div>
-                <dt class="en">Venue</dt>
-                <dd>{venue}</dd>
-              </div>
-            )}
-          </dl>
+        cta && (
+          <div class="hero__cta-block">
+            {cta.note && <p class="hero__cta-note">{cta.note}</p>}
+            <a class="btn en hero__cta-btn" href={cta.href}>
+              {cta.label}
+            </a>
+          </div>
         )
       }
 
       {
-        note && (
-          <p class="hero__note">
-            <a class="btn btn--ghost hero__note-link" href={note.href}>
-              {note.label}
-            </a>
-          </p>
+        (date || venue) && (
+          <div class="hero__meta">
+            {date && <p class="num hero__date">{date}</p>}
+            {venue && <p class="hero__venue">{venue}</p>}
+          </div>
         )
       }
 
@@ -193,41 +182,40 @@ const overlay = style === "overlay";
   }
 
   .hero__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 48px;
     margin-top: clamp(26px, 4vw, 40px);
     padding-top: 22px;
     border-top: 1px solid var(--border-strong);
   }
 
-  .hero__meta dt {
-    font-size: 0.75rem;
-    letter-spacing: 0.22em;
-    color: var(--text-muted);
-    line-height: 1;
-  }
-
-  .hero__meta dd {
-    margin: 8px 0 0;
+  .hero__date {
     font-size: clamp(1.15rem, 2.6vw, 1.6rem);
     font-weight: 600;
     letter-spacing: 0.04em;
-    line-height: 1.2;
+    line-height: 1.3;
   }
 
-  /* 入場条件などの案内。押せるが主役ではないので控えめに */
-  .hero__note {
-    margin-top: clamp(20px, 3vw, 28px);
+  .hero__venue {
+    margin-top: 6px;
+    font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
   }
 
-  .hero__note-link {
-    min-height: 44px;
-    font-family: var(--font-body);
-    font-size: 0.92rem;
-    font-weight: 500;
+  /* キャッチの下の案内。説明文を小さく添えて、その下にボタン */
+  .hero__cta-block {
+    margin-top: clamp(22px, 3vw, 30px);
+  }
+
+  .hero__cta-note {
+    font-size: 0.85rem;
     letter-spacing: 0.04em;
-    text-transform: none;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .hero__cta-btn {
+    margin-top: 10px;
   }
 
   .hero__cta {
