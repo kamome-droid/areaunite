@@ -87,6 +87,8 @@ const isCurrent = (href: string) => {
   </div>
 
   <!-- モバイル用ドロワー -->
+</header>
+
   <div class="drawer" id="drawer" hidden>
     <ul class="drawer__list">
       {
@@ -110,12 +112,11 @@ const isCurrent = (href: string) => {
       }
     </ul>
   </div>
-</header>
 
 <script>
   const header = document.querySelector<HTMLElement>(".hd");
   const burger = header?.querySelector<HTMLButtonElement>(".hd__burger");
-  const drawer = header?.querySelector<HTMLElement>(".drawer");
+  const drawer = document.querySelector<HTMLElement>(".drawer");
 
   const setOpen = (open: boolean) => {
     if (!burger || !drawer) return;
@@ -408,6 +409,9 @@ const isCurrent = (href: string) => {
   .drawer {
     position: fixed;
     inset: var(--header-h) 0 0;
+    /* ヘッダーより下、本文より上。ヘッダーの中に置くと、
+       すりガラスの指定のせいで画面いっぱいに広がらなくなる */
+    z-index: 40;
     background: var(--bg);
     overflow-y: auto;
     padding: 8px var(--page-pad) 48px;
