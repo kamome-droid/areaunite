@@ -88,7 +88,11 @@ const overlay = style === "overlay";
       {
         (date || venue) && (
           <div class="hero__meta">
-            {date && <DateText class="num hero__date" value={date} emphasis />}
+            {date && (
+              <p class="num hero__date">
+                <DateText value={date} emphasis />
+              </p>
+            )}
             {venue && <p class="hero__venue">{venue}</p>}
           </div>
         )
@@ -187,10 +191,12 @@ const overlay = style === "overlay";
     border-top: 1px solid var(--border-strong);
   }
 
-  /* 日付は DateText 側で月日を大きくキーカラーにしている。
-     ここでは全体の級数だけ決める */
-  .hero__date {
-    display: block;
+  /* 月日を大きくキーカラーにするのは DateText 側。
+     ここでは全体の級数を決める（DateText はこれを基準に倍率で組む）。
+     子コンポーネントには親のスコープ付きCSSが効かないので、
+     必ずこちら側の要素で指定する */
+  .hero__date,
+  .hero__venue {
     font-size: clamp(1.15rem, 2.6vw, 1.6rem);
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -199,10 +205,6 @@ const overlay = style === "overlay";
 
   .hero__venue {
     margin-top: 10px;
-    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    line-height: 1.4;
   }
 
   /* キャッチの下の案内。説明文を小さく添えて、その下にボタン */

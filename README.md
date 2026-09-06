@@ -290,6 +290,20 @@ YouTubeの埋め込みは追跡の少ない `youtube-nocookie` に変換して�
 同じ見た目のものを2か所に書かないこと。目次バーや日時の行のように
 複数ページに出るものは、必ず部品にしてから使う。
 
+### 部品に class を渡すときの注意
+
+Astroのスコープ付きCSSは、その部品のテンプレートにある要素にしか効かない。
+`<DateText class="hero__date" />` のように子へ class を渡しても、
+親側で書いた `.hero__date { ... }` は当たらない。
+
+級数や色を親から決めたいときは、**親側の要素で包んでから**中に置く。
+
+```astro
+<p class="hero__date">
+  <DateText value={date} emphasis />
+</p>
+```
+
 ## 開発
 
 ```bash
