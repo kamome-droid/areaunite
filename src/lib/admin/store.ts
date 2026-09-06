@@ -153,6 +153,26 @@ export async function saveEntry(
   return { slug };
 }
 
+/** GitHubからの返事を、原因の分かる文にする */
+async function githubError(res: Response, where: string): Promise<string> {
+  const repo = env("GITHUB_REPO") ?? "(GITHUB_REPO未設定)";
+  let detail = "";
+  try {
+    detail = ((await res.json()) as any)?.message ?? "";
+  } catch {
+    /* 本文が読めないことは気にしない */
+  }
+  const hint =
+    res.status === 401
+      ? "GITHUB_TOKEN が違うか期限切れです"
+      : res.status === 403
+        ? "GITHUB_TOKEN にこのリポジトリへの権限がありません（Contents: Read and write）"
+        : res.status === 404
+          ? `GITHUB_REPO（${repo}）かブランチ名が違うかもしれません`
+          : "";
+  return `GitHubから読めませんでした（${res.status} ${detail}／${where}）${hint ? "。" + hint : ""}`;
+}
+
 // 1件の生ファイル内容を読む。無ければ null。
 export async function readRaw(def: CollectionDef, id: string): Promise<string | null> {
   const repoPath = `${def.dir}/${safeSlug(id)}.md`;
@@ -164,7 +184,9 @@ export async function readRaw(def: CollectionDef, id: string): Promise<string | 
     const get = await fetch(`${api}?ref=${branch}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
     });
-    if (!get.ok) return null;
+    // 404 は「まだ無い」。それ以外の失敗は、設定の間違いなので黙って隠さない
+    if (get.status === 404) return null;
+    if (!get.ok) throw new Error(await githubError(get, repoPath));
     const j = await get.json();
     return Buffer.from(j.content, "base64").toString("utf8");
   }
@@ -211,7 +233,7 @@ export async function readAll(def: CollectionDef): Promise<RawEntry[]> {
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/${def.dir}?ref=${branch}`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
     });
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error(await githubError(res, def.dir));
     const files = (await res.json()) as { name: string }[];
     ids = files.filter((f) => f.name.endsWith(".md")).map((f) => f.name.replace(/\.md$/, ""));
   } else {
