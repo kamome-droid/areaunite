@@ -7,6 +7,7 @@ import { uploadImage } from "../../../lib/admin/store";
 export const POST: APIRoute = async ({ request }) => {
   const form = await request.formData();
   const collection = String(form.get("collection") ?? "");
+  const media = String(form.get("media") ?? "");
   const file = form.get("file");
   const def = collections[collection];
 
@@ -15,7 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const buf = Buffer.from(await file.arrayBuffer());
-    const url = await uploadImage(def, file.name, buf);
+    const url = await uploadImage(def, file.name, buf, media);
     return new Response(JSON.stringify({ url }), {
       headers: { "content-type": "application/json" },
     });

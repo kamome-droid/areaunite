@@ -193,13 +193,14 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   };
 
   /** 画像を選んでアップロードし、パスを返す */
-  const pickImage = async (onDone, into = collection) => {
+  const pickImage = async (onDone, into = collection, media = "") => {
     const input = el("input", { type: "file", accept: "image/*" });
     input.addEventListener("change", async () => {
       const file = input.files?.[0];
       if (!file) return;
       const fd = new FormData();
       fd.append("collection", into);
+      if (media) fd.append("media", media);
       fd.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       if (!res.ok) return alert("アップロードに失敗しました");
@@ -240,11 +241,15 @@ const previewHash = previewPath?.split("#")[1] ?? "";
           type: "button",
           class: "btn btn--ghost",
           onclick: () =>
-            pickImage((url) => {
-              path.value = url;
-              onChange(url);
-              draw();
-            }),
+            pickImage(
+              (url) => {
+                path.value = url;
+                onChange(url);
+                draw();
+              },
+              collection,
+              opts.media
+            ),
         }, opts.compact ? "選ぶ" : "画像を選ぶ"),
         // 繰り返しの行には右端に ✕ があるので、外すボタンは出さない
         opts.clearable === false
@@ -521,7 +526,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         head,
         repeater(
           list,
-          (row, i) => imageBox(row, (v) => (list[i] = v), { clearable: false }),
+          (row, i) => imageBox(row, (v) => (list[i] = v), { clearable: false, media: f.media }),
           [["＋ 画像を追加", () => ""]],
           { addsInto: slot }
         ),

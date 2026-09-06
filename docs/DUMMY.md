@@ -14,7 +14,8 @@
 | 同 `prVideo` | 無関係な公開動画 | 完成したPRムービーのURL |
 | 同 `address` / `accessNotes` | 仮の住所と案内文 | 白馬五竜の実際の情報 |
 | 同 `mapEmbed` | 暫定で白馬五竜スキー場を指している。住所を入れれば不要 | — |
-| `public/images/items/_dummy/` `public/images/sponsors/_dummy/` | グレーの仮画像 | 不要になったらフォルダごと削除 |
+| 同 `photos` | グレーの `PHOTO 1`〜`6` | 実際の会場写真 |
+| `public/images/items/_dummy/` `public/images/sponsors/_dummy/` `public/images/photos/_dummy/` | グレーの仮画像 | 不要になったらフォルダごと削除 |
 
 **ダミーは `draft` を付けていない**ので、そのまま公開されてしまう。
 本番に出す前に必ず実データへ差し替えること。

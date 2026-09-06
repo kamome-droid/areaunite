@@ -1,0 +1,65 @@
+---
+/**
+ * 写真を横一列に並べ、横スクロールで見せる。
+ * 画像は管理画面で 4:3 にそろえて保存されるので、ここでは高さだけ決める。
+ * 左右はページの余白ぶん外に出し、端で切れて見えることで
+ * 「まだ続きがある」と分かるようにしている。
+ */
+interface Props {
+  photos: string[];
+  label?: string;
+}
+const { photos, label = "写真" } = Astro.props;
+---
+
+{
+  photos.length > 0 && (
+    <div class="strip" role="group" aria-label={label} tabindex="0">
+      {photos.map((src) => (
+        <figure class="strip__item">
+          <img src={src} alt="" loading="lazy" decoding="async" />
+        </figure>
+      ))}
+    </div>
+  )
+}
+
+<style>
+  .strip {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    /* 端まで写真を出すため、ページの余白ぶん外に広げてから内側で戻す */
+    margin-inline: calc(var(--page-pad) * -1);
+    padding-inline: var(--page-pad);
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .strip__item {
+    flex: 0 0 auto;
+    width: clamp(230px, 40vw, 380px);
+    aspect-ratio: 4 / 3;
+    margin: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    scroll-snap-align: start;
+  }
+
+  .strip__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .strip:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 4px;
+  }
+</style>

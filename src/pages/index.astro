@@ -4,6 +4,7 @@ import Hero from "../components/Hero.astro";
 import Section from "../components/Section.astro";
 import GroupNav from "../components/GroupNav.astro";
 import VideoEmbed from "../components/VideoEmbed.astro";
+import PhotoStrip from "../components/PhotoStrip.astro";
 import DateText from "../components/DateText.astro";
 import CardGrid from "../components/CardGrid.astro";
 import NameList from "../components/NameList.astro";
@@ -52,7 +53,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   />
 
   {
-    ev?.aboutLead && (
+    ev && (ev.aboutLead || ev.photos.length > 0) && (
       <Section
         id="about"
         label="About"
@@ -62,14 +63,19 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         moreHref="/about/"
         moreLabel="もっと見る"
       >
-        <p class="about">{ev.aboutLead}</p>
-        {
-          ev?.prVideo && (
-            <div class="about__video" slot="after">
+        {ev.aboutLead && <p class="about">{ev.aboutLead}</p>}
+        <Fragment slot="after">
+          {ev.prVideo && (
+            <div class="about__video">
               <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />
             </div>
-          )
-        }
+          )}
+          {ev.photos.length > 0 && (
+            <div class="about__photos">
+              <PhotoStrip photos={ev.photos} label={`${site.name} の写真`} />
+            </div>
+          )}
+        </Fragment>
       </Section>
     )
   }
@@ -167,6 +173,10 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 
   .about__video {
     margin-top: clamp(28px, 4vw, 40px);
+  }
+
+  .about__photos {
+    margin-top: clamp(16px, 2.5vw, 24px);
   }
 
   /* SCHEDULE：日付・会場・各日の時間帯だけを並べる要約。

@@ -16,7 +16,12 @@ const RULES: Record<string, Rule> = {
   sponsors: { width: 800, format: "png" },
   // KV。形はそのまま、大きすぎるものだけ縮める
   kv: { width: 2400, format: "webp" },
+  // トップページのフォトギャラリー。横に並べるので 4:3 にそろえる
+  photos: { width: 1600, height: 1200, format: "webp" },
 };
+
+/** 置き場所として使ってよい名前か（アップロード先を外から指定されるため） */
+export const isMedia = (media: string) => Object.hasOwn(RULES, media);
 
 export type Prepared = { buf: Buffer; ext: string };
 

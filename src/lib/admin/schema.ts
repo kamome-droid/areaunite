@@ -14,7 +14,7 @@ export type Field =
       hideFor?: string[];
     }
   | { name: string; label: string; type: "image"; help?: string }
-  | { name: string; label: string; type: "images"; help?: string }
+  | { name: string; label: string; type: "images"; help?: string; /** 置き場所を変える。省略するとこの画面の既定 */ media?: string }
   | { name: string; label: string; type: "boolean"; help?: string }
   | { name: string; label: string; type: "select"; options: { value: string; label: string }[]; help?: string }
   /** select と同じだが、押して選ぶボタンの並びで出す */
@@ -129,6 +129,13 @@ export const collections: Record<string, CollectionDef> = {
           { name: "label", label: "ボタンの文字", type: "text", placeholder: "Ticket" },
           { name: "href", label: "リンク先", type: "text", placeholder: "/ticket/" },
         ],
+      },
+      {
+        name: "photos",
+        label: "フォトギャラリー",
+        type: "images",
+        media: "photos",
+        help: "ABOUTのムービーの下に、横スクロールで並びます",
       },
       { name: "schedule", label: "開催日", type: "days" },
       { name: "guests", label: "ゲストの名前", type: "lines", help: "1行に1人ずつ。改行で区切ってください" },

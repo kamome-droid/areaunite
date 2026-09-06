@@ -128,6 +128,8 @@ const event = defineCollection({
     aboutLead: z.string().default(""),
     /** PRムービー（YouTube / Vimeo）。ABOUTに埋め込まれる */
     prVideo: z.string().optional(),
+    /** トップページのフォトギャラリー（/public 起点）。横スクロールで並ぶ */
+    photos: z.array(z.string()).default([]),
 
     /* ---- 会場 ---- */
     venue: z.string().default(""),
