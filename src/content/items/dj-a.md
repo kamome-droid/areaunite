@@ -4,10 +4,10 @@ title: DJ NAME A
 subtitle: DJ
 time: "23:00"
 day: day1
+image: /images/items/_dummy/image.png
 order: 10
-draft: true
 ---
 
-アフターパーティの一番手。フィルム上映の余韻からフロアへ切り替えます。
+ここに説明文が入ります。ここに説明文が入ります。
 
-出演者が決まりしだい差し替えます。
+ここに説明文が入ります。ここに説明文が入ります。

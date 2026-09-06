@@ -4,10 +4,10 @@ title: DJ NAME C
 subtitle: DJ
 time: "25:00"
 day: day1
+image: /images/items/_dummy/image.png
 order: 30
-draft: true
 ---
 
-朝までのラストセット。
+ここに説明文が入ります。ここに説明文が入ります。ここに説明文が入ります。ここに説明文が入ります。
 
-出演者が決まりしだい差し替えます。
+ここに説明文が入ります。ここに説明文が入ります。ここに説明文が入ります。

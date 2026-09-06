@@ -4,10 +4,10 @@ title: DJ NAME B
 subtitle: DJ
 time: "24:00"
 day: day1
+image: /images/items/_dummy/image.png
 order: 20
-draft: true
 ---
 
-深夜帯を受け持つDJ。
+ここに説明文が入ります。ここに説明文が入ります。ここに説明文が入ります。
 
-出演者が決まりしだい差し替えます。
+ここに説明文が入ります。ここに説明文が入ります。
