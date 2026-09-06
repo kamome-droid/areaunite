@@ -10,6 +10,15 @@ import {
   type ProgramBlock,
 } from "../content";
 import { ogTheme, type OgTheme } from "./theme";
+import {
+  aboutCaption,
+  accessCaption,
+  itemCaption,
+  overviewCaption,
+  scheduleCaption,
+  stayCaption,
+  ticketCaption,
+} from "./caption";
 
 /** SNS画像の大きさ。Instagram の縦長（4:5） */
 export const OG_SIZE = { width: 1080, height: 1350 };
@@ -597,7 +606,14 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
    何が作れるかの一覧（管理画面で使う）
    --------------------------------------------------------- */
 
-export type Sheet = { key: string; label: string; note: string; src: string };
+export type Sheet = {
+  key: string;
+  label: string;
+  note: string;
+  src: string;
+  /** SNSに貼る文章の下書き */
+  caption?: string;
+};
 export type SheetSet = { key: string; label: string; note: string; sheets: Sheet[] };
 
 /** 画像のまとまり。管理画面のメニューと同じ区切りにしている */
@@ -611,7 +627,15 @@ export async function ogSets(): Promise<SheetSet[]> {
     key: "overview",
     label: "概要",
     note: "KV・日付・会場・キャッチコピー",
-    sheets: [{ key: "overview", label: "概要", note: "", src: "/api/og/overview.png" }],
+    sheets: [
+      {
+        key: "overview",
+        label: "概要",
+        note: "",
+        src: "/api/og/overview.png",
+        caption: overviewCaption(ev as any),
+      },
+    ],
   });
 
   if (ev.aboutLead) {
@@ -619,20 +643,32 @@ export async function ogSets(): Promise<SheetSet[]> {
       key: "about",
       label: "アバウト",
       note: "冒頭の紹介文",
-      sheets: [{ key: "about", label: "アバウト", note: "", src: "/api/og/about.png" }],
+      sheets: [
+        {
+          key: "about",
+          label: "アバウト",
+          note: "",
+          src: "/api/og/about.png",
+          caption: aboutCaption(ev as any),
+        },
+      ],
     });
   }
 
   // スケジュールは日をまたいで1つのまとまりにする
   const schedule: Sheet[] = [];
   for (const day of ev.schedule) {
-    const pages = paginate(await resolveProgram(day));
+    const blocks = await resolveProgram(day);
+    const pages = paginate(blocks);
+    const caption = scheduleCaption(ev as any, day, blocks);
     pages.forEach((_, i) => {
       schedule.push({
         key: pages.length > 1 ? `schedule-${day.id}-${i + 1}` : `schedule-${day.id}`,
         label: pages.length > 1 ? `${day.label}（${i + 1}/${pages.length}）` : day.label,
         note: day.note ?? "",
         src: `/api/og/schedule.png?id=${day.id}&page=${i + 1}`,
+        // 何枚に分かれても、文章は1日ぶんで1つ
+        caption: i === 0 ? caption : undefined,
       });
     });
   }
@@ -654,6 +690,7 @@ export async function ogSets(): Promise<SheetSet[]> {
         label: entry.data.title,
         note: g.jp,
         src: `/api/og/item.png?id=${entry.id}`,
+        caption: (await itemCaption(ev as any, entry.id)) ?? undefined,
       });
     }
   }
@@ -671,7 +708,13 @@ export async function ogSets(): Promise<SheetSet[]> {
     label: "チケット",
     note: "料金と注意事項",
     sheets: [
-      { key: "ticket", label: "料金", note: "", src: "/api/og/ticket.png" },
+      {
+        key: "ticket",
+        label: "料金",
+        note: "",
+        src: "/api/og/ticket.png",
+        caption: ticketCaption(ev as any),
+      },
       ...(ev.ticketNotes.length > 0
         ? [{ key: "ticket-notes", label: "注意事項", note: "", src: "/api/og/ticketnotes.png" }]
         : []),
@@ -684,9 +727,23 @@ export async function ogSets(): Promise<SheetSet[]> {
     label: "アクセス",
     note: "会場・行き方・宿泊",
     sheets: [
-      { key: "access", label: "会場・行き方", note: "", src: "/api/og/access.png" },
+      {
+        key: "access",
+        label: "会場・行き方",
+        note: "",
+        src: "/api/og/access.png",
+        caption: accessCaption(ev as any),
+      },
       ...(stay.length > 0
-        ? [{ key: "stay", label: "宿泊", note: "", src: "/api/og/stay.png" }]
+        ? [
+            {
+              key: "stay",
+              label: "宿泊",
+              note: "",
+              src: "/api/og/stay.png",
+              caption: stayCaption(ev as any, stay.map((r) => r.data.title)),
+            },
+          ]
         : []),
     ],
   });

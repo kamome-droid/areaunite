@@ -22,6 +22,8 @@ export const site = {
   ogImage: "/images/kv/og.jpg",
   /** フッターのコピーライト表記 */
   copyright: "AREA UNITE",
+  /** SNSに投稿するときのハッシュタグ。管理画面のキャプションに付く */
+  hashtags: ["#areaunite", "#エリアユナイト", "#白馬", "#hakuba", "#スノーボード", "#映画祭"],
   sns: {
     instagram: "https://www.instagram.com/areaunite_film_festival/",
     x: "",
