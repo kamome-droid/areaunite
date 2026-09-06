@@ -131,7 +131,7 @@ export const collections: Record<string, CollectionDef> = {
         ],
       },
       { name: "schedule", label: "開催日", type: "days" },
-      { name: "guests", label: "ゲストの名前", type: "lines" },
+      { name: "guests", label: "ゲストの名前", type: "lines", help: "1行に1人ずつ。改行で区切ってください" },
       {
         name: "sponsors",
         label: "協賛",
@@ -141,7 +141,7 @@ export const collections: Record<string, CollectionDef> = {
         inline: true,
         layout: "line",
       },
-      { name: "supporters", label: "後援・協力団体", type: "lines" },
+      { name: "supporters", label: "後援・協力団体", type: "lines", help: "1行に1つずつ。改行で区切ってください" },
 
       // 画面には出さない。開催回が増えたとき、どれが新しいかを決めるためだけの値
       { name: "date", label: "開催日", type: "hidden" },
