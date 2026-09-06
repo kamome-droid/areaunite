@@ -21,13 +21,19 @@ export async function getStaticPaths() {
     if (!def.detail) continue;
     const items = await getItems(key);
     for (const item of items) {
-      paths.push({ params: { group: key, id: item.id }, props: { item, def } });
+      paths.push({ params: { group: key, id: item.id } });
     }
   }
   return paths;
 }
 
-const { item, def } = Astro.props;
+// 静的に書き出すときも、その場で返すときも同じ道で解決する
+// （サーバー側で返す設定のあいだ getStaticPaths の props は渡ってこない）
+const group = String(Astro.params.group);
+const def = groups[group];
+const item = def?.detail ? (await getItems(group)).find((e) => e.id === Astro.params.id) : null;
+if (!def || !item) return new Response("見つかりません", { status: 404 });
+
 const { Content } = await render(item);
 const backHref = `${parents[def.parent].href}#${item.id}`;
 const ratio = def.ratio ?? "16 / 9";

@@ -5,8 +5,12 @@
 管理画面は、本番では**GitHubのファイルを書き換える**ことで保存する。
 そのため置き場所としてGitHubのリポジトリが要る。
 
+`gh` コマンドが入っていない場合は、github.com/new から空のプライベート
+リポジトリ（名前は `areaunite`、READMEなどは付けない）を作ってから、
+
 ```bash
-gh repo create areaunite --private --source=. --push
+git remote add origin https://github.com/<owner>/areaunite.git
+git push -u origin main
 ```
 
 ## 2. Vercelにつなぐ
@@ -46,6 +50,10 @@ Vercel の Settings → Environment Variables に入れる（Production と Prev
 2つ目は速さと費用のため。公開前はゲートを効かせるために全ページをサーバー側で
 返しているが、ゲートを外すなら静的に書き出したほうが速く、費用もかからない。
 （管理画面と保存API・画像APIは `prerender = false` なのでそのまま動く）
+
+`"static"` に戻すと、ビルド中に出ている
+`getStaticPaths() ignored in dynamic page` の警告も消える。
+個別ページはどちらの設定でも動くように、URLのパラメータから引く形にしてある。
 
 ## ドメイン
 
