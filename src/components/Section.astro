@@ -93,34 +93,22 @@ const {
     line-height: 1;
   }
 
+  /* 矢印が右を指すので、視線の行き先である右端に置く。
+     左揃えの本文とも競合しない */
   .sec__more-wrap {
     margin-top: clamp(20px, 3vw, 30px);
+    text-align: right;
   }
 
-  /* カードが並ぶページなので、囲みのある部品を増やさない。
-     文字の下に線を引くだけにして、押せることは色と矢印で示す */
+  /* 線は引かず、矢印を丸で囲って目立たせる */
   .sec__more {
-    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    /* 線は文字のすぐ下に引きたいので、余白の底ではなく擬似要素で位置を決める。
-       余白自体は指で押せる大きさを確保するために残す */
-    padding: 14px 0;
-    font-size: 1rem;
+    gap: 14px;
+    font-size: 1.02rem;
     line-height: 1;
     color: var(--text);
     transition: color 0.2s ease;
-  }
-
-  .sec__more::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 8px;
-    height: 2px;
-    background: var(--brand);
   }
 
   .sec__more:hover {
@@ -128,11 +116,21 @@ const {
   }
 
   .sec__arrow {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--brand);
+    border-radius: 50%;
     color: var(--brand);
-    transition: translate 0.2s ease;
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: background 0.2s ease, color 0.2s ease, translate 0.2s ease;
   }
 
   .sec__more:hover .sec__arrow {
+    background: var(--brand);
+    color: var(--brand-ink);
     translate: 4px 0;
   }
 

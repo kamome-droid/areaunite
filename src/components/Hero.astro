@@ -23,10 +23,6 @@ interface Props {
   venue?: string;
   /** キャッチのすぐ下に出す案内。note は小さな説明文 */
   cta?: { note?: string; label: string; href: string };
-  ctaLabel?: string;
-  ctaHref?: string;
-  subCtaLabel?: string;
-  subCtaHref?: string;
 }
 
 const {
@@ -38,10 +34,6 @@ const {
   date,
   venue,
   cta,
-  ctaLabel,
-  ctaHref,
-  subCtaLabel,
-  subCtaHref,
 } = Astro.props;
 
 const overlay = style === "overlay";
@@ -97,23 +89,6 @@ const overlay = style === "overlay";
           </div>
         )
       }
-
-      {
-        (ctaHref || subCtaHref) && (
-          <div class="hero__cta">
-            {ctaHref && (
-              <a class="btn" href={ctaHref}>
-                {ctaLabel}
-              </a>
-            )}
-            {subCtaHref && (
-              <a class="btn btn--ghost" href={subCtaHref}>
-                {subCtaLabel}
-              </a>
-            )}
-          </div>
-        )
-      }
     </div>
 
     <div class="hero__media">
@@ -148,7 +123,8 @@ const overlay = style === "overlay";
     opacity: 0.32;
     pointer-events: none;
     /* 下端で断ち切れると段差に見えるので、地の色へ溶かす */
-    mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 92%);
+    /* 色は関係なく、透ける度合いだけを決めている */
+    mask-image: linear-gradient(to bottom, black 0%, black 52%, transparent 92%);
   }
 
   .hero__ph {
@@ -221,13 +197,6 @@ const overlay = style === "overlay";
 
   .hero__cta-btn {
     margin-top: 10px;
-  }
-
-  .hero__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: clamp(26px, 4vw, 36px);
   }
 
   /* ---------- overlay ---------- */

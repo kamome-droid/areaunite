@@ -24,9 +24,11 @@
   --text-muted: #a0a0a6; /* 補助テキスト */
   --border: rgba(255, 255, 255, 0.13);
   --border-strong: rgba(255, 255, 255, 0.26);
-  --overlay: rgba(8, 8, 9, 0.62); /* KVの上に敷く暗幕 */
+  --overlay: rgb(0 0 0 / 0.72); /* モーダルの背面に敷く暗幕 */
 
-  /* ---- フォント ---- */
+  /* ---- フォント ----
+     書体そのものを変えるときは、この指定に加えて
+     src/components/PageHead.astro のWebフォント読み込みも差し替える */
   /* 本文（和文込み） */
   --font-body: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "BIZ UDPGothic", "Yu Gothic", Meiryo, system-ui, sans-serif;
