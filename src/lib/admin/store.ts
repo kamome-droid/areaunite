@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
 import type { CollectionDef } from "./schema";
+import { prepareImage } from "./image";
 
 function env(k: string): string | undefined {
   // 本番の秘密は process.env、devの .env は import.meta.env
@@ -276,10 +277,13 @@ export async function deleteEntry(def: CollectionDef, id: string): Promise<void>
 export async function uploadImage(
   def: CollectionDef,
   filename: string,
-  buf: Buffer
+  raw: Buffer
 ): Promise<string> {
-  const safe = slugify(filename.replace(/\.[^.]+$/, "")) + (filename.match(/\.[^.]+$/)?.[0] || "");
-  const name = `${Date.now()}-${safe || "image"}`;
+  // 置き場所ごとの決まった形にそろえてから保存する
+  const { buf, ext } = await prepareImage(def.media, raw);
+  const base = slugify(filename.replace(/\.[^.]+$/, "")) || "image";
+  const safe = base + (ext || filename.match(/\.[^.]+$/)?.[0] || "");
+  const name = `${Date.now()}-${safe}`;
   const repoPath = `public/images/${def.media}/${name}`;
   await writeBinary(repoPath, buf, `admin: upload ${repoPath}`);
   return `/images/${def.media}/${name}`;

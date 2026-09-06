@@ -123,6 +123,14 @@ const isCurrent = (href: string) => {
     burger.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
     drawer.hidden = !open;
     document.body.style.overflow = open ? "hidden" : "";
+
+    // お知らせの帯があるとヘッダーが下がるので、その下から開く。
+    // 決め打ちだと閉じるボタンにかぶって、メニューから戻れなくなる
+    if (open && header) {
+      drawer.style.top = `${Math.max(0, Math.round(header.getBoundingClientRect().bottom))}px`;
+    } else {
+      drawer.style.top = "";
+    }
   };
 
   burger?.addEventListener("click", () => {

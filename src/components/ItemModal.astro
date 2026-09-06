@@ -12,7 +12,8 @@
 ---
 
 <dialog class="modal" id="item-modal" aria-label="詳細">
-  <div class="modal__inner">
+  {/* 開いたときの焦点をここで受ける。閉じるボタンに枠が出るのを避ける */}
+  <div class="modal__inner" tabindex="-1" autofocus>
     <button class="modal__close" type="button" aria-label="閉じる">
       <span aria-hidden="true">✕</span>
     </button>
@@ -25,6 +26,7 @@
 
   if (dialog && typeof dialog.showModal === "function") {
     const body = dialog.querySelector<HTMLElement>(".modal__body")!;
+    const inner = dialog.querySelector<HTMLElement>(".modal__inner")!;
     const closeButton = dialog.querySelector<HTMLButtonElement>(".modal__close")!;
     const cache = new Map<string, string>();
     let closingFromHistory = false;
@@ -36,6 +38,8 @@
     const show = async (href: string) => {
       body.innerHTML = '<p class="modal__loading">読み込み中…</p>';
       if (!dialog.open) dialog.showModal();
+      // 開いた直後の焦点は枠のほう。閉じるボタンに枠が出るのを避ける
+      inner.focus({ preventScroll: true });
       lockScroll(true);
 
       try {
@@ -53,7 +57,8 @@
         // モーダル用の指定が効かなくなる
         body.replaceChildren(document.importNode(detail, true));
         body.scrollTop = 0;
-        closeButton.focus();
+        // 読み込み後の焦点も枠のほう。閉じるボタンに枠が出て目立つのを避ける
+        inner.focus({ preventScroll: true });
       } catch {
         // 取り出せなければ、普通にそのページへ行く
         location.href = href;
@@ -124,6 +129,10 @@
     max-height: inherit;
   }
 
+  .modal__inner:focus {
+    outline: none;
+  }
+
   /* 下端で文章が切れたとき、まだ続きがあることが分かるように */
   .modal__inner::after {
     content: "";
@@ -183,6 +192,22 @@
   .modal__close:hover {
     background: var(--bg);
     color: var(--brand);
+  }
+
+  /* 狭い画面では、画面いっぱいに近づけて読む面積を稼ぐ */
+  @media (max-width: 600px) {
+    .modal {
+      --modal-gutter: 10px;
+      --modal-height: 94svh;
+      border-radius: var(--radius);
+    }
+
+    .modal__close {
+      top: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+    }
   }
 
   .modal__loading {
