@@ -94,25 +94,36 @@ const {
   }
 
   .sec__more-wrap {
-    margin-top: clamp(24px, 3.5vw, 36px);
+    margin-top: clamp(20px, 3vw, 30px);
   }
 
+  /* カードが並ぶページなので、囲みのある部品を増やさない。
+     文字の下に線を引くだけにして、押せることは色と矢印で示す */
   .sec__more {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    min-height: 44px;
-    padding: 0 1.4em;
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    font-size: 0.95rem;
+    /* 線は文字のすぐ下に引きたいので、余白の底ではなく擬似要素で位置を決める。
+       余白自体は指で押せる大きさを確保するために残す */
+    padding: 14px 0;
+    font-size: 1rem;
     line-height: 1;
     color: var(--text);
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: color 0.2s ease;
+  }
+
+  .sec__more::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    height: 2px;
+    background: var(--brand);
   }
 
   .sec__more:hover {
-    border-color: var(--brand);
     color: var(--brand);
   }
 

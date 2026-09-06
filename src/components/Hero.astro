@@ -88,7 +88,7 @@ const overlay = style === "overlay";
       {
         (date || venue) && (
           <div class="hero__meta">
-            {date && <p class="num hero__date">{date}</p>}
+            {date && <DateText class="num hero__date" value={date} emphasis />}
             {venue && <p class="hero__venue">{venue}</p>}
           </div>
         )
@@ -187,7 +187,10 @@ const overlay = style === "overlay";
     border-top: 1px solid var(--border-strong);
   }
 
+  /* 日付は DateText 側で月日を大きくキーカラーにしている。
+     ここでは全体の級数だけ決める */
   .hero__date {
+    display: block;
     font-size: clamp(1.15rem, 2.6vw, 1.6rem);
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -195,8 +198,8 @@ const overlay = style === "overlay";
   }
 
   .hero__venue {
-    margin-top: 6px;
-    font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+    margin-top: 10px;
+    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
     font-weight: 600;
     letter-spacing: 0.03em;
     line-height: 1.4;
