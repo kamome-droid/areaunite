@@ -12,7 +12,10 @@ export default defineConfig({
   // （静的に書き出したページはミドルウェアを通らず、ゲートが効かないため）
   // 一般公開してゲートを外すときは "static" に戻すと速くて安い
   output: "server",
-  adapter: vercel(),
+  adapter: vercel({
+    // SNS画像を作る satori が読むWASM。バンドルには入らないので明示的に運ぶ
+    includeFiles: ["./node_modules/harfbuzzjs/hb.wasm"],
+  }),
 
   integrations: [sitemap()],
 });
