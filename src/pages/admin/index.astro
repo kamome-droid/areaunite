@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { collections, menu } from "../../lib/admin/schema";
+import { readAll } from "../../lib/admin/store";
+
+/** 各画面の件数を出して、いまサイトに何が載っているか一目で分かるようにする */
+const items = await readAll(collections.items);
+const sponsors = await readAll(collections.sponsors);
+const event = (await readAll(collections.top))[0];
+
+const published = items.filter((i) => !i.data.draft).length;
+const drafts = items.length - published;
+const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length : 0;
+---
+
+<AdminLayout title="編集する場所" intro="編集したいページを選んでください。">
+  <div class="cards">
+    {
+      menu.map((key) => {
+        const def = collections[key];
+        const note =
+          key === "items"
+            ? `${published}件を公開中${drafts ? `／下書き ${drafts}件` : ""}`
+            : key === "schedule"
+              ? `${days}日ぶん`
+              : key === "top"
+                ? event?.data.edition ?? ""
+                : event?.data.venue ?? "";
+        return (
+          <a class="card" href={`/admin/${key}/`}>
+            <span class="card__label">{def.label}</span>
+            {note && <span class="card__note">{note}</span>}
+            <span class="card__arrow" aria-hidden="true">
+              →
+            </span>
+          </a>
+        );
+      })
+    }
+  </div>
+
+  <div class="panel sub">
+    <h2>そのほか</h2>
+    <a href="/admin/sponsors/">協賛（{sponsors.length}件）</a>
+  </div>
+</AdminLayout>
+
+<style>
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    position: relative;
+    display: block;
+    padding: 20px 44px 20px 20px;
+    background: var(--a-panel);
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-radius);
+    text-decoration: none;
+  }
+
+  .card:hover {
+    border-color: var(--a-ink);
+  }
+
+  .card__label {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .card__note {
+    display: block;
+    margin-top: 4px;
+    color: var(--a-muted);
+    font-size: 13px;
+  }
+
+  .card__arrow {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--a-muted);
+  }
+
+  .sub {
+    margin-top: 24px;
+  }
+
+  .sub h2 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--a-muted);
+  }
+</style>

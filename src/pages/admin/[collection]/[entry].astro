@@ -1,0 +1,720 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { collections, type Field } from "../../../lib/admin/schema";
+import { readOne, readAll } from "../../../lib/admin/store";
+import { groups } from "../../../config/site";
+
+const key = Astro.params.collection!;
+const id = Astro.params.entry!;
+const def = collections[key];
+if (!def) return Astro.redirect("/admin/");
+
+const isNew = id === "new";
+const entry = isNew ? null : await readOne(def, id);
+if (!isNew && !entry) return Astro.redirect(`/admin/${key}/`);
+
+/** 選択肢を実データから埋める。分類や開催日を手で打たせない */
+const eventEntry = (await readAll(collections.top))[0];
+const dayOptions = (
+  Array.isArray(eventEntry?.data.schedule) ? eventEntry!.data.schedule : []
+).map((d: any) => ({ value: String(d.id), label: `${d.label}（${d.note ?? ""}）` }));
+
+const fields: Field[] = def.fields.map((f) => {
+  if (f.type !== "select") return f;
+  if (f.name === "group") {
+    return {
+      ...f,
+      options: Object.entries(groups).map(([k, g]) => ({ value: k, label: g.jp })),
+    };
+  }
+  if (f.name === "day") {
+    return { ...f, options: [{ value: "", label: "（指定しない）" }, ...dayOptions] };
+  }
+  return f;
+});
+
+/** 日付は input[type=date] が読める形に直す */
+const data: Record<string, any> = { ...(entry?.data ?? {}) };
+if (data.date instanceof Date) data.date = data.date.toISOString().slice(0, 10);
+if (data.tier != null) data.tier = String(data.tier);
+
+const title = isNew
+  ? `${def.labelOne}を追加`
+  : String(data[def.titleField] || def.labelOne);
+const groupOptions = Object.entries(groups).map(([k, g]) => ({ value: k, label: g.jp }));
+---
+
+<AdminLayout
+  title={title}
+  current={def.singleton ? key : key}
+  intro={def.intro}
+>
+  <form id="form" class="panel">
+    <div id="fields"></div>
+
+    {
+      def.hasBody && (
+        <div class="field">
+          <label class="field__label" for="body">
+            {def.bodyLabel ?? "本文"}
+          </label>
+          <textarea id="body" rows="10" set:html={entry?.body ?? ""} />
+          <p class="field__help">
+            空行で段落が分かれます。**文字**で太字になります。
+          </p>
+        </div>
+      )
+    }
+  </form>
+
+  <div class="bar">
+    <button class="btn" id="save" type="button">保存する</button>
+    <span id="status" class="bar__status"></span>
+    {
+      !def.singleton && !isNew && (
+        <button class="btn btn--danger" id="delete" type="button">
+          削除
+        </button>
+      )
+    }
+    {!def.singleton && <a class="btn btn--ghost" href={`/admin/${key}/`}>一覧へ戻る</a>}
+  </div>
+</AdminLayout>
+
+<script
+  define:vars={{
+    collection: key,
+    entryId: isNew ? null : id,
+    fields,
+    data,
+    groupOptions,
+    dayOptions,
+  }}
+>
+  const root = document.getElementById("fields");
+  const state = structuredClone(data);
+
+  const el = (tag, attrs = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") n.className = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (v != null && v !== false) n.setAttribute(k, v === true ? "" : v);
+    }
+    kids.flat().forEach((c) => n.append(c?.nodeType ? c : document.createTextNode(c ?? "")));
+    return n;
+  };
+
+  /** 画像を選んでアップロードし、パスを返す */
+  const pickImage = async (onDone) => {
+    const input = el("input", { type: "file", accept: "image/*" });
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append("collection", collection);
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      if (!res.ok) return alert("アップロードに失敗しました");
+      const { url } = await res.json();
+      onDone(url);
+    });
+    input.click();
+  };
+
+  const imageBox = (value, onChange) => {
+    const preview = el("div", { class: "img" });
+    const path = el("input", {
+      type: "text",
+      value: value ?? "",
+      placeholder: "/images/...",
+      oninput: (e) => {
+        onChange(e.target.value);
+        draw();
+      },
+    });
+    const draw = () => {
+      preview.replaceChildren();
+      const v = path.value.trim();
+      if (v) preview.append(el("img", { src: v, alt: "" }));
+    };
+    draw();
+    return el(
+      "div",
+      { class: "imgfield" },
+      preview,
+      el(
+        "div",
+        { class: "imgfield__ctrl" },
+        path,
+        el("button", {
+          type: "button",
+          class: "btn btn--ghost",
+          onclick: () =>
+            pickImage((url) => {
+              path.value = url;
+              onChange(url);
+              draw();
+            }),
+        }, "画像を選ぶ"),
+        el("button", {
+          type: "button",
+          class: "btn btn--ghost",
+          onclick: () => {
+            path.value = "";
+            onChange("");
+            draw();
+          },
+        }, "外す")
+      )
+    );
+  };
+
+  /** 並べ替え・追加・削除ができる箱 */
+  const repeater = (list, renderRow, makeEmpty, addLabel) => {
+    const box = el("div", { class: "rep" });
+    const draw = () => {
+      box.replaceChildren();
+      list.forEach((row, i) => {
+        const move = (to) => {
+          if (to < 0 || to >= list.length) return;
+          [list[i], list[to]] = [list[to], list[i]];
+          draw();
+        };
+        box.append(
+          el(
+            "div",
+            { class: "rep__row" },
+            el("div", { class: "rep__body" }, renderRow(row, i, draw)),
+            el(
+              "div",
+              { class: "rep__tools" },
+              el("button", { type: "button", title: "上へ", onclick: () => move(i - 1) }, "↑"),
+              el("button", { type: "button", title: "下へ", onclick: () => move(i + 1) }, "↓"),
+              el("button", {
+                type: "button",
+                title: "削除",
+                onclick: () => {
+                  if (!confirm("この行を削除しますか？")) return;
+                  list.splice(i, 1);
+                  draw();
+                },
+              }, "✕")
+            )
+          )
+        );
+      });
+      box.append(
+        el("button", {
+          type: "button",
+          class: "btn btn--ghost rep__add",
+          onclick: () => {
+            list.push(makeEmpty());
+            draw();
+          },
+        }, addLabel)
+      );
+    };
+    draw();
+    return box;
+  };
+
+  const labelFor = (f) =>
+    el("label", { class: "field__label", for: `f-${f.name}` }, f.label);
+
+  const helpFor = (f) => (f.help ? el("p", { class: "field__help" }, f.help) : "");
+
+  /** 1つの項目を描く */
+  const renderField = (f, target, get, set) => {
+    if (f.type === "hidden") return;
+
+    const wrap = el("div", { class: "field" });
+    const value = get(f.name);
+
+    if (f.type === "boolean") {
+      wrap.append(
+        el(
+          "label",
+          { class: "check" },
+          el("input", {
+            type: "checkbox",
+            checked: !!value,
+            onchange: (e) => set(f.name, e.target.checked),
+          }),
+          f.label
+        ),
+        helpFor(f)
+      );
+    } else if (f.type === "select") {
+      const sel = el("select", {
+        id: `f-${f.name}`,
+        onchange: (e) => set(f.name, e.target.value),
+      });
+      f.options.forEach((o) =>
+        sel.append(el("option", { value: o.value, selected: String(value ?? "") === o.value }, o.label))
+      );
+      wrap.append(labelFor(f), sel, helpFor(f));
+    } else if (f.type === "textarea" || f.type === "markdown") {
+      wrap.append(
+        labelFor(f),
+        el("textarea", {
+          id: `f-${f.name}`,
+          rows: 4,
+          oninput: (e) => set(f.name, e.target.value),
+        }, value ?? ""),
+        helpFor(f)
+      );
+    } else if (f.type === "lines") {
+      wrap.append(
+        labelFor(f),
+        el("textarea", {
+          id: `f-${f.name}`,
+          rows: 5,
+          placeholder: f.placeholder,
+          oninput: (e) =>
+            set(
+              f.name,
+              e.target.value.split("\n").map((s) => s.trim()).filter(Boolean)
+            ),
+        }, (Array.isArray(value) ? value : []).join("\n")),
+        helpFor(f)
+      );
+    } else if (f.type === "image") {
+      wrap.append(labelFor(f), imageBox(value, (v) => set(f.name, v)), helpFor(f));
+    } else if (f.type === "images") {
+      const list = Array.isArray(value) ? [...value] : [];
+      set(f.name, list);
+      wrap.append(
+        labelFor(f),
+        repeater(
+          list,
+          (row, i) => imageBox(row, (v) => (list[i] = v)),
+          () => "",
+          "＋ 画像を追加"
+        ),
+        helpFor(f)
+      );
+    } else if (f.type === "rows") {
+      const list = Array.isArray(value) ? value.map((r) => ({ ...r })) : [];
+      set(f.name, list);
+      wrap.append(
+        labelFor(f),
+        repeater(
+          list,
+          (row) =>
+            el(
+              "div",
+              { class: "cols", style: `grid-template-columns:${f.columns.map((c) => c.width ?? "1fr").join(" ")}` },
+              f.columns.map((c) =>
+                el("input", {
+                  type: "text",
+                  value: row[c.name] ?? "",
+                  placeholder: c.label,
+                  oninput: (e) => (row[c.name] = e.target.value),
+                })
+              )
+            ),
+          () => Object.fromEntries(f.columns.map((c) => [c.name, ""])),
+          "＋ 行を追加"
+        ),
+        helpFor(f)
+      );
+    } else if (f.type === "group") {
+      const obj = value && typeof value === "object" ? { ...value } : {};
+      set(f.name, obj);
+      const inner = el("div", { class: "group" });
+      f.fields.forEach((sub) =>
+        renderField(sub, inner, (n) => obj[n], (n, v) => (obj[n] = v))
+      );
+      wrap.append(labelFor(f), inner, helpFor(f));
+    } else if (f.type === "schedule") {
+      const days = Array.isArray(value) ? structuredClone(value) : [];
+      set(f.name, days);
+      wrap.append(labelFor(f), scheduleEditor(days), helpFor(f));
+    } else {
+      wrap.append(
+        labelFor(f),
+        el("input", {
+          id: `f-${f.name}`,
+          type: f.type === "datetime" ? "date" : f.type === "number" ? "number" : "text",
+          value: value ?? "",
+          placeholder: f.placeholder,
+          oninput: (e) => set(f.name, e.target.value),
+        }),
+        helpFor(f)
+      );
+    }
+
+    target.append(wrap);
+  };
+
+  /** 開催日ごとのプログラムを編集する */
+  const scheduleEditor = (days) =>
+    repeater(
+      days,
+      (day) => {
+        const box = el("div", { class: "day" });
+        const line = (label, name, placeholder) =>
+          el(
+            "label",
+            { class: "day__line" },
+            el("span", {}, label),
+            el("input", {
+              type: "text",
+              value: day[name] ?? "",
+              placeholder,
+              oninput: (e) => (day[name] = e.target.value),
+            })
+          );
+
+        day.program = Array.isArray(day.program) ? day.program : [];
+
+        box.append(
+          el(
+            "div",
+            { class: "day__head" },
+            line("見出し", "label", "DAY 1"),
+            line("日付", "note", "2026.10.17 sat."),
+            line("時間帯", "time", "12:00〜LATE"),
+            line("ID", "id", "day1")
+          ),
+          el("p", { class: "day__caption" }, "この日のプログラム"),
+          repeater(
+            day.program,
+            (block) => {
+              block.items = Array.isArray(block.items) ? block.items : [];
+              const includes = Array.isArray(block.include)
+                ? block.include
+                : block.include
+                  ? [block.include]
+                  : [];
+
+              const picker = el("div", { class: "picks" });
+              groupOptions.forEach((o) => {
+                picker.append(
+                  el(
+                    "label",
+                    { class: "pick" },
+                    el("input", {
+                      type: "checkbox",
+                      checked: includes.includes(o.value),
+                      onchange: (e) => {
+                        const set = new Set(includes);
+                        e.target.checked ? set.add(o.value) : set.delete(o.value);
+                        includes.length = 0;
+                        includes.push(...set);
+                        block.include = includes.length ? [...includes] : undefined;
+                      },
+                    }),
+                    o.label
+                  )
+                );
+              });
+
+              return el(
+                "div",
+                { class: "block" },
+                el(
+                  "label",
+                  { class: "day__line" },
+                  el("span", {}, "部の見出し"),
+                  el("input", {
+                    type: "text",
+                    value: block.part ?? "",
+                    placeholder: "第1部 ／ トーク & ライブ",
+                    oninput: (e) => (block.part = e.target.value),
+                  })
+                ),
+                el("p", { class: "block__caption" }, "コンテンツから差し込む分類"),
+                picker,
+                el("p", { class: "block__caption" }, "直接書く行（ゲートオープンなど）"),
+                repeater(
+                  block.items,
+                  (row) =>
+                    el(
+                      "div",
+                      { class: "cols", style: "grid-template-columns:100px 2fr 2fr" },
+                      el("input", {
+                        type: "text",
+                        value: row.time ?? "",
+                        placeholder: "12:00",
+                        oninput: (e) => (row.time = e.target.value),
+                      }),
+                      el("input", {
+                        type: "text",
+                        value: row.title ?? "",
+                        placeholder: "内容",
+                        oninput: (e) => (row.title = e.target.value),
+                      }),
+                      el("input", {
+                        type: "text",
+                        value: row.note ?? "",
+                        placeholder: "補足",
+                        oninput: (e) => (row.note = e.target.value),
+                      })
+                    ),
+                  () => ({ time: "", title: "", note: "" }),
+                  "＋ 行を追加"
+                )
+              );
+            },
+            () => ({ part: "", items: [] }),
+            "＋ 部を追加"
+          )
+        );
+        return box;
+      },
+      () => ({ id: "", label: "", jp: "", note: "", time: "", program: [] }),
+      "＋ 開催日を追加"
+    );
+
+  fields.forEach((f) =>
+    renderField(f, root, (n) => state[n], (n, v) => (state[n] = v))
+  );
+
+  // ---- 保存 ----
+  const status = document.getElementById("status");
+  const say = (text, tone = "") => {
+    status.textContent = text;
+    status.dataset.tone = tone;
+  };
+
+  document.getElementById("save").addEventListener("click", async () => {
+    say("保存しています…");
+    const body = document.getElementById("body")?.value ?? "";
+    const res = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ collection, id: entryId, data: state, body }),
+    });
+    if (!res.ok) return say(`保存できませんでした：${await res.text()}`, "error");
+    const { slug } = await res.json();
+    if (!entryId) return location.replace(`/admin/${collection}/${slug}`);
+    say("保存しました", "ok");
+  });
+
+  document.getElementById("delete")?.addEventListener("click", async () => {
+    if (!confirm("この項目を削除します。元に戻せません。")) return;
+    const res = await fetch("/api/admin/delete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ collection, id: entryId }),
+    });
+    if (!res.ok) return say(`削除できませんでした：${await res.text()}`, "error");
+    location.replace(`/admin/${collection}/`);
+  });
+</script>
+
+<style is:global>
+  .field + .field {
+    margin-top: 20px;
+  }
+
+  .field__label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .field__help {
+    margin: 6px 0 0;
+    color: var(--a-muted);
+    font-size: 12.5px;
+  }
+
+  .field input[type="text"],
+  .field input[type="date"],
+  .field input[type="number"],
+  .field select,
+  .field textarea,
+  .cols input,
+  .imgfield input,
+  .day__line input {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--a-line);
+    border-radius: 6px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+  }
+
+  .field textarea {
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .check input {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ---- 画像 ---- */
+  .imgfield {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .img {
+    aspect-ratio: 4 / 3;
+    display: grid;
+    place-items: center;
+    background: #efeff1;
+    border: 1px solid var(--a-line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .imgfield__ctrl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .imgfield__ctrl input {
+    flex: 1 1 100%;
+  }
+
+  /* ---- 繰り返し ---- */
+  .rep__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 0;
+    border-top: 1px solid var(--a-line);
+  }
+
+  .rep__tools {
+    display: flex;
+    gap: 4px;
+  }
+
+  .rep__tools button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--a-line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--a-muted);
+    cursor: pointer;
+  }
+
+  .rep__tools button:hover {
+    border-color: var(--a-ink);
+    color: var(--a-ink);
+  }
+
+  .rep__add {
+    margin-top: 10px;
+  }
+
+  .cols {
+    display: grid;
+    gap: 8px;
+  }
+
+  /* ---- スケジュール ---- */
+  .day,
+  .block {
+    padding: 12px;
+    background: #fafafa;
+    border: 1px solid var(--a-line);
+    border-radius: 6px;
+  }
+
+  .day__head {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .day__line {
+    display: block;
+  }
+
+  .day__line span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--a-muted);
+  }
+
+  .day__caption,
+  .block__caption {
+    margin: 14px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--a-muted);
+  }
+
+  .picks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+
+  .pick {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+  }
+
+  .group {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+    background: #fafafa;
+    border: 1px solid var(--a-line);
+    border-radius: 6px;
+  }
+
+  .group .field + .field {
+    margin-top: 0;
+  }
+
+  /* ---- 保存バー ---- */
+  .bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 12px 0;
+    background: linear-gradient(to top, var(--a-bg) 70%, transparent);
+  }
+
+  .bar__status {
+    font-size: 13px;
+    color: var(--a-muted);
+  }
+
+  .bar__status[data-tone="ok"] {
+    color: #1a7f37;
+  }
+
+  .bar__status[data-tone="error"] {
+    color: var(--a-danger);
+  }
+</style>

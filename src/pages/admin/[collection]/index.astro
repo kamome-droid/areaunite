@@ -1,0 +1,133 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { collections } from "../../../lib/admin/schema";
+import { readAll } from "../../../lib/admin/store";
+import { groups } from "../../../config/site";
+
+const key = Astro.params.collection!;
+const def = collections[key];
+if (!def) return Astro.redirect("/admin/");
+
+// 単一ファイルを編集する画面は、一覧を挟まず直接フォームへ
+if (def.singleton) return Astro.redirect(`/admin/${key}/${def.singleton}`);
+
+const entries = await readAll(def);
+entries.sort((a, b) => {
+  if (def.groupBy) {
+    const ga = String(a.data[def.groupBy] ?? "");
+    const gb = String(b.data[def.groupBy] ?? "");
+    if (ga !== gb) return Object.keys(groups).indexOf(ga) - Object.keys(groups).indexOf(gb);
+  }
+  const oa = Number(a.data[def.order ?? "order"] ?? 0);
+  const ob = Number(b.data[def.order ?? "order"] ?? 0);
+  if (oa !== ob) return oa - ob;
+  return String(a.data[def.titleField] ?? "").localeCompare(
+    String(b.data[def.titleField] ?? ""),
+    "ja"
+  );
+});
+
+/** 分類ごとにまとめて出す。項目が増えても探しやすい */
+const sections = def.groupBy
+  ? Object.entries(groups).map(([gk, g]) => ({
+      key: gk,
+      label: g.jp,
+      rows: entries.filter((e) => e.data[def.groupBy!] === gk),
+    }))
+  : [{ key: "", label: "", rows: entries }];
+---
+
+<AdminLayout title={def.label} current={key} intro={def.intro}>
+  <p class="tools">
+    <a class="btn" href={`/admin/${key}/new`}>＋ 新しく追加</a>
+  </p>
+
+  {
+    sections.map((section) =>
+      section.rows.length === 0 && section.key ? null : (
+        <div class="panel">
+          {section.label && <h2 class="group">{section.label}</h2>}
+          <ul class="rows">
+            {section.rows.map((entry) => (
+              <li>
+                <a href={`/admin/${key}/${entry.id}`}>
+                  <span class="rows__title">
+                    {entry.data[def.titleField] || entry.id}
+                  </span>
+                  {entry.data.subtitle && (
+                    <span class="rows__sub">{entry.data.subtitle}</span>
+                  )}
+                  {entry.data.time && (
+                    <span class="rows__time">{entry.data.time}</span>
+                  )}
+                  {entry.data.draft && <span class="rows__draft">下書き</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    )
+  }
+</AdminLayout>
+
+<style>
+  .tools {
+    margin: 0 0 16px;
+  }
+
+  .group {
+    margin: 0 0 10px;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--a-muted);
+  }
+
+  .rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rows li + li {
+    border-top: 1px solid var(--a-line);
+  }
+
+  .rows a {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 4px;
+    text-decoration: none;
+  }
+
+  .rows a:hover {
+    background: #fafafa;
+  }
+
+  .rows__title {
+    font-weight: 600;
+  }
+
+  .rows__sub {
+    color: var(--a-muted);
+    font-size: 13px;
+  }
+
+  .rows__time {
+    margin-left: auto;
+    color: var(--a-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rows__draft {
+    padding: 2px 8px;
+    border: 1px solid var(--a-line);
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--a-muted);
+  }
+</style>
