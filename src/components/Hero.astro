@@ -21,6 +21,8 @@ interface Props {
   catch?: string;
   date?: string;
   venue?: string;
+  /** 情報のすぐ下に出す案内ボタン（入場条件など） */
+  note?: { label: string; href: string };
   ctaLabel?: string;
   ctaHref?: string;
   subCtaLabel?: string;
@@ -35,6 +37,7 @@ const {
   catch: catchCopy,
   date,
   venue,
+  note,
   ctaLabel,
   ctaHref,
   subCtaLabel,
@@ -89,6 +92,16 @@ const overlay = style === "overlay";
               </div>
             )}
           </dl>
+        )
+      }
+
+      {
+        note && (
+          <p class="hero__note">
+            <a class="btn btn--ghost hero__note-link" href={note.href}>
+              {note.label}
+            </a>
+          </p>
         )
       }
 
@@ -201,6 +214,20 @@ const overlay = style === "overlay";
     font-weight: 600;
     letter-spacing: 0.04em;
     line-height: 1.2;
+  }
+
+  /* 入場条件などの案内。押せるが主役ではないので控えめに */
+  .hero__note {
+    margin-top: clamp(20px, 3vw, 28px);
+  }
+
+  .hero__note-link {
+    min-height: 44px;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: none;
   }
 
   .hero__cta {

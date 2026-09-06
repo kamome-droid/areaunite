@@ -121,6 +121,10 @@ const event = defineCollection({
     schedule: z.array(schedulePart).default([]),
     /** チケット料金表 */
     tickets: z.array(ticketRow).default([]),
+    /** KVの下に出す案内ボタン（入場条件など）。文言とリンク先 */
+    heroNote: z
+      .object({ label: z.string(), href: z.string() })
+      .optional(),
     /** チケット購入ボタン */
     ticketUrl: z.string().optional(),
     ticketUrlLabel: z.string().optional(),

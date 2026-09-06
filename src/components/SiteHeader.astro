@@ -251,23 +251,40 @@ const isCurrent = (href: string) => {
   }
 
   .hd__link {
+    position: relative;
     display: block;
     font-size: 1.02rem;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
     color: var(--text);
-    /* 下に伸びる余白がそのまま子メニューへの通り道になる */
+    /* 下に伸びる余白がそのまま子メニューへの通り道になる。
+       下線は余白の底ではなく文字のすぐ下に引きたいので、罫線ではなく
+       擬似要素で位置を決める */
     padding: 22px 0;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s ease, border-color 0.2s ease;
+    transition: color 0.2s ease;
+  }
+
+  .hd__link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    height: 2px;
+    background: transparent;
+    transition: background 0.2s ease;
   }
 
   /* 帯にマウスが移っているあいだも、親は点いたままにする */
   .hd__item:hover .hd__link,
   .hd__link[aria-current="page"] {
     color: var(--brand);
-    border-bottom-color: var(--brand);
+  }
+
+  .hd__item:hover .hd__link::after,
+  .hd__link[aria-current="page"]::after {
+    background: var(--brand);
   }
 
   /* ---- 子メニュー ----
