@@ -145,6 +145,11 @@ const isCurrent = (href: string) => {
     if (e.key === "Escape") setOpen(false);
   });
 
+  // 開いたまま画面の大きさが変わっても、ヘッダーの下に付いてくる
+  addEventListener("resize", () => {
+    if (burger?.getAttribute("aria-expanded") === "true") setOpen(true);
+  });
+
   // 少しでもスクロールしたら背景を敷いて可読性を確保する
   const onScroll = () =>
     header?.classList.toggle("is-scrolled", window.scrollY > 8);
