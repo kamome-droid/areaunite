@@ -83,6 +83,10 @@ const autoRows =
         })
     : [];
 
+/** 左下の「戻る」。別の画面の中で編集している項目（宿泊・協賛）は、その画面の名前で出す */
+const backKey = def.backTo?.split("/")[2];
+const backLabel = backKey && collections[backKey] ? `← ${collections[backKey].label}へ戻る` : "← 一覧へ戻る";
+
 /** 右に出すプレビューの行き先。新規作成中はまだページが無いので出さない */
 const previewPath = !isNew && def.preview ? def.preview(id, data) : null;
 /** iframe の src に # を付けると、その位置を出そうとして親の画面まで動いてしまう。
@@ -118,7 +122,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         <div class="bar">
           {!def.singleton && (
             <a class="btn btn--ghost" href={def.backTo ?? `/admin/${key}/`}>
-            ← 一覧へ戻る
+            {backLabel}
           </a>
         )}
           <span id="status" class="bar__status" />
@@ -687,16 +691,58 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         )
       );
 
-      const list = el("ul", { class: "sublist" });
+      // コンテンツ一覧と同じ形：左のつまみで並べ替え、名前で個別ページ、右の ✕ で削除
+      const list = el("ul", { class: "rows" });
       let from = null;
 
+      /** 保存や削除のあと、サイトに出るまでを知らせる */
+      const report = (commit, done) => {
+        if (!commit) return say(done, "ok");
+        say(`${done}。サイトに反映しています…`, "ok");
+        preview.pending();
+        window.adminWaitLive(commit, {
+          live: () => {
+            say(`${done}。サイトに反映されました`, "ok");
+            preview.fresh();
+          },
+          slow: () => say(`${done}。サイトへの反映に時間がかかっています`, "warn"),
+        });
+      };
+
       const push = (row) => {
+        const title = row.data.title || row.id;
         const li = el(
           "li",
           { "data-id": row.id },
-          el("button", { type: "button", class: "rows__grip", title: "ドラッグで並べ替え" }, "☰"),
-          el("a", { href: `/admin/${f.collection}/${row.id}` }, row.data.title || row.id),
-          row.data.draft ? el("span", { class: "rows__draft" }, "下書き") : ""
+          el("button", { type: "button", class: "rows__grip", title: "ドラッグで並べ替え", "aria-label": "並べ替え" }, "☰"),
+          el(
+            "a",
+            { href: `/admin/${f.collection}/${row.id}` },
+            el("span", { class: "rows__title" }, title),
+            row.data.subtitle ? el("span", { class: "rows__sub" }, row.data.subtitle) : "",
+            row.data.draft ? el("span", { class: "rows__draft" }, "下書き") : ""
+          ),
+          el(
+            "button",
+            {
+              type: "button",
+              class: "rows__del",
+              title: "削除",
+              "aria-label": "削除",
+              onclick: async () => {
+                if (!(await window.adminConfirm(`「${title}」を削除します。元に戻せません。`))) return;
+                const res = await fetch("/api/admin/delete", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ collection: f.collection, id: row.id }),
+                }).catch(() => null);
+                if (!res?.ok) return say("削除できませんでした。もう一度お試しください", "error");
+                li.remove();
+                report((await res.json()).commit, "削除しました");
+              },
+            },
+            "✕"
+          )
         );
 
         const grip = li.querySelector(".rows__grip");
@@ -710,12 +756,17 @@ const previewHash = previewPath?.split("#")[1] ?? "";
           li.draggable = false;
           li.classList.remove("is-dragging");
           from = null;
+          list.querySelectorAll(".is-over").forEach((n) => n.classList.remove("is-over"));
         });
         li.addEventListener("dragover", (e) => {
-          if (from && from !== li) e.preventDefault();
+          if (!from || from === li) return;
+          e.preventDefault();
+          li.classList.add("is-over");
         });
+        li.addEventListener("dragleave", () => li.classList.remove("is-over"));
         li.addEventListener("drop", async (e) => {
           e.preventDefault();
+          li.classList.remove("is-over");
           if (!from || from === li) return;
           const order = [...list.children];
           li.insertAdjacentElement(
@@ -732,16 +783,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
             }),
           }).catch(() => null);
           if (!res?.ok) return say("並び順を保存できませんでした。もう一度お試しください", "error");
-          const { commit } = await res.json();
-          if (!commit) return say("並び順を保存しました", "ok");
-          say("並び順を保存しました。サイトに反映しています…", "ok");
-          preview.pending();
-          window.adminWaitLive(commit, {
-            live: () => {
-              say("並び順を保存しました。サイトに反映されました", "ok");
-              preview.fresh();
-            },
-          });
+          report((await res.json()).commit, "並び順を保存しました");
         });
 
         list.append(li);

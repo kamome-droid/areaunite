@@ -151,36 +151,45 @@
   margin-top: 16px;
 }
 
-.sublist {
+/* ---- 並べ替えられる一覧 ----
+   コンテンツ一覧と、画面の中の一覧（宿泊など）で同じ見た目にする。
+   左のつまみで並べ替え、名前を押すと個別ページ、右の ✕ で削除 */
+.rows {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.sublist li {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-}
-
-.sublist li + li {
+.rows li + li {
   border-top: 1px solid var(--a-line);
 }
 
-.sublist li.is-dragging {
+.rows li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  align-items: center;
+}
+
+.rows__del {
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--a-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rows__del:hover {
+  color: var(--a-danger);
+}
+
+.rows li.is-dragging {
   opacity: 0.45;
 }
 
-.sublist a {
-  padding: 12px 0;
-  color: inherit;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.sublist a:hover {
-  text-decoration: underline;
+.rows li.is-over {
+  box-shadow: 0 -2px 0 var(--a-ink);
 }
 
 .rows__grip {
@@ -191,6 +200,35 @@
   font-size: 13px;
   line-height: 1;
   cursor: grab;
+}
+
+
+.rows a {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 4px;
+  text-decoration: none;
+}
+
+.rows a:hover {
+  background: #fafafa;
+}
+
+.rows__title {
+  font-weight: 600;
+}
+
+.rows__sub {
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
+.rows__time {
+  margin-left: auto;
+  color: var(--a-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 .rows__draft {
@@ -212,14 +250,14 @@
 }
 
 .field__head + .rep,
-.field__head + .sublist {
+.field__head + .rows {
   padding-top: 2px;
   border-top: 1px solid var(--a-line);
 }
 
 /* 枠線は上に1本あるので、先頭の行では引かない */
 .field__head + .rep > .rep__row:first-child,
-.field__head + .sublist > li:first-child {
+.field__head + .rows > li:first-child {
   border-top: 0;
 }
 

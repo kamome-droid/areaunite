@@ -41,8 +41,8 @@ const sections = def.groupBy
 
 <AdminLayout title={def.label} current={key}>
   <div class="tools">
-    <a class="btn" href={`/admin/${key}/new`}>＋ 新しく追加</a>
     <span id="orderStatus" class="tools__status"></span>
+    <a class="btn btn--small" href={`/admin/${key}/new`}>＋ 新しく追加</a>
   </div>
 
   {
@@ -259,57 +259,10 @@ const sections = def.groupBy
     border-color: var(--a-ink);
   }
 
-  .rows {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .rows li + li {
-    border-top: 1px solid var(--a-line);
-  }
-
-  .rows li {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) 28px;
-    align-items: center;
-  }
-
-  .rows__del {
-    padding: 4px;
-    border: 0;
-    background: none;
-    color: var(--a-muted);
-    font-size: 13px;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .rows__del:hover {
-    color: var(--a-danger);
-  }
-
-  .rows li.is-dragging {
-    opacity: 0.45;
-  }
-
-  .rows li.is-over {
-    box-shadow: 0 -2px 0 var(--a-ink);
-  }
-
-  .rows__grip {
-    padding: 4px;
-    border: 0;
-    background: none;
-    color: var(--a-muted);
-    font-size: 13px;
-    line-height: 1;
-    cursor: grab;
-  }
-
   .tools {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     margin: 0 0 16px;
   }
@@ -317,42 +270,6 @@ const sections = def.groupBy
 
   .tools__status {
     font-size: 13px;
-    color: var(--a-muted);
-  }
-
-  .rows a {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding: 12px 4px;
-    text-decoration: none;
-  }
-
-  .rows a:hover {
-    background: #fafafa;
-  }
-
-  .rows__title {
-    font-weight: 600;
-  }
-
-  .rows__sub {
-    color: var(--a-muted);
-    font-size: 13px;
-  }
-
-  .rows__time {
-    margin-left: auto;
-    color: var(--a-muted);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .rows__draft {
-    padding: 2px 8px;
-    border: 1px solid var(--a-line);
-    border-radius: 999px;
-    font-size: 11px;
     color: var(--a-muted);
   }
 </style>
