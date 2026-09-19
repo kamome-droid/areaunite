@@ -18,24 +18,19 @@ export const site = {
   logo: "/images/logo/logo.png",
   /** ロゴ画像の実寸。縦横比だけ使うので、差し替えたら実寸に合わせる */
   logoSize: { w: 720, h: 139 },
-  /** SNSでシェアされたときの画像 */
-  ogImage: "/images/kv/og.jpg",
+  /** SNSでシェアされたときの画像。空なら今のKVから自動で作る（/api/share.jpg） */
+  ogImage: "",
   /** フッターのコピーライト表記 */
   copyright: "AREA UNITE",
-  /** SNSに投稿するときのハッシュタグ。管理画面のキャプションに付く */
-  hashtags: ["#areaunite", "#エリアユナイト", "#白馬", "#hakuba", "#スノーボード", "#映画祭"],
-  sns: {
-    instagram: "https://www.instagram.com/areaunite_film_festival/",
-    x: "",
-    youtube: "",
-  },
+  /** SNS画像のキャプションに付くハッシュタグの既定。
+      ふだんは管理画面（トップページ）で入れたものが使われる */
+  hashtags: [] as string[],
   /** お問い合わせ */
   contact: {
     /** フォームの送信先URL。空のあいだフォームは「未接続」表示になり、送信できない */
     endpoint: "",
-    /** 連絡先メールアドレス（任意） */
-    email: "",
   },
+  // SNSのリンクと連絡先メールは、管理画面（トップページ）で入れる
   /** ヘッダー右のCTAボタン。不要なら null */
   headerCta: { label: "Ticket", href: "/ticket/" } as {
     label: string;

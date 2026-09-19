@@ -5,24 +5,25 @@ import PageHero from "../components/PageHero.astro";
 import { site } from "../config/site";
 import VideoEmbed from "../components/VideoEmbed.astro";
 import HiddenNote from "../components/HiddenNote.astro";
-import { getCurrentEvent } from "../lib/content";
+import { getCurrentEvent, getSiteInfo } from "../lib/content";
 import { showsComingSoon } from "../lib/visibility";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+const info = await getSiteInfo();
 // 準備中なら COMING SOON に差し替える（URLはそのまま）
 if (showsComingSoon(ev, "about", Astro)) return Astro.rewrite("/soon/about");
 const About = event ? (await render(event)).Content : null;
 ---
 
-<BaseLayout title="About｜イベントについて" description={site.description}>
+<BaseLayout title="About｜イベントについて">
   <PageHero label="About" jp="イベントについて" />
   <HiddenNote page="about" />
 
   <section class="page">
     <div class="wrap">
       <div class="measure">
-        <p class="tagline">{site.tagline}</p>
+        <p class="tagline">{info.tagline}</p>
         <div class="prose body">
           {ev?.aboutLead && <p>{ev.aboutLead}</p>}
           {About && <About />}

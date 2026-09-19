@@ -1,5 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
-import { groups, parents } from "../config/site";
+import { groups, parents, site } from "../config/site";
 
 const isProd = import.meta.env.PROD;
 
@@ -254,4 +254,23 @@ export function itemThumb(data: { image?: string; video?: string }): string | un
   if (data.image) return data.image;
   const yt = youtubeId(data.video);
   return yt ? `https://img.youtube.com/vi/${yt}/hqdefault.jpg` : undefined;
+}
+
+/**
+ * サイト全体に出る、管理画面から変えられる値。
+ * 開催回のファイルに入っていればそれを、無ければ site.ts の既定を使う。
+ */
+export async function getSiteInfo() {
+  const ev = (await getCurrentEvent())?.data;
+  return {
+    tagline: ev?.tagline || site.tagline,
+    description: ev?.description || site.description,
+    sns: {
+      instagram: ev?.sns?.instagram ?? "",
+      x: ev?.sns?.x ?? "",
+      youtube: ev?.sns?.youtube ?? "",
+    },
+    contactEmail: ev?.contactEmail ?? "",
+    hashtags: ev?.hashtags ?? [],
+  };
 }

@@ -46,9 +46,7 @@ const ev = event?.data;
               )
             }
 
-            <p class="support muted">
-              応援チケットの販売もしています。AREA UNITE 運営のためにご協力をお願いいたします。
-            </p>
+            {ev?.ticketMessage && <p class="support muted">{ev.ticketMessage}</p>}
       </div>
     </div>
   </section>

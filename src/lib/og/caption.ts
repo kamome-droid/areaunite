@@ -7,12 +7,14 @@ import { dateRangeLabel, getItems, resolveProgram, type ProgramBlock } from "../
  * 下書きまで用意して「コピーして貼るだけ」にする。
  */
 
-const tags = () => (site.hashtags ?? []).join(" ");
+/** ハッシュタグ。管理画面（トップページ）で入れたもの */
+const tags = (ev: Ev) => (ev.hashtags?.length ? ev.hashtags : site.hashtags ?? []).join(" ");
 
 const join = (...blocks: (string | undefined | false)[]) =>
   blocks.filter(Boolean).join("\n\n").trim();
 
 type Ev = {
+  hashtags?: readonly string[];
   edition?: string;
   catch?: string;
   venue?: string;
@@ -30,11 +32,11 @@ const head = (ev: Ev) =>
   [ev.edition, dateRangeLabel(ev.schedule), ev.venue].filter(Boolean).join("\n");
 
 export function overviewCaption(ev: Ev): string {
-  return join(head(ev), ev.catch, tags());
+  return join(head(ev), ev.catch, tags(ev));
 }
 
 export function aboutCaption(ev: Ev): string {
-  return join(head(ev), ev.aboutLead, tags());
+  return join(head(ev), ev.aboutLead, tags(ev));
 }
 
 export function scheduleCaption(
@@ -52,7 +54,7 @@ export function scheduleCaption(
     [day.note, day.time].filter(Boolean).join("　"),
     lines.join("\n"),
     ev.venue && `会場：${ev.venue}`,
-    tags()
+    tags(ev)
   );
 }
 
@@ -63,7 +65,7 @@ export function ticketCaption(ev: Ev): string {
     rows.join("\n"),
     ev.ticketNotes[0],
     ev.ticketUrl && `▼ご購入はこちら\n${ev.ticketUrl}`,
-    tags()
+    tags(ev)
   );
 }
 
@@ -72,12 +74,12 @@ export function accessCaption(ev: Ev): string {
     "【会場・アクセス】",
     [ev.venue, ev.address].filter(Boolean).join("\n"),
     ev.accessNotes.join("\n"),
-    tags()
+    tags(ev)
   );
 }
 
 export function stayCaption(ev: Ev, names: string[]): string {
-  return join("【周辺の宿泊】", names.join("\n"), ev.venue && `会場：${ev.venue}`, tags());
+  return join("【周辺の宿泊】", names.join("\n"), ev.venue && `会場：${ev.venue}`, tags(ev));
 }
 
 export async function itemCaption(ev: Ev, id: string): Promise<string | null> {
@@ -100,7 +102,7 @@ export async function itemCaption(ev: Ev, id: string): Promise<string | null> {
       name,
       when,
       (hit.body ?? "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_`>#]/g, "").trim(),
-      tags()
+      tags(ev)
     );
   }
   return null;

@@ -114,6 +114,9 @@ const event = defineCollection({
     heroStyle: z.enum(["overlay", "band", "split"]).default("overlay"),
     /** KVに添えるキャッチ */
     catch: z.string().default(""),
+    /** KVの上に小さく出す英字のキャッチ。フッターとSNS画像にも出る。
+        空なら site.ts の tagline */
+    tagline: z.string().optional(),
     /** キャッチのすぐ下に出す案内。note は小さな説明文、label はボタンの文字 */
     heroCta: z
       .object({
@@ -162,6 +165,25 @@ const event = defineCollection({
     /** 購入ボタンの行き先。書かなければボタンは出ない。文字は「購入する」で固定 */
     ticketUrl: z.string().optional(),
     ticketNotes: z.array(z.string()).default([]),
+
+    /** チケットページの一番下に添える文（応援チケットの案内など） */
+    ticketMessage: z.string().optional(),
+
+    /* ---- サイト全体 ---- */
+    /** SNSのリンク。入っているものだけアイコンを出す（ヘッダー・フッター・お問い合わせ） */
+    sns: z
+      .object({
+        instagram: z.string().optional(),
+        x: z.string().optional(),
+        youtube: z.string().optional(),
+      })
+      .default({}),
+    /** お問い合わせページに出す連絡先メール */
+    contactEmail: z.string().optional(),
+    /** SNS画像のキャプションに付けるハッシュタグ。1行に1つ */
+    hashtags: z.array(z.string()).default([]),
+    /** 検索結果やシェアで出る説明文。空なら site.ts の description */
+    description: z.string().optional(),
 
     /* ---- 出演・協賛 ---- */
     /** 名前だけを並べる欄（来場ライダーなど） */

@@ -1,5 +1,6 @@
 ---
 import { site } from "../config/site";
+import { getSiteInfo } from "../lib/content";
 
 interface Props {
   title?: string;
@@ -11,8 +12,9 @@ interface Props {
 const { title, description, image, noindex = false } = Astro.props;
 
 const pageTitle = title ? `${title} | ${site.name}` : `${site.name}`;
-const desc = description ?? site.description;
-const ogImage = new URL(image ?? site.ogImage, Astro.site ?? Astro.url).href;
+const desc = description ?? (await getSiteInfo()).description;
+// シェアされたときの画像。指定が無ければ、今のKVから自動で作ったもの
+const ogImage = new URL(image ?? (site.ogImage || "/api/share.jpg"), Astro.site ?? Astro.url).href;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
 ---
 

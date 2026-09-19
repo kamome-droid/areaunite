@@ -118,6 +118,13 @@ export const collections: Record<string, CollectionDef> = {
         ],
       },
       { name: "hero", label: "KV画像", type: "image" },
+      {
+        name: "tagline",
+        label: "KVの英字キャッチ",
+        type: "text",
+        placeholder: "Together, one in unity.",
+        help: "KVの上とフッター、SNS画像に出ます",
+      },
       { name: "edition", label: "開催回の名前", type: "text", placeholder: "AREA UNITE 2026" },
       { name: "catch", label: "キャッチコピー", type: "textarea" },
       {
@@ -149,6 +156,32 @@ export const collections: Record<string, CollectionDef> = {
         layout: "line",
       },
       { name: "supporters", label: "後援・協力団体", type: "lines", help: "1行に1つずつ。改行で区切ってください" },
+
+      // ここから下は、ページの一番下（フッター）とサイト全体に効くもの
+      {
+        name: "sns",
+        label: "SNSのリンク",
+        type: "group",
+        help: "入れたものだけ、ヘッダー・フッター・お問い合わせにアイコンが出ます",
+        fields: [
+          { name: "instagram", label: "Instagram", type: "text", placeholder: "https://www.instagram.com/…" },
+          { name: "x", label: "X", type: "text", placeholder: "https://x.com/…" },
+          { name: "youtube", label: "YouTube", type: "text", placeholder: "https://www.youtube.com/@…" },
+        ],
+      },
+      { name: "contactEmail", label: "お問い合わせのメールアドレス", type: "text", help: "お問い合わせページに出ます" },
+      {
+        name: "hashtags",
+        label: "SNS投稿のハッシュタグ",
+        type: "lines",
+        help: "1行に1つずつ。SNS画像ダウンロードのキャプションに付きます",
+      },
+      {
+        name: "description",
+        label: "検索やシェアで出る説明文",
+        type: "textarea",
+        help: "Google の検索結果や、LINE・X でURLを送ったときに出ます",
+      },
 
       // 画面には出さない。開催回が増えたとき、どれが新しいかを決めるためだけの値
       { name: "date", label: "開催日", type: "hidden" },
@@ -201,6 +234,7 @@ export const collections: Record<string, CollectionDef> = {
       },
       { name: "ticketUrl", label: "チケット購入先URL", type: "text" },
       { name: "ticketNotes", label: "注意事項", type: "lines" },
+      { name: "ticketMessage", label: "一番下に添える文", type: "textarea", placeholder: "応援チケットの販売もしています。" },
     ],
   },
 

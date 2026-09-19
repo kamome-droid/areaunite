@@ -10,6 +10,7 @@ import PageHero from "../../components/PageHero.astro";
 import SnsIcons from "../../components/SnsIcons.astro";
 import { site, parents } from "../../config/site";
 import { pageKeys, type PageKey } from "../../lib/visibility";
+import { getSiteInfo } from "../../lib/content";
 
 const heads: Record<PageKey, { label: string; jp: string }> = {
   about: { label: "About", jp: "イベントについて" },
@@ -21,9 +22,10 @@ const heads: Record<PageKey, { label: string; jp: string }> = {
 const page = Astro.params.page as PageKey;
 if (!pageKeys.includes(page)) return new Response(null, { status: 404 });
 const head = heads[page];
+const { sns } = await getSiteInfo();
 ---
 
-<BaseLayout title={`${head.label}｜${head.jp}`} description={site.description}>
+<BaseLayout title={`${head.label}｜${head.jp}`}>
   <PageHero label={head.label} jp={head.jp} />
 
   <section class="soon">
@@ -31,7 +33,7 @@ const head = heads[page];
       <p class="en soon__title">Coming Soon</p>
       <p class="soon__text">準備中です。</p>
       {
-        site.sns.instagram && (
+        (sns.instagram || sns.x || sns.youtube) && (
           <div class="soon__sns">
             <p class="soon__note muted">最新情報はSNSでお知らせします</p>
             <SnsIcons size={24} />

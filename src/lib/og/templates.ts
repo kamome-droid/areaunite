@@ -439,7 +439,7 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
     const KV_H = tall ? 600 : 560;
     node = frame({
       ...base,
-      label: site.tagline ?? "Film festival",
+      label: ev.tagline || site.tagline || "Film festival",
       jp: ev.edition,
       // 日付は本文に出すので、足もとは会場名にする
       footer: ev.venue ?? period,

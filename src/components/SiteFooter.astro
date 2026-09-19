@@ -1,4 +1,5 @@
 ---
+import { getSiteInfo } from "../lib/content";
 import { site } from "../config/site";
 import { getNav } from "../lib/nav";
 import SnsIcons from "./SnsIcons.astro";
@@ -14,6 +15,7 @@ const nav = [
 ];
 
 const year = new Date().getFullYear();
+const info = await getSiteInfo();
 ---
 
 <footer class="ft">
@@ -33,7 +35,7 @@ const year = new Date().getFullYear();
           )
         }
       </a>
-      <p class="ft__tagline">{site.tagline}</p>
+      <p class="ft__tagline">{info.tagline}</p>
       <SnsIcons class="ft__sns" size={22} />
     </div>
 

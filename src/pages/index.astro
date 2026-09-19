@@ -11,9 +11,11 @@ import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
 import { showsComingSoon } from "../lib/visibility";
+import { getSiteInfo } from "../lib/content";
 import { dateRangeLabel, getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, displayDate } from "../lib/content";
 
 const event = await getCurrentEvent();
+const info = await getSiteInfo();
 const ev = event?.data;
 /** 準備中のページ。トップからはその中身も出さず、リンクも張らない */
 const soon = {
@@ -48,11 +50,11 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
 }));
 ---
 
-<BaseLayout description={site.description}>
+<BaseLayout>
   <Hero
     image={ev?.hero}
     style={ev?.heroStyle}
-    eyebrow={site.tagline}
+    eyebrow={info.tagline}
     title={ev?.edition ?? site.name}
     catch={ev?.catch}
     date={dateLabel}
