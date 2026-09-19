@@ -88,6 +88,10 @@ const previewPath = !isNew && def.preview ? def.preview(id, data) : null;
 /** iframe の src に # を付けると、その位置を出そうとして親の画面まで動いてしまう。
     読み込んだあとに iframe の中だけを動かすので、ここでは分けて持つ */
 const previewSrc = previewPath?.split("#")[0] ?? null;
+/** 「別タブで開く」。非公開のページも中身を見られるよう、プレビューの印を付ける */
+const previewTab = previewSrc
+  ? `${previewSrc}${previewSrc.includes("?") ? "&" : "?"}preview${previewPath!.includes("#") ? "#" + previewPath!.split("#")[1] : ""}`
+  : null;
 const previewHash = previewPath?.split("#")[1] ?? "";
 ---
 
@@ -141,7 +145,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
             <button type="button" id="reload" class="preview__btn">
               更新
             </button>
-            <a href={previewPath} target="_blank" rel="noopener" class="preview__btn">
+            <a href={previewTab} target="_blank" rel="noopener" class="preview__btn">
               別タブで開く ↗
             </a>
           </div>

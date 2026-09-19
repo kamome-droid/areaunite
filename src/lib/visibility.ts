@@ -36,8 +36,24 @@ export const isAdmin = (astro: Pick<AstroGlobal, "cookies">) =>
   verifyToken(astro.cookies.get(COOKIE)?.value);
 
 /**
- * このリクエストで COMING SOON を出すか。
- * 非公開 かつ 管理者でない とき。
+ * 管理画面のプレビュー枠の中で開かれたか。
+ * ブラウザは iframe の中で開くページに Sec-Fetch-Dest: iframe を付ける
  */
-export const showsComingSoon = (ev: WithHidden, page: PageKey, astro: Pick<AstroGlobal, "cookies">) =>
+const inPreview = (request: Request) =>
+  request.headers.get("sec-fetch-dest") === "iframe" || new URL(request.url).searchParams.has("preview");
+
+/**
+ * このリクエストで COMING SOON を出すか。
+ * 非公開なら、ログインしていてもサイトを直接開いたときは COMING SOON を出す
+ * （一般の人と同じ見え方を確かめられるように）。
+ * 中身を見せるのは、管理画面にログインしていて、プレビュー枠の中で開いたときだけ。
+ */
+export const showsComingSoon = (
+  ev: WithHidden,
+  page: PageKey,
+  astro: Pick<AstroGlobal, "cookies" | "request">
+) => isHidden(ev, page) && !(isAdmin(astro) && inPreview(astro.request));
+
+/** 非公開ページのSNS画像を出さないか。管理画面（SNS画像ダウンロード）からは作れるようにする */
+export const hiddenFromPublic = (ev: WithHidden, page: PageKey, astro: Pick<AstroGlobal, "cookies">) =>
   isHidden(ev, page) && !isAdmin(astro);

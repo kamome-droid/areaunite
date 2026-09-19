@@ -4,7 +4,7 @@ import { buildOg, OG_SIZE, type OgKind } from "./templates";
 import { ogFonts } from "./font";
 import type { AstroCookies } from "astro";
 import { getCurrentEvent } from "../content";
-import { showsComingSoon, type PageKey } from "../visibility";
+import { hiddenFromPublic, type PageKey } from "../visibility";
 
 /** 1枚ぶんのPNGを作る。無い内容なら null */
 export async function renderOg(
@@ -37,7 +37,7 @@ const pageOfKind: Partial<Record<OgKind, PageKey>> = {
 /** ページが準備中で、この人には画像も出さないか（管理画面にログインしていれば出す） */
 export async function ogHidden(kind: OgKind, cookies: AstroCookies) {
   const page = pageOfKind[kind];
-  return !!page && showsComingSoon((await getCurrentEvent())?.data, page, { cookies });
+  return !!page && hiddenFromPublic((await getCurrentEvent())?.data, page, { cookies });
 }
 
 /** "/api/og/xxx.png?…" の形から種類を取り出す */
