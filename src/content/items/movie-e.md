@@ -6,7 +6,7 @@ time: "18:40"
 day: day1
 runtime: 25 min
 image: /images/items/_dummy/image.png
-order: 40
+order: 50
 featured: false
 ---
 
