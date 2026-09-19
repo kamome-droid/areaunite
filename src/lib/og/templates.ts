@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import sharp from "sharp";
 import path from "node:path";
 import { groups, site } from "../../config/site";
 import {
@@ -47,28 +48,48 @@ const img = (src: string, style: Record<string, any>): Node => ({
   props: { src, style },
 });
 
-/** 画像を data URI にする。satori は画像を自分で取りに行けないので、
+/** 画像を読み込む。satori は画像を自分で取りに行けないので、
     public/ のファイルも、YouTubeのサムネイルのような外部URLもここで読み込む */
-async function dataUri(src?: string | null): Promise<string | null> {
+async function loadImage(src?: string | null): Promise<Buffer | null> {
   if (!src) return null;
   try {
     if (/^https?:\/\//.test(src)) {
       const res = await fetch(src);
-      if (!res.ok) return null;
-      const mime = res.headers.get("content-type") ?? "image/jpeg";
-      const buf = Buffer.from(await res.arrayBuffer());
-      return `data:${mime};base64,${buf.toString("base64")}`;
+      return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
     }
     if (!src.startsWith("/")) return null;
-    const file = path.join(process.cwd(), "public", src.slice(1));
-    const buf = await readFile(file);
-    const ext = path.extname(file).toLowerCase();
-    const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
-    return `data:${mime};base64,${buf.toString("base64")}`;
+    return await readFile(path.join(process.cwd(), "public", src.slice(1)));
   } catch {
     return null;
   }
 }
+
+type Picture = { uri: string; width: number; height: number };
+
+/**
+ * 画像を satori に渡せる形（data URI）にする。
+ * satori は webp を読めない（読めないと黙って空白になる）。管理画面から上げた画像は
+ * webp にそろえているので、ここで PNG / JPEG に直す。大きすぎるものは縮める。
+ */
+async function picture(src?: string | null): Promise<Picture | null> {
+  const raw = await loadImage(src);
+  if (!raw) return null;
+  try {
+    const img = sharp(raw, { animated: false }).rotate().resize({ width: 1200, withoutEnlargement: true });
+    const meta = await img.metadata();
+    // 透過のあるもの（ロゴなど）は PNG、写真は軽い JPEG
+    const { data, info } = meta.hasAlpha
+      ? await img.png().toBuffer({ resolveWithObject: true })
+      : await img.jpeg({ quality: 85 }).toBuffer({ resolveWithObject: true });
+    const mime = meta.hasAlpha ? "image/png" : "image/jpeg";
+    return { uri: `data:${mime};base64,${data.toString("base64")}`, width: info.width, height: info.height };
+  } catch {
+    return null;
+  }
+}
+
+/** data URI だけ欲しいとき */
+const dataUri = async (src?: string | null) => (await picture(src))?.uri ?? null;
 
 /* ---------------------------------------------------------
    共通の枠
@@ -412,7 +433,10 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
     });
     name = pages.length > 1 ? `schedule-${day.id}-${page}` : `schedule-${day.id}`;
   } else if (kind === "overview") {
-    const kv = await dataUri(ev.hero);
+    const kv = await picture(ev.hero);
+    // 縦長のKV（ポスター型）は切らずに全体を見せる。横長は帯にして切り抜く
+    const tall = !!kv && kv.height > kv.width;
+    const KV_H = tall ? 600 : 560;
     node = frame({
       ...base,
       label: site.tagline ?? "Film festival",
@@ -422,13 +446,23 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
       children: [
         ...(kv
           ? [
-              img(kv, {
-                width: "100%",
-                height: 560,
-                objectFit: "cover",
-                borderRadius: 10,
-                marginBottom: 44,
-              }),
+              tall
+                ? h(
+                    "div",
+                    { display: "flex", justifyContent: "center", width: "100%", marginBottom: 40 },
+                    img(kv.uri, {
+                      height: KV_H,
+                      width: Math.round((KV_H * kv.width) / kv.height),
+                      borderRadius: 10,
+                    })
+                  )
+                : img(kv.uri, {
+                    width: "100%",
+                    height: KV_H,
+                    objectFit: "cover",
+                    borderRadius: 10,
+                    marginBottom: 44,
+                  }),
             ]
           : []),
         h(
