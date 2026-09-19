@@ -683,3 +683,9 @@
 .bar__status[data-tone="error"] {
   color: var(--a-danger);
 }
+
+/* アップロード中・保存中は押せないことが見て分かるように */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}

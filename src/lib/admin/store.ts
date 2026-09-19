@@ -102,7 +102,12 @@ async function githubPut(repoPath: string, contentBase64: string, message: strin
   // 既存ファイルの sha を取得（更新に必要）
   let sha: string | undefined;
   const get = await fetch(`${api}?ref=${branch}`, { headers });
-  if (get.ok) sha = (await get.json()).sha;
+  if (get.ok) {
+    const cur = await get.json();
+    sha = cur.sha;
+    // 中身が同じなら書かない。空のコミットでもサイトが作り直されて、反映待ちの列が伸びるため
+    if (typeof cur.content === "string" && cur.content.replace(/\s/g, "") === contentBase64) return;
+  }
   const res = await fetch(api, {
     method: "PUT",
     headers,
@@ -116,6 +121,8 @@ async function writeText(repoPath: string, text: string, message: string) {
     await githubPut(repoPath, Buffer.from(text, "utf8").toString("base64"), message);
   } else {
     const abs = path.join(process.cwd(), repoPath);
+    // 中身が同じなら書かない（GitHubに書くときと振る舞いをそろえる）
+    if ((await fs.readFile(abs, "utf8").catch(() => null)) === text) return;
     await fs.mkdir(path.dirname(abs), { recursive: true });
     await fs.writeFile(abs, text, "utf8");
   }
