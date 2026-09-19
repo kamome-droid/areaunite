@@ -79,12 +79,16 @@ export type Group = {
       bracket … 制作者「作品名」（映画のように作り手を併記したいとき）
       plain   … 名前だけ（出演者のように名前で通じるとき。既定） */
   scheduleFormat?: "bracket" | "plain";
+  /** 管理画面での欄の名前。分類ごとに呼び方が違うので、ここで決める。
+      subtitle … タイトルの上に小さく出る文字 / title … 名前 */
+  labels?: { subtitle?: string; title?: string };
   /** どの親ページに置くか */
   parent: Parent;
 };
 
 export const groups: Record<string, Group> = {
   movies: {
+    labels: { subtitle: "制作者・チーム名", title: "作品タイトル" },
     label: "Movies",
     jp: "ムービー",
     ratio: "16 / 9",
@@ -96,6 +100,7 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   live: {
+    labels: { subtitle: "ジャンル・肩書き", title: "アーティスト名" },
     label: "Live",
     jp: "ライブ",
     ratio: "16 / 9",
@@ -105,6 +110,7 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   talk: {
+    labels: { subtitle: "登壇者", title: "トークのタイトル" },
     label: "Talk Show",
     jp: "トークショー",
     ratio: "16 / 9",
@@ -114,6 +120,7 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   dj: {
+    labels: { subtitle: "肩書き・拠点", title: "DJ名" },
     label: "DJ",
     jp: "DJ",
     ratio: "16 / 9",
@@ -123,6 +130,7 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   foods: {
+    labels: { subtitle: "料理のジャンル", title: "店名" },
     video: false,
     label: "Foods",
     jp: "フード",
@@ -132,6 +140,7 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   shops: {
+    labels: { subtitle: "業種・ジャンル", title: "店名・ブース名" },
     video: false,
     label: "Shop & Booth",
     jp: "ショップ ＆ ブース",

@@ -297,8 +297,8 @@ export const collections: Record<string, CollectionDef> = {
       { name: "group", label: "分類", type: "pills", options: [] }, // 起動時に site.ts から埋める
       { name: "video", label: "動画", type: "text", placeholder: "https://youtu.be/xxxxxxx", hideFor: ["foods", "shops"] },
       { name: "image", label: "画像", type: "image" },
-      { name: "subtitle", label: "制作者・チーム名", type: "text" },
-      { name: "title", label: "作品タイトル", type: "text" },
+      { name: "subtitle", label: "肩書き・ひとこと", type: "text" }, // 分類ごとの呼び方は site.ts の labels
+      { name: "title", label: "名前", type: "text" },
       { name: "day", label: "開催日", type: "select", options: [] }, // 起動時に開催回から埋める
       { name: "time", label: "開始時刻", type: "text", placeholder: "17:30", help: "入れると[スケジュール](/admin/schedule/)に並びます" },
       { name: "runtime", label: "所要時間", type: "text", placeholder: "10 min" },

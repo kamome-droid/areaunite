@@ -231,6 +231,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.rows__empty {
+  margin: 0;
+  padding: 14px 4px;
+  color: var(--a-muted);
+  font-size: 13px;
+}
+
 .rows__draft {
   padding: 2px 8px;
   border: 1px solid var(--a-line);

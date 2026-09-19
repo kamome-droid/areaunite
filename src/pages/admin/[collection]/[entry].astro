@@ -52,6 +52,8 @@ const title = isNew
     ? def.label
     : String(data[def.titleField] || def.labelOne);
 const groupOptions = Object.entries(groups).map(([k, g]) => ({ value: k, label: g.jp }));
+/** 分類ごとの欄の名前（ムービーなら「作品タイトル」、フードなら「店名」…） */
+const groupLabels = Object.fromEntries(Object.entries(groups).map(([k, g]) => [k, g.labels ?? {}]));
 
 /** この画面の中で直接編集する、別コレクションの項目（アクセス画面の宿泊など） */
 const subFields = def.fields.filter((f) => f.type === "sub") as Extract<Field, { type: "sub" }>[];
@@ -176,6 +178,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     fields,
     data,
     groupOptions,
+    groupLabels,
     dayOptions,
     autoRows,
     subRows,
@@ -752,6 +755,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
                 }).catch(() => null);
                 if (!res?.ok) return say("削除できませんでした。もう一度お試しください", "error");
                 li.remove();
+                showEmpty();
                 report((await res.json()).commit, "削除しました");
               },
             },
@@ -804,7 +808,11 @@ const previewHash = previewPath?.split("#")[1] ?? "";
       };
 
       rows.forEach(push);
-      wrap.append(head, list, helpFor(f));
+      // 1件も無いときは、枠が壊れて見えないよう一言出す
+      const empty = el("p", { class: "rows__empty" }, `まだありません。「${f.addLabel ?? "＋ 追加"}」から足せます`);
+      const showEmpty = () => (empty.hidden = list.children.length > 0);
+      showEmpty();
+      wrap.append(head, list, empty, helpFor(f));
     } else if (f.type === "schedule") {
       // 開催日の追加・削除はしない。中身だけ編集する
       const days = Array.isArray(value) ? structuredClone(value) : [];
@@ -1104,6 +1112,8 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     extras.replaceChildren();
     fields
       .filter((f) => !f.hideFor?.includes(String(state.group ?? "")))
+      // 欄の名前は分類によって変える。分類を選び直すと、ここから描き直される
+      .map((f) => ({ ...f, label: groupLabels[state.group]?.[f.name] ?? f.label }))
       .forEach((f) => {
         // 別コレクションを扱う欄は、フォームとは別のフレームに出す
         const target =

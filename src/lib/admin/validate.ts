@@ -3,6 +3,7 @@
 import yaml from "js-yaml";
 import { collections as content } from "../../content.config";
 import { collections, type CollectionDef, type Field } from "./schema";
+import { groups } from "../../config/site";
 
 /** 保存先のフォルダから、どのスキーマで確かめるかを決める */
 const schemaOf = (def: CollectionDef) => {
@@ -12,7 +13,10 @@ const schemaOf = (def: CollectionDef) => {
 };
 
 /** 項目名を、管理画面の欄の名前にする（同じフォルダを分け合う画面の欄もまとめて探す） */
-function labelOf(def: CollectionDef, key: string): string {
+function labelOf(def: CollectionDef, key: string, data: Record<string, any>): string {
+  // 分類ごとの呼び方（ムービーなら「作品タイトル」）があればそちら
+  const byGroup = groups[data.group]?.labels?.[key as "title" | "subtitle"];
+  if (byGroup) return byGroup;
   const all: Field[] = Object.values(collections)
     .filter((d) => d.dir === def.dir)
     .flatMap((d) => d.fields);
@@ -36,7 +40,7 @@ export function validateFile(def: CollectionDef, text: string) {
     ...new Set(
       result.error.issues.map((issue: any) => {
         const key = String(issue.path?.[0] ?? "");
-        const label = labelOf(def, key);
+        const label = labelOf(def, key, data as Record<string, any>);
         const missing = issue.code === "invalid_type" && issue.input === undefined;
         if (missing || issue.code === "invalid_value" || issue.code === "invalid_enum_value") {
           return issue.code === "invalid_type" ? `「${label}」を入れてください` : `「${label}」を選んでください`;
