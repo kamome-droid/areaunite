@@ -15,7 +15,7 @@ export type Field =
     }
   | { name: string; label: string; type: "image"; help?: string }
   | { name: string; label: string; type: "images"; help?: string; /** 置き場所を変える。省略するとこの画面の既定 */ media?: string }
-  | { name: string; label: string; type: "boolean"; help?: string }
+  | { name: string; label: string; type: "boolean"; help?: string; hideFor?: string[] }
   | {
       name: string;
       label: string;
@@ -301,10 +301,16 @@ export const collections: Record<string, CollectionDef> = {
       { name: "title", label: "名前", type: "text" },
       { name: "day", label: "開催日", type: "select", options: [] }, // 起動時に開催回から埋める
       { name: "time", label: "開始時刻", type: "text", placeholder: "17:30", help: "入れると[スケジュール](/admin/schedule/)に並びます" },
-      { name: "runtime", label: "所要時間", type: "text", placeholder: "10 min" },
+      { name: "runtime", label: "所要時間", type: "text", placeholder: "10 min", hideFor: ["foods", "shops"] },
       { name: "body", label: "紹介文", type: "body" },
       { name: "gallery", label: "キャプチャ画像", type: "images" },
-      { name: "featured", label: "トップページの「注目」に出す", type: "boolean" },
+      // トップページの「注目ムービー」に並ぶのはムービーだけなので、ほかの分類では出さない
+      {
+        name: "featured",
+        label: "トップページの「注目ムービー」に出す",
+        type: "boolean",
+        hideFor: ["live", "talk", "dj", "foods", "shops"],
+      },
       { name: "draft", label: "下書き（公開しない）", type: "boolean" },
       { name: "order", label: "表示順", type: "hidden" },
     ],
