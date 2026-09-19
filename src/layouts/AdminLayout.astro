@@ -11,11 +11,14 @@ import "../styles/admin.css";
 interface Props {
   title: string;
   current?: string;
-  /** 画面の説明。何を編集する場所か1行で伝える */
   /** プレビューを横に並べる画面は幅いっぱいを使う */
   wide?: boolean;
+  /** ページ全体の公開・非公開のスイッチを出すか。
+      ページそのものを編集する画面だけに出す（コンテンツ1件の画面に出すと、
+      その1件だけを隠すスイッチに見えてしまうため） */
+  pageSwitch?: boolean;
 }
-const { title, current, wide = false } = Astro.props;
+const { title, current, wide = false, pageSwitch = false } = Astro.props;
 
 /** 準備中にしているページ。メニューに印を付け、該当する画面の上部に切り替えを出す */
 let hiddenPages: PageKey[] = [];
@@ -25,7 +28,7 @@ try {
 } catch {
   /* 読めなくても画面は出す。切り替えは保存時にエラーで知らせる */
 }
-const page = current ? pageOfScreen[current] : undefined;
+const page = pageSwitch && current ? pageOfScreen[current] : undefined;
 const pageHidden = !!page && hiddenPages.includes(page);
 ---
 
@@ -527,6 +530,14 @@ const pageHidden = !!page && hiddenPages.includes(page);
           margin: 0 0 0 auto;
           flex-direction: row;
           gap: 12px;
+        }
+
+        /* 幅が足りないときは縮めずに横へ流す（縮めると1文字ずつ縦に折れて読めない） */
+        .side > *,
+        .side__nav > a,
+        .side__foot > * {
+          flex-shrink: 0;
+          white-space: nowrap;
         }
       }
     </style>

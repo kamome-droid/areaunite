@@ -39,7 +39,7 @@ const sections = def.groupBy
   : [{ key: "", label: "", rows: entries }];
 ---
 
-<AdminLayout title={def.label} current={key}>
+<AdminLayout title={def.label} current={key} pageSwitch>
   <div class="tools">
     <span id="orderStatus" class="tools__status"></span>
     <a class="btn btn--small" href={`/admin/${key}/new`}>＋ 新しく追加</a>

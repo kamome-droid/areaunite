@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { collections, menu, tools } from "../../lib/admin/schema";
 import { readAll } from "../../lib/admin/store";
+import { pageOfScreen } from "../../lib/visibility";
 
 /** 各画面の件数を出して、いまサイトに何が載っているか一目で分かるようにする */
 const items = await readAll(collections.items);
@@ -13,6 +14,19 @@ const rows = items.filter((i) => collections.items.filter?.(i.data) ?? true);
 const published = rows.filter((i) => !i.data.draft).length;
 const drafts = rows.length - published;
 const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length : 0;
+const stays = items.filter((i) => collections.stay.filter?.(i.data)).length;
+const tickets = Array.isArray(event?.data.tickets) ? event!.data.tickets.length : 0;
+const hidden: string[] = event?.data.hiddenPages ?? [];
+
+/** カードに添える一言。その画面に今なにが入っているか */
+const notes: Record<string, string> = {
+  top: event?.data.edition ?? "",
+  about: event?.data.aboutLead ? "紹介文あり" : "紹介文が空です",
+  schedule: `${days}日ぶん`,
+  items: `${published}件を公開中${drafts ? `／下書き ${drafts}件` : ""}`,
+  ticket: tickets ? `${tickets}区分` : "料金が空です",
+  access: `宿泊 ${stays}件`,
+};
 ---
 
 <AdminLayout title="編集する場所">
@@ -20,17 +34,14 @@ const days = Array.isArray(event?.data.schedule) ? event!.data.schedule.length :
     {
       menu.map((key) => {
         const def = collections[key];
-        const note =
-          key === "items"
-            ? `${published}件を公開中${drafts ? `／下書き ${drafts}件` : ""}`
-            : key === "schedule"
-              ? `${days}日ぶん`
-              : key === "top"
-                ? event?.data.edition ?? ""
-                : event?.data.venue ?? "";
+        const note = notes[key] ?? "";
+        const page = pageOfScreen[key];
         return (
           <a class="card" href={`/admin/${key}/`}>
-            <span class="card__label">{def.label}</span>
+            <span class="card__label">
+              {def.label}
+              {page && hidden.includes(page) && <span class="side__chip">非公開</span>}
+            </span>
             {note && <span class="card__note">{note}</span>}
             <span class="card__arrow" aria-hidden="true">
               →

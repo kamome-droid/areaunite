@@ -237,7 +237,7 @@ export const collections: Record<string, CollectionDef> = {
         type: "rows",
         columns: [
           { name: "label", label: "券種", width: "2fr" },
-          { name: "price", label: "料金", width: "1fr" },
+          { name: "price", label: "料金", width: "1.4fr" },
           { name: "note", label: "補足", width: "2fr" },
         ],
       },

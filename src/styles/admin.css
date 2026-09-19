@@ -412,6 +412,21 @@
   gap: 8px;
 }
 
+/* 行の並びの上に置く列の名前。行と同じ格子にそろえる */
+.rep__colhead {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  gap: 8px;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--a-line);
+  font-size: 12px;
+  color: var(--a-muted);
+}
+
+.rep__colhead + .rep > .rep__row:first-child {
+  border-top: 0;
+}
+
 /* ---- スケジュール ----
    日ごとに枠で囲って、DAY 1 と DAY 2 の切れ目をはっきりさせる */
 .day {
@@ -569,18 +584,29 @@
 }
 
 .srow--auto {
-  grid-template-columns: 104px 92px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   align-items: center;
   padding: 2px 0;
   color: var(--a-muted);
   font-size: 13px;
 }
 
+/* 名前は省略せずに折り返す（映画は「制作者「作品名」」で長く、省略すると見分けられない） */
 .srow--auto .srow__body {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.srow--auto .srow__body a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.srow--auto .srow__body a:hover {
+  color: var(--a-ink);
+  text-decoration: underline;
 }
 
 .srow--auto .srow__time {

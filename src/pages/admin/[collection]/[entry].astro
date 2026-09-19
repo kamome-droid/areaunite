@@ -46,7 +46,11 @@ if (data.tier != null) data.tier = String(data.tier);
 
 const title = isNew
   ? `${def.labelOne}を追加`
-  : String(data[def.titleField] || def.labelOne);
+  : // 開催回を分担する画面（トップページ・アバウト…）は、どれも開催回の名前になって
+    // 区別がつかないので、画面の名前で出す
+    def.singleton
+    ? def.label
+    : String(data[def.titleField] || def.labelOne);
 const groupOptions = Object.entries(groups).map(([k, g]) => ({ value: k, label: g.jp }));
 
 /** この画面の中で直接編集する、別コレクションの項目（アクセス画面の宿泊など） */
@@ -75,6 +79,7 @@ const autoRows =
           const g = groups[e.data.group as keyof typeof groups];
           const bracket = g?.scheduleFormat === "bracket" && e.data.subtitle;
           return {
+            id: e.id,
             day: e.data.day ? String(e.data.day) : "",
             time: String(e.data.time),
             title: bracket ? `${e.data.subtitle}「${e.data.title}」` : String(e.data.title),
@@ -99,7 +104,7 @@ const previewTab = previewSrc
 const previewHash = previewPath?.split("#")[1] ?? "";
 ---
 
-<AdminLayout title={title} current={key} wide={!!previewPath}>
+<AdminLayout title={title} current={key} wide={!!previewPath} pageSwitch={!!def.singleton}>
   <div class:list={["split", previewPath && "split--preview"]}>
     <div class="split__form">
       {/* 保存バーはこの枠の中だけに効く。下の別枠（宿泊など）とは切り離す */}
@@ -281,7 +286,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
       el(
         "div",
         { class: "imgfield__ctrl" },
-        opts.compact ? "" : path,
+        // ファイルの置き場所（/images/…）は見せない。画像そのものを見て選べば足りるので
         el("button", {
           type: "button",
           class: "btn btn--ghost",
@@ -588,8 +593,18 @@ const previewHash = previewPath?.split("#")[1] ?? "";
       const list = Array.isArray(value) ? value.map((r) => ({ ...r })) : [];
       set(f.name, list);
       const [head, slot] = headWithAdd(f);
+      // 列の名前。入力すると欄の中の薄い字（券種・料金…）が消えて、どの列か分からなくなるため
+      const grid = `grid-template-columns:${f.columns.map((c) => c.width ?? "1fr").join(" ")}`;
+      const colhead = el(
+        "div",
+        { class: "rep__colhead" },
+        el("span"),
+        el("div", { class: "cols", style: grid }, f.columns.map((c) => el("span", {}, c.label))),
+        el("span")
+      );
       wrap.append(
         head,
+        colhead,
         repeater(
           list,
           (row) =>
@@ -906,7 +921,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
       // コンテンツ画面のぶん。読むだけ
       ...autoRows
         .filter((a) => !a.day || a.day === day.id)
-        .map((a) => ({ kind: "auto", time: a.time, title: a.title, group: a.group })),
+        .map((a) => ({ kind: "auto", id: a.id, time: a.time, title: a.title, group: a.group })),
     ];
     // 最初だけは、保存してある startsAt を手がかりに位置を決める。
     // 見出しは同時刻の行より前に置く（そこから始まる、という意味なので）
@@ -951,13 +966,18 @@ const previewHash = previewPath?.split("#")[1] ?? "";
 
   /** リストの1行。薄い行と開場の行は読むだけで、直せるのは見出しの文字と開場の時刻 */
   const renderScheduleRow = (row, rows, sync, redraw) => {
+    // コンテンツの行は読むだけ。押すとそのコンテンツの編集画面へ
     if (row.kind === "auto") {
       return el(
         "div",
         { class: "srow srow--auto" },
-        el("span", { class: "srow__tag" }, row.group),
         el("span", { class: "srow__time" }, row.time),
-        el("span", { class: "srow__body" }, row.title)
+        el(
+          "span",
+          { class: "srow__body" },
+          el("a", { href: `/admin/items/${row.id}`, title: "このコンテンツを編集する" }, row.title),
+          el("span", { class: "srow__tag" }, row.group)
+        )
       );
     }
 

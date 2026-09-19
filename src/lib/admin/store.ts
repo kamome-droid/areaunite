@@ -5,6 +5,7 @@ import path from "node:path";
 import yaml from "js-yaml";
 import type { CollectionDef } from "./schema";
 import { prepareImage, isMedia } from "./image";
+import { validateFile } from "./validate";
 
 function env(k: string): string | undefined {
   // 本番の秘密は process.env、devの .env は import.meta.env
@@ -341,7 +342,10 @@ export async function prepareEntry(
     // 本文を編集しない画面から保存したときに、本文を消さない。
     // 開催回のように1ファイルを複数の画面で分担しているため
     const nextBody = def.hasBody && body !== undefined ? body : (existing?.body ?? "");
-    return buildFile(merged, nextBody);
+    const text = buildFile(merged, nextBody);
+    // サイトの作り直しが失敗する中身は書かない（以降の変更が一切出なくなるため）
+    validateFile(def, text);
+    return text;
   };
 
   return { slug, change: { path: `${def.dir}/${slug}.md`, update } };
