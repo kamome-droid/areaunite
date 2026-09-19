@@ -135,6 +135,16 @@
   height: 40px;
 }
 
+/* ロゴはサイトでは黒い地に載るので、ここでも黒い地で、形を切らずに見せる */
+.imgfield--logo .img--pick:not(.is-empty) {
+  background: #16161a;
+}
+
+.imgfield--logo .img img {
+  object-fit: contain;
+  padding: 8px;
+}
+
 @media (max-width: 700px) {
   .subedit,
   .subedit--line {
@@ -345,6 +355,80 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* 画像の枠そのものがボタン。押すと選べて、ファイルを落としてもよい */
+.img--pick {
+  position: relative;
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: var(--a-muted);
+  cursor: pointer;
+}
+
+.img--pick.is-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #fafafa;
+  border: 2px dashed #cfcfd6;
+}
+
+.img--pick.is-empty:hover,
+.img--pick.is-over {
+  border-color: var(--a-ink);
+  color: var(--a-ink);
+  background: #f3f3f5;
+}
+
+.img__plus {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.imgfield--compact .img__plus {
+  font-size: 18px;
+}
+
+.img__hint {
+  font-size: 12px;
+}
+
+/* 画像が入っているときは、乗せると「変更」が出る */
+.img--pick:not(.is-empty) .img__hint {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 4px 0;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.img--pick:not(.is-empty):hover .img__hint,
+.img--pick:focus-visible .img__hint,
+.img--pick.is-over .img__hint {
+  opacity: 1;
+}
+
+.img--pick.is-over {
+  outline: 2px solid var(--a-ink);
+  outline-offset: 2px;
+}
+
+.img--pick.is-busy {
+  cursor: progress;
+  background: #f3f3f5;
+}
+
+.img--pick.is-busy .img__hint {
+  position: static;
+  opacity: 1;
+  background: none;
+  color: var(--a-muted);
 }
 
 .imgfield__ctrl input {
@@ -783,4 +867,9 @@
 
 .preview__state[data-state="fresh"] {
   color: #1a7f37;
+}
+
+/* hidden を付けたものは確実に隠す（.btn などの display 指定に負けないように） */
+[hidden] {
+  display: none !important;
 }

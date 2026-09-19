@@ -229,101 +229,122 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     hooks.edited();
   };
 
-  /** 画像を選んでアップロードし、パスを返す。
-      onBusy は送っている間だけ true で呼ばれる（ボタンの表示を変えるため） */
-  const pickImage = async (onDone, into = collection, media = "", onBusy = () => {}) => {
+  /** 画像ファイルを送って、置いた場所（パス）を返す。
+      onBusy は送っている間だけ true で呼ばれる（表示を変えるため） */
+  const uploadFile = (file, onDone, into = collection, media = "", onBusy = () => {}) => {
+    const fd = new FormData();
+    fd.append("collection", into);
+    if (media) fd.append("media", media);
+    fd.append("file", file);
+
+    const job = (async () => {
+      onBusy(true);
+      try {
+        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+        if (!res.ok) return alert("アップロードに失敗しました");
+        const { url } = await res.json();
+        onDone(url);
+        hooks.edited();
+      } finally {
+        onBusy(false);
+      }
+    })();
+    uploads.add(job);
+    uploadStatus();
+    job.finally(() => {
+      uploads.delete(job);
+      uploadStatus();
+    });
+  };
+
+  /** ファイルを選ぶ画面を開いて、選んだ画像を送る */
+  const pickImage = (onDone, into = collection, media = "", onBusy = () => {}) => {
     const input = el("input", { type: "file", accept: "image/*" });
     input.addEventListener("change", () => {
       const file = input.files?.[0];
-      if (!file) return;
-      const fd = new FormData();
-      fd.append("collection", into);
-      if (media) fd.append("media", media);
-      fd.append("file", file);
-
-      const job = (async () => {
-        onBusy(true);
-        try {
-          const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-          if (!res.ok) return alert("アップロードに失敗しました");
-          const { url } = await res.json();
-          onDone(url);
-          hooks.edited();
-        } finally {
-          onBusy(false);
-        }
-      })();
-      uploads.add(job);
-      uploadStatus();
-      job.finally(() => {
-        uploads.delete(job);
-        uploadStatus();
-      });
+      if (file) uploadFile(file, onDone, into, media, onBusy);
     });
     input.click();
   };
 
-  const imageBox = (value, onChange, opts = {}) => {
-    const preview = el("div", { class: "img" });
-    const path = el("input", {
-      type: "text",
-      value: value ?? "",
-      placeholder: "/images/...",
-      oninput: (e) => {
-        onChange(e.target.value);
-        draw();
-      },
+  // 画像の枠の外にファイルを落とすと、ブラウザがその画像を開いてしまい、書きかけが消える。
+  // 枠の外では何もしないようにしておく
+  for (const type of ["dragover", "drop"]) {
+    window.addEventListener(type, (e) => {
+      if (e.dataTransfer?.types?.includes("Files")) e.preventDefault();
     });
+  }
+
+  /**
+   * 画像の欄。枠そのものを押すと選べる（ファイルを枠に落としてもよい）。
+   * 空のときは点線の枠に「＋」、入っているときは画像を押すと差し替え。
+   */
+  const imageBox = (value, onChange, opts = {}) => {
+    let current = value ?? "";
+
+    if (opts.readOnly) {
+      const thumb = el("div", { class: "img" });
+      if (current) thumb.append(el("img", { src: current, alt: "" }));
+      return el("div", { class: "imgfield imgfield--thumb" }, thumb);
+    }
+
+    const box = el("button", { type: "button", class: "img img--pick" });
+    const clear = el("button", { type: "button", class: "btn btn--ghost btn--small" }, "外す");
+
     const draw = () => {
-      preview.replaceChildren();
-      const v = path.value.trim();
-      if (v) preview.append(el("img", { src: v, alt: "" }));
+      box.replaceChildren();
+      box.classList.toggle("is-empty", !current);
+      box.setAttribute("aria-label", current ? "画像を変える" : "画像を追加する");
+      if (current) {
+        box.append(el("img", { src: current, alt: "" }), el("span", { class: "img__hint" }, "変更"));
+      } else {
+        box.append(
+          el("span", { class: "img__plus", "aria-hidden": "true" }, "＋"),
+          opts.compact ? "" : el("span", { class: "img__hint" }, "画像を追加")
+        );
+      }
+      clear.hidden = !current;
     };
+
+    const set = (url) => {
+      current = url;
+      onChange(url);
+      draw();
+    };
+    const busy = (on) => {
+      box.disabled = on;
+      box.classList.toggle("is-busy", on);
+      if (on) box.replaceChildren(el("span", { class: "img__hint" }, "アップロード中…"));
+      else draw();
+    };
+
+    // 別コレクションの行（協賛のロゴなど）は、その置き場所の決まりでそろえる
+    const into = opts.into ?? collection;
+    box.addEventListener("click", () => pickImage(set, into, opts.media, busy));
+    box.addEventListener("dragover", (e) => {
+      if (!e.dataTransfer?.types?.includes("Files")) return;
+      e.preventDefault();
+      box.classList.add("is-over");
+    });
+    box.addEventListener("dragleave", () => box.classList.remove("is-over"));
+    box.addEventListener("drop", (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      e.preventDefault();
+      // 行の並べ替え（ドラッグ）のほうには渡さない
+      e.stopPropagation();
+      box.classList.remove("is-over");
+      if (file.type.startsWith("image/")) uploadFile(file, set, into, opts.media, busy);
+    });
+    clear.addEventListener("click", () => set(""));
     draw();
-    if (opts.readOnly) return el("div", { class: "imgfield imgfield--thumb" }, preview);
 
     return el(
       "div",
-      { class: `imgfield${opts.compact ? " imgfield--compact" : ""}` },
-      preview,
-      el(
-        "div",
-        { class: "imgfield__ctrl" },
-        // ファイルの置き場所（/images/…）は見せない。画像そのものを見て選べば足りるので
-        el("button", {
-          type: "button",
-          class: "btn btn--ghost",
-          onclick: (e) => {
-            const button = e.currentTarget;
-            const label = button.textContent;
-            pickImage(
-              (url) => {
-                path.value = url;
-                onChange(url);
-                draw();
-              },
-              collection,
-              opts.media,
-              (busy) => {
-                button.disabled = busy;
-                button.textContent = busy ? "アップロード中…" : label;
-              }
-            );
-          },
-        }, opts.compact ? "選ぶ" : "画像を選ぶ"),
-        // 繰り返しの行には右端に ✕ があるので、外すボタンは出さない
-        opts.clearable === false
-          ? ""
-          : el("button", {
-              type: "button",
-              class: "btn btn--ghost",
-              onclick: () => {
-                path.value = "";
-                onChange("");
-                draw();
-              },
-            }, "外す")
-      )
+      { class: `imgfield${opts.compact ? " imgfield--compact" : ""}${opts.logo ? " imgfield--thumb imgfield--logo" : ""}` },
+      box,
+      // 繰り返しの行には右端に ✕ があるので、外すボタンは出さない
+      opts.clearable === false ? "" : el("div", { class: "imgfield__ctrl" }, clear)
     );
   };
 
@@ -587,7 +608,8 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         repeater(
           list,
           (row, i) => imageBox(row, (v) => (list[i] = v), { clearable: false, media: f.media }),
-          [["＋ 画像を追加", () => ""]],
+          // 空の行を足してから選ばせるより、選んだ画像をそのまま足すほうが一手少ない
+          [["＋ 画像を追加", () => new Promise((done) => pickImage(done, collection, f.media))]],
           { addsInto: slot }
         ),
         helpFor(f)
@@ -682,7 +704,12 @@ const previewHash = previewPath?.split("#")[1] ?? "";
                     // 名前を打たせない代わりに、画像のファイル名から埋める
                     if (n === "logo" && !row.data.name) row.data.name = fileTitle(v);
                   },
-                  line && sf.type === "image" ? { readOnly: true } : line ? { compact: true } : {}
+                  // ロゴは大きめの枠で、押すと差し替え（消すのは行の ✕）
+                  line && sf.type === "image"
+                    ? { logo: true, clearable: false, into: f.collection }
+                    : line
+                      ? { compact: true }
+                      : {}
                 )
               );
             return box;
