@@ -7,9 +7,13 @@ import NoteList from "../components/NoteList.astro";
 import GroupSection from "../components/GroupSection.astro";
 import { parents, groupsOf } from "../config/site";
 import { getCurrentEvent, mapLinks } from "../lib/content";
+import HiddenNote from "../components/HiddenNote.astro";
+import { showsComingSoon } from "../lib/visibility";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+// 準備中なら COMING SOON に差し替える（URLはそのまま）
+if (showsComingSoon(ev, "access", Astro)) return Astro.rewrite("/soon/access");
 const list = groupsOf("access");
 const map = mapLinks(ev);
 
@@ -20,6 +24,7 @@ const map = mapLinks(ev);
   description="会場の場所と駐車場、周辺の宿泊施設のご案内。"
 >
   <PageHero label={parents.access.label} jp={parents.access.jp} />
+  <HiddenNote page="access" />
 
   <Section id="map" label="Venue" jp="会場・アクセス" narrow>
     <ShareImage

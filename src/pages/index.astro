@@ -10,10 +10,17 @@ import CardGrid from "../components/CardGrid.astro";
 import NameList from "../components/NameList.astro";
 import SponsorGrid from "../components/SponsorGrid.astro";
 import { site, parents, groups, groupsOf } from "../config/site";
+import { showsComingSoon } from "../lib/visibility";
 import { dateRangeLabel, getCurrentEvent, getDayRange, getFeaturedItems, getSponsors, getEventDays, displayDate } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+/** 準備中のページ。トップからはその中身も出さず、リンクも張らない */
+const soon = {
+  about: showsComingSoon(ev, "about", Astro),
+  schedule: showsComingSoon(ev, "schedule", Astro),
+  contents: showsComingSoon(ev, "contents", Astro),
+};
 /** 開催日から組み立てた「2026.10.17 sat. - 10.18 sun.」 */
 const dateLabel = dateRangeLabel(ev?.schedule);
 /** 日付と「何時から何時まで」。時間帯はスケジュールから組み立てる */
@@ -21,7 +28,8 @@ const days = ev
   ? await Promise.all(
       ev.schedule.map(async (day) => ({
         date: day.note || day.label,
-        range: await getDayRange(day),
+        // 時間帯はスケジュールから組み立てるので、スケジュールが準備中なら出さない
+        range: soon.schedule ? "" : await getDayRange(day),
       }))
     )
   : [];
@@ -53,19 +61,19 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   />
 
   {
-    ev && (ev.aboutLead || ev.photos.length > 0) && (
+    ev && ((!soon.about && ev.aboutLead) || ev.photos.length > 0) && (
       <Section
         id="about"
         label="About"
         jp="イベントについて"
         narrow
         surface
-        moreHref="/about/"
+        moreHref={soon.about ? undefined : "/about/"}
         moreLabel="もっと見る"
       >
-        {ev.aboutLead && <p class="about">{ev.aboutLead}</p>}
+        {!soon.about && ev.aboutLead && <p class="about">{ev.aboutLead}</p>}
         <Fragment slot="after">
-          {ev.prVideo && (
+          {!soon.about && ev.prVideo && (
             <div class="about__video">
               <VideoEmbed url={ev.prVideo} title={`${site.name} PR movie`} />
             </div>
@@ -86,7 +94,7 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
         id="schedule"
         label="Schedule"
         jp="スケジュール"
-        moreHref="/schedule/"
+        moreHref={soon.schedule ? undefined : "/schedule/"}
         moreLabel="詳細を見る"
       >
         <div class="sched">
@@ -116,19 +124,23 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     )
   }
 
-  <Section
-    id="contents"
-    label={parents.contents.label}
-    jp={parents.contents.jp}
-    surface
-    moreHref={parents.contents.href}
-    moreLabel="すべて見る"
-  >
-    <GroupNav items={contentsNav} />
-  </Section>
+  {
+    !soon.contents && (
+      <Section
+        id="contents"
+        label={parents.contents.label}
+        jp={parents.contents.jp}
+        surface
+        moreHref={parents.contents.href}
+        moreLabel="すべて見る"
+      >
+        <GroupNav items={contentsNav} />
+      </Section>
+    )
+  }
 
   {
-    movieRows.length > 0 && (
+    !soon.contents && movieRows.length > 0 && (
       <Section
         id="movies"
         label="Pick Up Movie"

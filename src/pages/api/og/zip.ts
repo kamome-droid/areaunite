@@ -3,11 +3,11 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import JSZip from "jszip";
 import { ogSet, ogSets } from "../../../lib/og/templates";
-import { renderOgSrc } from "../../../lib/og/render";
+import { renderOgSrc, ogHidden, kindOfSrc } from "../../../lib/og/render";
 
 /** 画像をまとめて1つのzipにして返す。
     ?set=all で全部、?src=… を並べればその画像だけ */
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, cookies }) => {
   const picked = url.searchParams.getAll("src");
   const key = url.searchParams.get("set") ?? "all";
 
@@ -20,6 +20,8 @@ export const GET: APIRoute = async ({ url }) => {
 
   const zip = new JSZip();
   for (const src of srcs) {
+    // 準備中のページの画像は入れない
+    if (await ogHidden(kindOfSrc(src), cookies)) continue;
     const made = await renderOgSrc(src);
     if (made) zip.file(`${made.name}.png`, made.png);
   }

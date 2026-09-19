@@ -43,16 +43,12 @@ Vercel の Settings → Environment Variables に入れる（Production と Prev
 
 ## 5. 一般公開するとき
 
-1. Vercel から `SITE_PASSWORD` を消す（ゲートが外れる）
-2. `astro.config.mjs` の `output` を `"server"` から `"static"` に戻す
+Vercel から `SITE_PASSWORD` を消す（ゲートが外れる）。それだけでよい。
 
-2つ目は速さと費用のため。公開前はゲートを効かせるために全ページをサーバー側で
-返しているが、ゲートを外すなら静的に書き出したほうが速く、費用もかからない。
-（管理画面と保存API・画像APIは `prerender = false` なのでそのまま動く）
-
-`"static"` に戻すと、ビルド中に出ている
-`getStaticPaths() ignored in dynamic page` の警告も消える。
-個別ページはどちらの設定でも動くように、URLのパラメータから引く形にしてある。
+**`output` は `"server"` のままにする。** ページごとの公開・非公開
+（非公開のページは一般の人に COMING SOON、管理画面にログインした人には中身を出す）は、
+見ている人がログインしているかをその場で見て出し分けるので、静的に書き出すと効かない。
+ビルド中の `getStaticPaths() ignored in dynamic page` の警告はそのためで、害はない。
 
 ## ドメイン
 

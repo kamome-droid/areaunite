@@ -2,16 +2,17 @@ export const prerender = false;
 
 import type { APIRoute } from "astro";
 import { OG_KINDS, OG_SIZE, type OgKind } from "../../../lib/og/templates";
-import { renderOg } from "../../../lib/og/render";
+import { renderOg, ogHidden } from "../../../lib/og/render";
 
 /**
  * SNS用の画像（1080×1350）を作って返す。
  * 管理画面で入れた内容をそのまま流し込むので、画像を作り直す手間が要らない。
  * ?w=… で小さく（一覧のサムネイル用）、?dl=1 でダウンロードとして返す。
  */
-export const GET: APIRoute = async ({ params, url }) => {
+export const GET: APIRoute = async ({ params, url, cookies }) => {
   const kind = params.kind as OgKind;
   if (!OG_KINDS.includes(kind)) return new Response("不明な種類です", { status: 404 });
+  if (await ogHidden(kind, cookies)) return new Response("準備中です", { status: 404 });
 
   const width = Math.min(OG_SIZE.width, Number(url.searchParams.get("w")) || OG_SIZE.width);
   const made = await renderOg(

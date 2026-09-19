@@ -6,14 +6,22 @@ import Timetable from "../components/Timetable.astro";
 import ShareImage from "../components/ShareImage.astro";
 import { getCurrentEvent, resolveProgram } from "../lib/content";
 import { schedulePageCount } from "../lib/og/templates";
+import HiddenNote from "../components/HiddenNote.astro";
+import { showsComingSoon } from "../lib/visibility";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
+// 準備中なら COMING SOON に差し替える（URLはそのまま）
+if (showsComingSoon(ev, "schedule", Astro)) return Astro.rewrite("/soon/schedule");
 
+// コンテンツが準備中なら、表から個別ページへのリンクを外す（開いても COMING SOON になるため）
+const linkItems = !showsComingSoon(ev, "contents", Astro);
 const days = await Promise.all(
   (ev?.schedule ?? []).map(async (day) => ({
     day,
-    blocks: await resolveProgram(day),
+    blocks: (await resolveProgram(day)).map((b) =>
+      linkItems ? b : { ...b, items: b.items.map((s) => ({ ...s, href: undefined })) }
+    ),
   }))
 );
 
@@ -23,6 +31,7 @@ const single = days.length === 1 ? days[0] : null;
 
 <BaseLayout title="Schedule｜スケジュール" description="当日のスケジュール。">
   <PageHero label="Schedule" jp="スケジュール" />
+  <HiddenNote page="schedule" />
 
   {days.length > 1 && <DayTabs days={days} />}
 

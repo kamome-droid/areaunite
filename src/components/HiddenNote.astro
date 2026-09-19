@@ -1,0 +1,39 @@
+---
+/**
+ * 非公開のページを、管理画面にログインした人が見ているときだけ出す帯。
+ * 一般の人には COMING SOON が出ていることを伝える。
+ */
+import { getCurrentEvent } from "../lib/content";
+import { isAdmin, isHidden, type PageKey } from "../lib/visibility";
+
+interface Props {
+  page: PageKey;
+}
+const { page } = Astro.props;
+const ev = (await getCurrentEvent())?.data;
+const show = isHidden(ev, page) && isAdmin(Astro);
+---
+
+{
+  show && (
+    <div class="hiddennote" role="note">
+      <div class="wrap">非公開のページです。一般の人には「COMING SOON」と表示されています。</div>
+    </div>
+  )
+}
+
+<style>
+  .hiddennote {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--surface-2),
+      var(--surface-2) 10px,
+      var(--surface) 10px,
+      var(--surface) 20px
+    );
+    border-block: 1px solid var(--border-strong);
+    padding-block: 10px;
+    font-size: 0.88rem;
+    text-align: center;
+  }
+</style>

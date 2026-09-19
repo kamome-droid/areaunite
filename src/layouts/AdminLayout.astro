@@ -1,5 +1,7 @@
 ---
 import { collections, menu, tools } from "../lib/admin/schema";
+import { readOne } from "../lib/admin/store";
+import { pageOfScreen, type PageKey } from "../lib/visibility";
 import "../styles/admin.css";
 
 /**
@@ -14,6 +16,17 @@ interface Props {
   wide?: boolean;
 }
 const { title, current, wide = false } = Astro.props;
+
+/** 準備中にしているページ。メニューに印を付け、該当する画面の上部に切り替えを出す */
+let hiddenPages: PageKey[] = [];
+try {
+  const top = collections.top;
+  hiddenPages = ((await readOne(top, top.singleton!))?.data.hiddenPages ?? []) as PageKey[];
+} catch {
+  /* 読めなくても画面は出す。切り替えは保存時にエラーで知らせる */
+}
+const page = current ? pageOfScreen[current] : undefined;
+const pageHidden = !!page && hiddenPages.includes(page);
 ---
 
 <!doctype html>
@@ -38,6 +51,9 @@ const { title, current, wide = false } = Astro.props;
                 aria-current={current === key ? "page" : undefined}
               >
                 {collections[key].label}
+                {pageOfScreen[key] && hiddenPages.includes(pageOfScreen[key]) && (
+                  <span class="side__chip">非公開</span>
+                )}
               </a>
             ))
           }
@@ -62,6 +78,27 @@ const { title, current, wide = false } = Astro.props;
         <header class="head">
           <h1>{title}</h1>
         </header>
+        {
+          page && (
+            <div class:list={["pub", pageHidden && "pub--hidden"]} data-page={page}>
+              <button
+                type="button"
+                class="pub__switch"
+                role="switch"
+                aria-checked={pageHidden ? "false" : "true"}
+                aria-label="このページを公開する"
+              >
+                <span class="pub__track" aria-hidden="true"><span class="pub__thumb" /></span>
+                <span class="pub__state">{pageHidden ? "非公開" : "公開中"}</span>
+              </button>
+              <p class="pub__text">
+                {pageHidden
+                  ? "サイトでは「COMING SOON」と表示されています。プレビューでは中身を確認できます。"
+                  : "サイトに表示されています。"}
+              </p>
+            </div>
+          )
+        }
         <slot />
       </main>
 
@@ -72,6 +109,52 @@ const { title, current, wide = false } = Astro.props;
         <button type="button" class="btn btn--danger" data-ask="yes">削除する</button>
       </div>
     </dialog>
+
+    <script is:inline>
+      /** ページの公開・非公開。押した時点で保存する */
+      (() => {
+        const box = document.querySelector(".pub");
+        if (!box) return;
+        const button = box.querySelector(".pub__switch");
+        const state = box.querySelector(".pub__state");
+        const text = box.querySelector(".pub__text");
+        const draw = (hidden) => {
+          box.classList.toggle("pub--hidden", hidden);
+          button.setAttribute("aria-checked", hidden ? "false" : "true");
+          state.textContent = hidden ? "非公開" : "公開中";
+          const chip = document.querySelector('.side__nav [aria-current="page"] .side__chip');
+          if (hidden && !chip) {
+            const c = document.createElement("span");
+            c.className = "side__chip";
+            c.textContent = "非公開";
+            document.querySelector('.side__nav [aria-current="page"]')?.append(c);
+          } else if (!hidden) chip?.remove();
+        };
+        button.addEventListener("click", async () => {
+          const hidden = !box.classList.contains("pub--hidden");
+          button.disabled = true;
+          text.textContent = "切り替えています…";
+          try {
+            const res = await fetch("/api/admin/visibility", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ page: box.dataset.page, hidden }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            draw(hidden);
+            text.textContent = hidden
+              ? "非公開にしました。1〜2分でサイトが「COMING SOON」に切り替わります。"
+              : "公開しました。1〜2分でサイトに表示されます。";
+            // 右のプレビューも読み直す（管理画面からは中身が見えるので、帯の有無だけ変わる）
+            document.getElementById("reload")?.click();
+          } catch (e) {
+            text.textContent = `切り替えられませんでした：${e.message}`;
+          } finally {
+            button.disabled = false;
+          }
+        });
+      })();
+    </script>
 
     <script is:inline>
       /** 管理画面共通の確認ダイアログ。ブラウザの confirm は使わない */
@@ -230,6 +313,100 @@ const { title, current, wide = false } = Astro.props;
         margin: 0;
         font-size: 24px;
         letter-spacing: 0.02em;
+      }
+
+      /* ---- ページの公開・非公開 ----
+         見落とさないよう、見出しのすぐ下に帯で出す。非公開のときは色を変える */
+      .pub {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: -8px 0 24px;
+        padding: 12px 16px;
+        border: 1px solid #b7dfc3;
+        border-radius: var(--a-radius);
+        background: #eef8f1;
+      }
+
+      .pub--hidden {
+        border-color: #e6cf8f;
+        background: #fdf6e3;
+      }
+
+      .pub__switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 700;
+        color: var(--a-ink);
+        cursor: pointer;
+      }
+
+      .pub__switch:disabled {
+        cursor: progress;
+        opacity: 0.6;
+      }
+
+      .pub__track {
+        position: relative;
+        width: 46px;
+        height: 26px;
+        border-radius: 999px;
+        background: #2e9d57;
+        transition: background 0.2s ease;
+      }
+
+      .pub__thumb {
+        position: absolute;
+        top: 3px;
+        left: 23px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+        transition: left 0.2s ease;
+      }
+
+      .pub--hidden .pub__track {
+        background: #b9b9c0;
+      }
+
+      .pub--hidden .pub__thumb {
+        left: 3px;
+      }
+
+      .pub__switch:focus-visible .pub__track {
+        outline: 2px solid var(--a-ink);
+        outline-offset: 2px;
+      }
+
+      .pub__state {
+        min-width: 4em;
+      }
+
+      .pub__text {
+        margin: 0;
+        font-size: 13px;
+        color: var(--a-muted);
+      }
+
+      .side__chip {
+        display: inline-block;
+        white-space: nowrap;
+        margin-left: 8px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: #e6cf8f;
+        color: #5a4610;
+        font-size: 11px;
+        font-weight: 700;
+        vertical-align: 1px;
       }
 
 

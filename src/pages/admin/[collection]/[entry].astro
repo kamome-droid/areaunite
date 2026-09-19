@@ -1103,7 +1103,8 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     const res = await fetch("/api/admin/save", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ collection, id: entryId, data: state, body }),
+      // 公開・非公開は上部のスイッチだけが書く。開いたときの古い値で戻さないよう送らない
+      body: JSON.stringify({ collection, id: entryId, data: { ...state, hiddenPages: undefined }, body }),
     });
     await saveSub();
     if (!res.ok) return say(`保存できませんでした：${await res.text()}`, "error");

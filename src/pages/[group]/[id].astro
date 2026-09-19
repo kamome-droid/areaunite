@@ -5,7 +5,8 @@ import ItemMeta from "../../components/ItemMeta.astro";
 import ShareImage from "../../components/ShareImage.astro";
 import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
 import { groups, parents } from "../../config/site";
-import { getItems, getEventDays, displayDate, embedUrl } from "../../lib/content";
+import { getItems, getEventDays, displayDate, embedUrl, getCurrentEvent } from "../../lib/content";
+import { showsComingSoon } from "../../lib/visibility";
 
 /**
  * 項目の個別ページ。site.ts の groups で detail: true にした分類だけ作られる。
@@ -33,6 +34,8 @@ const group = String(Astro.params.group);
 const def = groups[group];
 const item = def?.detail ? (await getItems(group)).find((e) => e.id === Astro.params.id) : null;
 if (!def || !item) return new Response("見つかりません", { status: 404 });
+// 親ページ（コンテンツ／アクセス）が準備中なら、個別ページも COMING SOON にする
+if (showsComingSoon((await getCurrentEvent())?.data, def.parent, Astro)) return Astro.rewrite(`/soon/${def.parent}`);
 
 const { Content } = await render(item);
 const backHref = `${parents[def.parent].href}#${item.id}`;

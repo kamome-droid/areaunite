@@ -4,6 +4,12 @@ import PageHero from "../components/PageHero.astro";
 import PageIndex from "../components/PageIndex.astro";
 import GroupSection from "../components/GroupSection.astro";
 import { parents, groupsOf } from "../config/site";
+import HiddenNote from "../components/HiddenNote.astro";
+import { getCurrentEvent } from "../lib/content";
+import { showsComingSoon } from "../lib/visibility";
+
+// 準備中なら COMING SOON に差し替える（URLはそのまま）
+if (showsComingSoon((await getCurrentEvent())?.data, "contents", Astro)) return Astro.rewrite("/soon/contents");
 
 /** site.ts の groups に parent:"contents" を1件足すと、
     このページにセクションが1つ増え、タブとナビにも自動で並ぶ。 */
@@ -18,6 +24,7 @@ const list = groupsOf("contents");
     label={parents.contents.label}
     jp={parents.contents.jp}
   />
+  <HiddenNote page="contents" />
 
   <PageIndex items={list.map(([key, g]) => ({ href: `#${key}`, label: g.jp }))} />
 

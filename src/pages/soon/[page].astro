@@ -1,0 +1,86 @@
+---
+/**
+ * 準備中のページの代わりに出す画面。
+ * 各ページが非公開のとき、ここへ差し替わる（URLはそのまま）。
+ */
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHero from "../../components/PageHero.astro";
+import SnsIcons from "../../components/SnsIcons.astro";
+import { site, parents } from "../../config/site";
+import { pageKeys, type PageKey } from "../../lib/visibility";
+
+const heads: Record<PageKey, { label: string; jp: string }> = {
+  about: { label: "About", jp: "イベントについて" },
+  schedule: { label: "Schedule", jp: "スケジュール" },
+  contents: { label: parents.contents.label, jp: parents.contents.jp },
+  access: { label: parents.access.label, jp: parents.access.jp },
+};
+
+const page = Astro.params.page as PageKey;
+if (!pageKeys.includes(page)) return new Response(null, { status: 404 });
+const head = heads[page];
+---
+
+<BaseLayout title={`${head.label}｜${head.jp}`} description={site.description}>
+  <PageHero label={head.label} jp={head.jp} />
+
+  <section class="soon">
+    <div class="wrap">
+      <p class="en soon__title">Coming Soon</p>
+      <p class="soon__text">このページは準備中です。公開まで今しばらくお待ちください。</p>
+      {
+        site.sns.instagram && (
+          <div class="soon__sns">
+            <p class="soon__note muted">最新情報はSNSでお知らせします</p>
+            <SnsIcons size={24} />
+          </div>
+        )
+      }
+      <p class="soon__back">
+        <a href="/">トップページへ戻る</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .soon {
+    padding-block: clamp(64px, 12vw, 140px);
+    text-align: center;
+  }
+
+  .soon__title {
+    font-size: clamp(2.4rem, 8vw, 4.5rem);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    color: var(--brand);
+  }
+
+  .soon__text {
+    margin-top: 24px;
+  }
+
+  .soon__sns {
+    margin-top: 40px;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+  }
+
+  .soon__note {
+    font-size: 0.9rem;
+  }
+
+  .soon__back {
+    margin-top: 48px;
+    font-size: 0.95rem;
+  }
+
+  .soon__back a {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+</style>

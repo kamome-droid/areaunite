@@ -143,6 +143,10 @@ const event = defineCollection({
     /* ---- スケジュール ---- */
     schedule: z.array(scheduleDay).default([]),
 
+    /** 準備中のページ。ここに入れたページは、一般の人には COMING SOON を出す。
+        管理画面にログインしている人には中身がそのまま見える（公開前の確認のため） */
+    hiddenPages: z.array(z.enum(["about", "schedule", "contents", "access"])).default([]),
+
     /** 全ページの先頭に出すお知らせの帯。アンケート依頼や急な告知に使う。
         text が空なら何も出ない */
     notice: z
