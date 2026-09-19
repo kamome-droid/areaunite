@@ -111,6 +111,31 @@ const pageHidden = !!page && hiddenPages.includes(page);
     </dialog>
 
     <script is:inline>
+      /**
+       * 保存したコミットが公開サイトに反映されるのを待つ。
+       * 本番は保存するたびにサイトを作り直すので、1〜2分かかる。
+       * live … 反映されたとき / slow … 5分たっても反映されないとき
+       */
+      window.adminWaitLive = (commit, { live = () => {}, slow = () => {} } = {}) => {
+        const started = Date.now();
+        let warned = false;
+        const tick = async () => {
+          const res = await fetch(`/api/admin/live?commit=${encodeURIComponent(commit)}`).catch(() => null);
+          const { live: done } = res?.ok ? await res.json() : { live: null };
+          const waited = Date.now() - started;
+          // 判断できない環境では、作り直しにかかる時間だけ待って読み直す
+          if (done === true || (done === null && waited > 90_000)) return live();
+          if (!warned && waited > 5 * 60_000) {
+            warned = true;
+            slow();
+          }
+          if (waited < 15 * 60_000) setTimeout(tick, 5000);
+        };
+        setTimeout(tick, commit === "local" ? 0 : 5000);
+      };
+    </script>
+
+    <script is:inline>
       /** ページの公開・非公開。押した時点で保存する */
       (() => {
         const box = document.querySelector(".pub");
@@ -141,12 +166,26 @@ const pageHidden = !!page && hiddenPages.includes(page);
               body: JSON.stringify({ page: box.dataset.page, hidden }),
             });
             if (!res.ok) throw new Error(await res.text());
+            const { commit } = await res.json();
             draw(hidden);
-            text.textContent = hidden
-              ? "非公開にしました。1〜2分でサイトが「COMING SOON」に切り替わります。"
-              : "公開しました。1〜2分でサイトに表示されます。";
-            // 右のプレビューも読み直す（管理画面からは中身が見えるので、帯の有無だけ変わる）
-            document.getElementById("reload")?.click();
+            const done = hidden
+              ? "非公開にしました。サイトでは「COMING SOON」と表示されます。"
+              : "公開しました。サイトに表示されます。";
+            if (!commit) {
+              text.textContent = done;
+            } else {
+              text.textContent = hidden
+                ? "非公開にしています…（サイトに反映されるまで1〜2分）"
+                : "公開しています…（サイトに反映されるまで1〜2分）";
+              window.adminWaitLive(commit, {
+                live: () => {
+                  text.textContent = done;
+                  // 右のプレビューも読み直す（管理画面からは中身が見えるので、帯の有無だけ変わる）
+                  document.getElementById("reload")?.click();
+                },
+                slow: () => (text.textContent = "切り替えは保存できています。サイトへの反映に時間がかかっています。"),
+              });
+            }
           } catch (e) {
             text.textContent = `切り替えられませんでした：${e.message}`;
           } finally {

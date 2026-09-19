@@ -137,6 +137,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         <aside class="preview">
           <div class="preview__bar">
             <span>プレビュー</span>
+            <span id="previewState" class="preview__state" />
             <button type="button" id="reload" class="preview__btn">
               更新
             </button>
@@ -145,7 +146,9 @@ const previewHash = previewPath?.split("#")[1] ?? "";
             </a>
           </div>
           <iframe id="preview" src={previewSrc} data-hash={previewHash} title="プレビュー" />
-          <p class="preview__note">保存すると自動で更新されます</p>
+          <p class="preview__note">
+            保存していない変更はプレビューに出ません。保存すると、サイトに反映されたところで（1〜2分）自動で更新されます
+          </p>
         </aside>
       )
     }
@@ -192,12 +195,22 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     return n;
   };
 
+  /** 後ろで定義するものを、先に定義した部品から呼ぶための受け口 */
+  const hooks = { edited: () => {} };
+
   /** 送っている途中のアップロード。保存はこれが空になるまで待つ */
   const uploads = new Set();
+  const UPLOADING = "画像をアップロードしています…";
   const uploadStatus = () => {
     const status = document.getElementById("status");
-    status.textContent = uploads.size ? "画像をアップロードしています…" : "";
-    status.dataset.tone = "";
+    if (uploads.size) {
+      status.textContent = UPLOADING;
+      status.dataset.tone = "";
+      return;
+    }
+    if (status.textContent === UPLOADING) status.textContent = "";
+    // 終わったら「保存していない変更があります」に戻す
+    hooks.edited();
   };
 
   /** 画像を選んでアップロードし、パスを返す。
@@ -219,6 +232,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
           if (!res.ok) return alert("アップロードに失敗しました");
           const { url } = await res.json();
           onDone(url);
+          hooks.edited();
         } finally {
           onBusy(false);
         }
@@ -704,15 +718,26 @@ const previewHash = previewPath?.split("#")[1] ?? "";
             order.indexOf(from) < order.indexOf(li) ? "afterend" : "beforebegin",
             from
           );
-          await fetch("/api/admin/order", {
+          say("並び順を保存しています…");
+          const res = await fetch("/api/admin/order", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
               collection: f.collection,
               ids: [...list.children].map((n) => n.dataset.id),
             }),
+          }).catch(() => null);
+          if (!res?.ok) return say("並び順を保存できませんでした。もう一度お試しください", "error");
+          const { commit } = await res.json();
+          if (!commit) return say("並び順を保存しました", "ok");
+          say("並び順を保存しました。サイトに反映しています…", "ok");
+          preview.pending();
+          window.adminWaitLive(commit, {
+            live: () => {
+              say("並び順を保存しました。サイトに反映されました", "ok");
+              preview.fresh();
+            },
           });
-          say("並び順を保存しました", "ok");
         });
 
         list.append(li);
@@ -1025,12 +1050,28 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   };
   drawFields();
 
-  // ---- 保存 ----
-  /** プレビューを読み直す。開発サーバーが作り直すのを少し待つ */
+  // ---- プレビュー ----
+  // 本番は保存するとサイトが作り直され、終わるまで1〜2分は前の内容が出る。
+  // その間は「反映待ち」と出し、終わったら読み直す
   const frame = document.getElementById("preview");
-  const reloadPreview = () => {
-    if (!frame) return;
-    setTimeout(() => frame.contentWindow?.location.reload(), 700);
+  const previewState = document.getElementById("previewState");
+  const preview = {
+    pending() {
+      if (!previewState) return;
+      previewState.textContent = "反映待ち…";
+      previewState.dataset.state = "pending";
+    },
+    fresh() {
+      if (!frame) return;
+      // 開発サーバーは書き換えを読み込むのに1秒ほどかかる
+      setTimeout(() => frame.contentWindow?.location.reload(), 1500);
+      if (!previewState) return;
+      previewState.textContent = "最新";
+      previewState.dataset.state = "fresh";
+      setTimeout(() => {
+        if (previewState.dataset.state === "fresh") previewState.textContent = "";
+      }, 4000);
+    },
   };
   if (frame) {
     // 中の該当箇所まで、iframe の中だけを動かす。親の画面は動かさない
@@ -1047,40 +1088,103 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   }
 
   const status = document.getElementById("status");
+  const bar = document.querySelector(".bar");
   const say = (text, tone = "") => {
     status.textContent = text;
     status.dataset.tone = tone;
   };
 
-  /** この画面の中で編集した別コレクションを、それぞれのファイルへ書き戻す */
-  const saveSub = async () => {
-    for (const sub of Object.values(subState)) {
-      for (const id of sub.removed) {
-        await fetch("/api/admin/delete", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ collection: sub.collection, id }),
-        });
-      }
-      sub.removed = [];
-
-      for (const [i, row] of sub.rows.entries()) {
-        const res = await fetch("/api/admin/save", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            collection: sub.collection,
-            id: row.id,
-            // 並びはこの画面の順番のまま
-            data: { ...row.data, order: (i + 1) * 10 },
-            body: row.body ?? "",
-          }),
-        });
-        if (res.ok && !row.id) row.id = (await res.json()).slug;
-      }
-    }
+  // ---- 保存する中身 ----
+  /** この画面が受け持つ項目。開催回の1ファイルを複数の画面で分担しているので、
+      自分の項目だけを送る（開いたときの古い値で、ほかの画面の変更を戻さないように） */
+  const owned = fields.filter(
+    (f) => f.type !== "sub" && f.type !== "body" && (f.type !== "hidden" || !entryId)
+  );
+  /** 開催日は、トップページが日付を、スケジュール画面が見出しを受け持つ。
+      それぞれ自分の分だけを送り、サーバー側で日ごとに重ねる */
+  const project = (f, v) => {
+    if (f.type === "days" && Array.isArray(v))
+      return v.map((d) => ({ id: d.id, label: d.label, note: d.note ?? "", time: d.time ?? "" }));
+    if (f.type === "schedule" && Array.isArray(v))
+      return v.map((d) => ({ id: d.id, parts: d.parts ?? [], extras: d.extras ?? [] }));
+    return v;
   };
 
+  const payload = () => ({
+    collection,
+    id: entryId,
+    data: Object.fromEntries(owned.map((f) => [f.name, project(f, state[f.name])])),
+    body: document.getElementById("body")?.value ?? "",
+    // この画面の中で編集した別コレクション（協賛など）。並びは画面の順番のまま
+    subs: Object.values(subState).flatMap((sub) =>
+      sub.rows.map((row, i) => ({
+        collection: sub.collection,
+        id: row.id,
+        data: { ...row.data, order: (i + 1) * 10 },
+        body: row.body ?? "",
+      }))
+    ),
+    deletes: Object.values(subState).flatMap((sub) =>
+      sub.removed.map((id) => ({ collection: sub.collection, id }))
+    ),
+  });
+
+  // ---- 保存していない変更 ----
+  // 開いたとき（と保存したとき）の中身を覚えておき、今の中身と比べる
+  let saved = "";
+  const snapshot = () => (saved = JSON.stringify(payload()));
+  const isDirty = () => JSON.stringify(payload()) !== saved;
+  /** 自動では保存しない（保存するとすぐ公開サイトに出るため）。代わりに、
+      保存していない変更があることを目立たせ、そのまま離れようとしたら止める */
+  const checkDirty = () => {
+    const dirty = isDirty();
+    bar.classList.toggle("is-dirty", dirty);
+    if (dirty) say("保存していない変更があります", "warn");
+    else if (status.dataset.tone === "warn") say("");
+  };
+  hooks.edited = checkDirty;
+  let checking = 0;
+  const queueCheck = () => {
+    cancelAnimationFrame(checking);
+    checking = requestAnimationFrame(checkDirty);
+  };
+  for (const type of ["input", "change", "click", "drop", "keyup"]) {
+    document.addEventListener(type, queueCheck);
+  }
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!isDirty()) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+  // 管理画面の中のリンク（メニュー・一覧へ戻る）は、ブラウザの確認より分かりやすい文で止める
+  document.addEventListener(
+    "click",
+    async (e) => {
+      const a = e.target.closest?.("a[href]");
+      if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || !isDirty()) return;
+      if (a.closest(".preview")) return;
+      e.preventDefault();
+      const go = await window.adminConfirm(
+        "保存していない変更があります。保存せずに移動しますか？",
+        "保存せずに移動"
+      );
+      if (!go) return;
+      saved = JSON.stringify(payload()); // beforeunload で二重に聞かないように
+      location.href = a.href;
+    },
+    true
+  );
+
+  // ⌘S / Ctrl+S で保存
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+      e.preventDefault();
+      saveButton.click();
+    }
+  });
+
+  // ---- 保存 ----
   const saveButton = document.getElementById("save");
   saveButton.addEventListener("click", async () => {
     // 待っている間に二度押しされて、二重に保存しないように
@@ -1099,20 +1203,46 @@ const previewHash = previewPath?.split("#")[1] ?? "";
       await Promise.allSettled([...uploads]);
     }
     say("保存しています…");
-    const body = document.getElementById("body")?.value ?? "";
+    const sent = payload();
     const res = await fetch("/api/admin/save", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      // 公開・非公開は上部のスイッチだけが書く。開いたときの古い値で戻さないよう送らない
-      body: JSON.stringify({ collection, id: entryId, data: { ...state, hiddenPages: undefined }, body }),
-    });
-    await saveSub();
-    if (!res.ok) return say(`保存できませんでした：${await res.text()}`, "error");
-    const { slug } = await res.json();
+      body: JSON.stringify(sent),
+    }).catch(() => null);
+    if (!res?.ok) {
+      checkDirty();
+      return say(`保存できませんでした：${res ? await res.text() : "通信できませんでした"}`, "error");
+    }
+    const { slug, subSlugs, commit } = await res.json();
+
+    // 新しく作った行に、付いた名前を覚えさせる（次の保存で二重に作らないように）
+    let k = 0;
+    for (const sub of Object.values(subState)) {
+      for (const row of sub.rows) {
+        if (!row.id) row.id = subSlugs[k];
+        k++;
+      }
+      sub.removed = [];
+    }
+    snapshot();
+    bar.classList.remove("is-dirty");
+
     if (!entryId) return location.replace(`/admin/${collection}/${slug}`);
-    say("保存しました", "ok");
-    reloadPreview();
+    if (!commit) return say("保存しました（変更はありませんでした）", "ok");
+
+    say("保存しました。サイトに反映しています…（1〜2分）", "ok");
+    preview.pending();
+    window.adminWaitLive(commit, {
+      live: () => {
+        say("保存しました。サイトに反映されました", "ok");
+        preview.fresh();
+      },
+      slow: () =>
+        say("保存はできています。サイトへの反映に時間がかかっています", "warn"),
+    });
   };
+
+  snapshot();
 
   document.getElementById("delete")?.addEventListener("click", async () => {
     if (!(await window.adminConfirm("この項目を削除します。元に戻せません。"))) return;

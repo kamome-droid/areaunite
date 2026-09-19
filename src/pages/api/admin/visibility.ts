@@ -20,8 +20,8 @@ export const POST: APIRoute = async ({ request }) => {
     else now.delete(page);
     // 並びを決めておく（書くたびに順番が変わって、中身が同じなのに差分が出ないように）
     const hiddenPages = pageKeys.filter((k) => now.has(k));
-    await saveEntry(def, id, { hiddenPages }, entry.body);
-    return new Response(JSON.stringify({ hiddenPages }), {
+    const { commit } = await saveEntry(def, id, { hiddenPages }, entry.body);
+    return new Response(JSON.stringify({ hiddenPages, commit }), {
       headers: { "content-type": "application/json" },
     });
   } catch (e) {

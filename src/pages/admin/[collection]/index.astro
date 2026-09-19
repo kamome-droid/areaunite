@@ -116,8 +116,19 @@ const sections = def.groupBy
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ collection, ids }),
+    }).catch(() => null);
+    if (!res?.ok) return say("並び順を保存できませんでした。もう一度お試しください");
+    waitLive((await res.json()).commit, "並び順を保存しました");
+  };
+
+  /** 保存したあと、サイトに出るまでを知らせる（作り直しに1〜2分かかる） */
+  const waitLive = (commit, done) => {
+    if (!commit) return say(done);
+    say(`${done}。サイトに反映しています…`);
+    window.adminWaitLive(commit, {
+      live: () => say(`${done}。サイトに反映されました`),
+      slow: () => say(`${done}。サイトへの反映に時間がかかっています`),
     });
-    say(res.ok ? "並び順を保存しました" : "保存できませんでした");
   };
 
   document.querySelectorAll("[data-list]").forEach((list) => {
@@ -172,7 +183,7 @@ const sections = def.groupBy
       });
       if (!res.ok) return say("削除できませんでした");
       btn.closest("li")?.remove();
-      say("削除しました");
+      waitLive((await res.json()).commit, "削除しました");
     });
   });
 

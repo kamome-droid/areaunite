@@ -689,3 +689,27 @@
   opacity: 0.5;
   cursor: progress;
 }
+
+/* 保存していない変更があるとき。保存ボタンを目立たせる */
+.bar__status[data-tone="warn"] {
+  color: #9a6700;
+  font-weight: 700;
+}
+
+.bar.is-dirty #save {
+  box-shadow: 0 0 0 3px #f2d58a;
+}
+
+/* プレビューが保存した内容に追いついているか */
+.preview__state {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preview__state[data-state="pending"] {
+  color: #9a6700;
+}
+
+.preview__state[data-state="fresh"] {
+  color: #1a7f37;
+}

@@ -10,8 +10,8 @@ export const POST: APIRoute = async ({ request }) => {
   if (!def || !id) return new Response("不明な項目です", { status: 400 });
 
   try {
-    await deleteEntry(def, id);
-    return new Response(JSON.stringify({ ok: true }), {
+    const { commit } = await deleteEntry(def, id);
+    return new Response(JSON.stringify({ ok: true, commit }), {
       headers: { "content-type": "application/json" },
     });
   } catch (e) {

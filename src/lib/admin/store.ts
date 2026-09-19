@@ -1,5 +1,6 @@
 // 管理画面の保存処理。ローカル(dev)は直接ファイル書き込み、本番(Vercel)はGitHub APIでコミット。
 import fs from "node:fs/promises";
+import crypto from "node:crypto";
 import path from "node:path";
 import yaml from "js-yaml";
 import type { CollectionDef } from "./schema";
@@ -57,7 +58,12 @@ function clean(value: any): any {
     const arr = value.map(clean).filter((v) => v !== undefined);
     return arr.length ? arr : undefined;
   }
-  if (value instanceof Date) return value;
+  // 日付は元の "2026-10-17" の形で書き戻す（読むときに Date にしているため）。
+  // そのまま書くと時刻付きに化けて、中身は同じなのに毎回差分が出る
+  if (value instanceof Date) {
+    const iso = value.toISOString();
+    return iso.endsWith("T00:00:00.000Z") ? iso.slice(0, 10) : iso;
+  }
   if (value && typeof value === "object") {
     const out: Record<string, any> = {};
     for (const [k, v] of Object.entries(value)) {
@@ -116,18 +122,6 @@ async function githubPut(repoPath: string, contentBase64: string, message: strin
   if (!res.ok) throw new Error(`GitHub write failed: ${res.status} ${await res.text()}`);
 }
 
-async function writeText(repoPath: string, text: string, message: string) {
-  if (useGitHub()) {
-    await githubPut(repoPath, Buffer.from(text, "utf8").toString("base64"), message);
-  } else {
-    const abs = path.join(process.cwd(), repoPath);
-    // 中身が同じなら書かない（GitHubに書くときと振る舞いをそろえる）
-    if ((await fs.readFile(abs, "utf8").catch(() => null)) === text) return;
-    await fs.mkdir(path.dirname(abs), { recursive: true });
-    await fs.writeFile(abs, text, "utf8");
-  }
-}
-
 async function writeBinary(repoPath: string, buf: Buffer, message: string) {
   if (useGitHub()) {
     await githubPut(repoPath, buf.toString("base64"), message);
@@ -138,28 +132,190 @@ async function writeBinary(repoPath: string, buf: Buffer, message: string) {
   }
 }
 
+// ---- まとめて1コミットにする ----
+// 1回の保存（本文＋協賛の行＋削除）を1つのコミットにまとめる。
+// コミットのたびにサイトが作り直されるので、細切れにすると反映待ちの列が伸び、
+// Vercel の1日のデプロイ回数の上限にも近づくため。
+
+/** 書き込む1ファイル。content が null なら削除 */
+export type FileChange = { path: string; content: string | null };
+
+/** git がファイルの中身から付ける名前（blob の sha）。中身が同じか比べるのに使う */
+const blobSha = (text: string) => {
+  const buf = Buffer.from(text, "utf8");
+  return crypto
+    .createHash("sha1")
+    .update(Buffer.concat([Buffer.from(`blob ${buf.length}\0`), buf]))
+    .digest("hex");
+};
+
+async function gh(pathname: string, init: RequestInit = {}) {
+  const token = env("GITHUB_TOKEN")!;
+  const repo = env("GITHUB_REPO");
+  const res = await fetch(`https://api.github.com/repos/${repo}${pathname}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+  return res;
+}
+
+async function ghJson(pathname: string, init: RequestInit = {}) {
+  const res = await gh(pathname, init);
+  if (!res.ok) throw new Error(await githubError(res, pathname));
+  return res.json() as Promise<any>;
+}
+
+/**
+ * ファイルをまとめて書く。中身の変わらないものは書かない。
+ * 何も変わらなければコミットしない（commit は null）。
+ */
+export async function commitFiles(
+  changes: FileChange[],
+  message: string
+): Promise<{ commit: string | null }> {
+  if (!useGitHub()) {
+    let wrote = false;
+    for (const c of changes) {
+      const abs = path.join(process.cwd(), c.path);
+      if (c.content == null) {
+        const had = await fs.stat(abs).then(() => true, () => false);
+        if (had) {
+          await fs.rm(abs, { force: true });
+          wrote = true;
+        }
+        continue;
+      }
+      if ((await fs.readFile(abs, "utf8").catch(() => null)) === c.content) continue;
+      await fs.mkdir(path.dirname(abs), { recursive: true });
+      await fs.writeFile(abs, c.content, "utf8");
+      wrote = true;
+    }
+    return { commit: wrote ? "local" : null };
+  }
+
+  const branch = env("GITHUB_BRANCH") || "main";
+  // 同時に別の保存が入って先を越されたら、最新の上に積み直す
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const head = (await ghJson(`/git/ref/heads/${branch}`)).object.sha as string;
+    const base = (await ghJson(`/git/commits/${head}`)).tree.sha as string;
+    const tree = await ghJson(`/git/trees/${base}?recursive=1`);
+    const current = new Map<string, string>(
+      (tree.tree as { path: string; sha: string; type: string }[])
+        .filter((t) => t.type === "blob")
+        .map((t) => [t.path, t.sha])
+    );
+
+    const entries = changes.flatMap((c) => {
+      if (c.content == null) {
+        return current.has(c.path) ? [{ path: c.path, mode: "100644", type: "blob", sha: null }] : [];
+      }
+      return current.get(c.path) === blobSha(c.content)
+        ? []
+        : [{ path: c.path, mode: "100644", type: "blob", content: c.content }];
+    });
+    if (entries.length === 0) return { commit: null };
+
+    const nextTree = await ghJson(`/git/trees`, {
+      method: "POST",
+      body: JSON.stringify({ base_tree: base, tree: entries }),
+    });
+    const commit = await ghJson(`/git/commits`, {
+      method: "POST",
+      body: JSON.stringify({ message, tree: nextTree.sha, parents: [head] }),
+    });
+    const moved = await gh(`/git/refs/heads/${branch}`, {
+      method: "PATCH",
+      body: JSON.stringify({ sha: commit.sha, force: false }),
+    });
+    if (moved.ok) return { commit: commit.sha };
+    // 422 は「先に別のコミットが入った」。それ以外は設定の問題なので知らせる
+    if (moved.status !== 422) throw new Error(await githubError(moved, `refs/heads/${branch}`));
+  }
+  throw new Error("ほかの保存と重なって書き込めませんでした。もう一度保存してください");
+}
+
+/** 公開中のサイトが、そのコミットの内容まで作り直し終えているか */
+export async function isLive(commit: string): Promise<boolean | null> {
+  if (!useGitHub()) return true;
+  // Vercel が今のデプロイに付けているコミット。無ければ判断できない
+  const deployed = env("VERCEL_GIT_COMMIT_SHA");
+  if (!deployed) return null;
+  if (deployed === commit) return true;
+  const res = await gh(`/compare/${commit}...${deployed}`);
+  if (!res.ok) return null;
+  const { status } = await res.json();
+  // 公開中のものが、保存したコミットと同じか、それより先に進んでいれば反映済み
+  return status === "identical" || status === "ahead";
+}
+
 // ---- 公開API ----
-export async function saveEntry(
+
+/**
+ * 画面から来た値を、既存の内容に重ねる。
+ * 開催回の1ファイルを複数の画面で分担しているので、その画面が送ってこなかった項目は残す。
+ * id を持つ行の並び（開催日）は、行ごとに重ねる。トップページは日付、
+ * スケジュール画面は見出しだけを送ってくるため。
+ */
+function mergeData(existing: Record<string, any>, data: Record<string, any>) {
+  const out: Record<string, any> = { ...existing };
+  for (const [k, v] of Object.entries(data)) {
+    const old = existing[k];
+    const byId =
+      Array.isArray(v) &&
+      Array.isArray(old) &&
+      v.every((r) => r && typeof r === "object" && "id" in r);
+    out[k] = byId
+      ? v.map((row: any) => ({ ...(old.find((o: any) => o?.id === row.id) ?? {}), ...row }))
+      : v;
+  }
+  return out;
+}
+
+/** 1件ぶんの書き込みを作る（まだ書かない） */
+export async function prepareEntry(
   def: CollectionDef,
   id: string | null,
   data: Record<string, any>,
-  body: string
-): Promise<{ slug: string }> {
-  const slug = id ? safeSlug(id) : makeSlug(def, data);
+  body: string,
+  /** 同じ保存の中ですでに使った名前。新しく作る行どうしで重ならないように */
+  taken: Set<string> = new Set()
+): Promise<{ slug: string; change: FileChange }> {
+  let slug = id ? safeSlug(id) : makeSlug(def, data);
 
-  // その画面が扱わない項目を消さないよう、既存の内容に上書きする形で合成する。
-  // 開催回の1ファイルを、トップページ・スケジュール・アクセスの3画面で分担しているため。
+  // 新しく作るとき、同じ名前のファイルがあれば番号を付ける（上書きしてしまわないように）
+  if (!id) {
+    const base = slug;
+    for (let n = 2; taken.has(slug) || (await readRaw(def, slug)) != null; n++) slug = `${base}-${n}`;
+  }
+  taken.add(slug);
+
   const existing = id ? await readOne(def, slug) : null;
-  const merged = { ...(existing?.data ?? {}), ...data };
+  const merged = mergeData(existing?.data ?? {}, data);
 
   // 本文を編集しない画面から保存したときに、本文を消さない。
   // 開催回のように1ファイルを複数の画面で分担しているため
   const nextBody = def.hasBody ? body : (existing?.body ?? "");
 
-  const repoPath = `${def.dir}/${slug}.md`;
-  await writeText(repoPath, buildFile(merged, nextBody), `admin: save ${def.key}/${slug}`);
-  return { slug };
+  return { slug, change: { path: `${def.dir}/${slug}.md`, content: buildFile(merged, nextBody) } };
 }
+
+export async function saveEntry(
+  def: CollectionDef,
+  id: string | null,
+  data: Record<string, any>,
+  body: string
+): Promise<{ slug: string; commit: string | null }> {
+  const { slug, change } = await prepareEntry(def, id, data, body);
+  const { commit } = await commitFiles([change], `admin: save ${def.key}/${slug}`);
+  return { slug, commit };
+}
+
+export const entryPath = (def: CollectionDef, id: string) => `${def.dir}/${safeSlug(id)}.md`;
 
 /** GitHubからの返事を、原因の分かる文にする */
 async function githubError(res: Response, where: string): Promise<string> {
@@ -260,25 +416,8 @@ export async function readAll(def: CollectionDef): Promise<RawEntry[]> {
   return out;
 }
 
-export async function deleteEntry(def: CollectionDef, id: string): Promise<void> {
-  const repoPath = `${def.dir}/${safeSlug(id)}.md`;
-  if (useGitHub()) {
-    const token = env("GITHUB_TOKEN")!;
-    const repo = env("GITHUB_REPO");
-    const branch = env("GITHUB_BRANCH") || "main";
-    const api = `https://api.github.com/repos/${repo}/contents/${repoPath}`;
-    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
-    const get = await fetch(`${api}?ref=${branch}`, { headers });
-    if (!get.ok) return;
-    const sha = (await get.json()).sha;
-    await fetch(api, {
-      method: "DELETE",
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: `admin: delete ${def.key}/${id}`, sha, branch }),
-    });
-  } else {
-    await fs.rm(path.join(process.cwd(), repoPath), { force: true });
-  }
+export async function deleteEntry(def: CollectionDef, id: string): Promise<{ commit: string | null }> {
+  return commitFiles([{ path: entryPath(def, id), content: null }], `admin: delete ${def.key}/${id}`);
 }
 
 export async function uploadImage(
