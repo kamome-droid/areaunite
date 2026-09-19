@@ -16,7 +16,16 @@ export type Field =
   | { name: string; label: string; type: "image"; help?: string }
   | { name: string; label: string; type: "images"; help?: string; /** 置き場所を変える。省略するとこの画面の既定 */ media?: string }
   | { name: string; label: string; type: "boolean"; help?: string }
-  | { name: string; label: string; type: "select"; options: { value: string; label: string }[]; help?: string }
+  | {
+      name: string;
+      label: string;
+      type: "select";
+      options: { value: string; label: string }[];
+      help?: string;
+      /** 値を数として保存する（選択肢は文字でしか持てないため）。
+          付け忘れると "2" のような文字で保存され、サイトの作り直しが失敗する */
+      numeric?: boolean;
+    }
   /** select と同じだが、押して選ぶボタンの並びで出す */
   | { name: string; label: string; type: "pills"; options: { value: string; label: string }[]; help?: string }
   /** 本文。置いた位置に出す（省略すると一番下） */
@@ -325,6 +334,7 @@ export const collections: Record<string, CollectionDef> = {
         name: "tier",
         label: "表示の大きさ",
         type: "select",
+        numeric: true,
         options: [
           { value: "1", label: "大" },
           { value: "2", label: "中" },

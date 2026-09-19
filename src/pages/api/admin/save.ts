@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     for (const sub of subs as Part[]) {
       const sdef = collections[sub.collection];
       if (!sdef) throw new Error(`不明な項目です：${sub.collection}`);
-      const one = await prepareEntry(sdef, sub.id ?? null, sub.data ?? {}, sub.body ?? "", taken);
+      const one = await prepareEntry(sdef, sub.id ?? null, sub.data ?? {}, sub.body, taken);
       changes.push(one.change);
       subSlugs.push(one.slug);
     }

@@ -14,10 +14,9 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const changes: FileChange[] = [];
     for (const [i, id] of ids.entries()) {
-      const entry = await readOne(def, id);
-      if (!entry) continue;
-      // 10刻み。あとから手で間に入れられるようにしておく
-      const { change } = await prepareEntry(def, id, { order: (i + 1) * 10 }, entry.body);
+      if (!(await readOne(def, id))) continue;
+      // 10刻み。あとから手で間に入れられるようにしておく。本文には触らない
+      const { change } = await prepareEntry(def, id, { order: (i + 1) * 10 });
       changes.push(change);
     }
     const { commit } = await commitFiles(changes, `admin: reorder ${def.key}`);

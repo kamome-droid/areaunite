@@ -137,8 +137,17 @@ async function writeBinary(repoPath: string, buf: Buffer, message: string) {
 // コミットのたびにサイトが作り直されるので、細切れにすると反映待ちの列が伸び、
 // Vercel の1日のデプロイ回数の上限にも近づくため。
 
-/** 書き込む1ファイル。content が null なら削除 */
-export type FileChange = { path: string; content: string | null };
+/**
+ * 書き込む1ファイル。content が null なら削除。
+ * update を渡すと、コミットを積む時点の最新の中身から作り直す。
+ * 読んでから書くまでの間に別の保存が入っても、その変更を古い内容で上書きしないように
+ */
+export type FileChange =
+  | { path: string; content: string | null }
+  | { path: string; update: (current: string | null) => string | null };
+
+const resolve = (c: FileChange, current: string | null) =>
+  "update" in c ? c.update(current) : c.content;
 
 /** git がファイルの中身から付ける名前（blob の sha）。中身が同じか比べるのに使う */
 const blobSha = (text: string) => {
@@ -182,7 +191,8 @@ export async function commitFiles(
     let wrote = false;
     for (const c of changes) {
       const abs = path.join(process.cwd(), c.path);
-      if (c.content == null) {
+      const content = resolve(c, await fs.readFile(abs, "utf8").catch(() => null));
+      if (content == null) {
         const had = await fs.stat(abs).then(() => true, () => false);
         if (had) {
           await fs.rm(abs, { force: true });
@@ -190,9 +200,9 @@ export async function commitFiles(
         }
         continue;
       }
-      if ((await fs.readFile(abs, "utf8").catch(() => null)) === c.content) continue;
+      if ((await fs.readFile(abs, "utf8").catch(() => null)) === content) continue;
       await fs.mkdir(path.dirname(abs), { recursive: true });
-      await fs.writeFile(abs, c.content, "utf8");
+      await fs.writeFile(abs, content, "utf8");
       wrote = true;
     }
     return { commit: wrote ? "local" : null };
@@ -210,14 +220,21 @@ export async function commitFiles(
         .map((t) => [t.path, t.sha])
     );
 
-    const entries = changes.flatMap((c) => {
-      if (c.content == null) {
-        return current.has(c.path) ? [{ path: c.path, mode: "100644", type: "blob", sha: null }] : [];
+    const entries = [];
+    for (const c of changes) {
+      // update は、このコミットの土台（head）にある中身から作る
+      const sha = current.get(c.path);
+      const before =
+        "update" in c && sha
+          ? Buffer.from((await ghJson(`/git/blobs/${sha}`)).content, "base64").toString("utf8")
+          : null;
+      const content = resolve(c, before);
+      if (content == null) {
+        if (sha) entries.push({ path: c.path, mode: "100644", type: "blob", sha: null });
+      } else if (sha !== blobSha(content)) {
+        entries.push({ path: c.path, mode: "100644", type: "blob", content });
       }
-      return current.get(c.path) === blobSha(c.content)
-        ? []
-        : [{ path: c.path, mode: "100644", type: "blob", content: c.content }];
-    });
+    }
     if (entries.length === 0) return { commit: null };
 
     const nextTree = await ghJson(`/git/trees`, {
@@ -276,16 +293,35 @@ function mergeData(existing: Record<string, any>, data: Record<string, any>) {
   return out;
 }
 
-/** 1件ぶんの書き込みを作る（まだ書かない） */
+/** 数として持つ欄（選択肢で選ぶ大きさなど）を、数に直す */
+function coerce(def: CollectionDef, data: Record<string, any>) {
+  const out = { ...data };
+  for (const f of def.fields) {
+    if (f.type === "select" && f.numeric && out[f.name] != null && out[f.name] !== "") {
+      const n = Number(out[f.name]);
+      if (!Number.isNaN(n)) out[f.name] = n;
+    }
+  }
+  return out;
+}
+
+/** 画面から来る値。今の中身を見て決めたいとき（公開・非公開の切り替えなど）は関数で渡す */
+export type EntryData = Record<string, any> | ((existing: Record<string, any>) => Record<string, any>);
+
+/**
+ * 1件ぶんの書き込みを作る（まだ書かない）。
+ * 既存の内容との重ね合わせは、書き込む時点の最新の中身に対して行う。
+ * body を省くと本文はそのまま残す。
+ */
 export async function prepareEntry(
   def: CollectionDef,
   id: string | null,
-  data: Record<string, any>,
-  body: string,
+  data: EntryData,
+  body?: string,
   /** 同じ保存の中ですでに使った名前。新しく作る行どうしで重ならないように */
   taken: Set<string> = new Set()
 ): Promise<{ slug: string; change: FileChange }> {
-  let slug = id ? safeSlug(id) : makeSlug(def, data);
+  let slug = id ? safeSlug(id) : makeSlug(def, typeof data === "function" ? {} : data);
 
   // 新しく作るとき、同じ名前のファイルがあれば番号を付ける（上書きしてしまわないように）
   if (!id) {
@@ -294,21 +330,28 @@ export async function prepareEntry(
   }
   taken.add(slug);
 
-  const existing = id ? await readOne(def, slug) : null;
-  const merged = mergeData(existing?.data ?? {}, data);
+  const update = (raw: string | null) => {
+    // 既存の項目なのに見つからない＝その間に削除された。項目の一部だけで作り直すと
+    // 必須の欄が欠けたファイルになり、サイトの作り直しが失敗するので、何も書かない
+    if (id && raw == null) return null;
+    const existing = id && raw != null ? parseFile(slug, raw) : null;
+    const before = existing?.data ?? {};
+    const incoming = coerce(def, typeof data === "function" ? data(before) : data);
+    const merged = mergeData(before, incoming);
+    // 本文を編集しない画面から保存したときに、本文を消さない。
+    // 開催回のように1ファイルを複数の画面で分担しているため
+    const nextBody = def.hasBody && body !== undefined ? body : (existing?.body ?? "");
+    return buildFile(merged, nextBody);
+  };
 
-  // 本文を編集しない画面から保存したときに、本文を消さない。
-  // 開催回のように1ファイルを複数の画面で分担しているため
-  const nextBody = def.hasBody ? body : (existing?.body ?? "");
-
-  return { slug, change: { path: `${def.dir}/${slug}.md`, content: buildFile(merged, nextBody) } };
+  return { slug, change: { path: `${def.dir}/${slug}.md`, update } };
 }
 
 export async function saveEntry(
   def: CollectionDef,
   id: string | null,
-  data: Record<string, any>,
-  body: string
+  data: EntryData,
+  body?: string
 ): Promise<{ slug: string; commit: string | null }> {
   const { slug, change } = await prepareEntry(def, id, data, body);
   const { commit } = await commitFiles([change], `admin: save ${def.key}/${slug}`);

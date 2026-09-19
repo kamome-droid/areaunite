@@ -13,14 +13,17 @@ export const POST: APIRoute = async ({ request }) => {
   const def = collections.top;
   const id = def.singleton!;
   try {
-    const entry = await readOne(def, id);
-    if (!entry) return new Response("開催回のファイルがありません", { status: 404 });
-    const now = new Set<PageKey>((entry.data.hiddenPages ?? []) as PageKey[]);
-    if (hidden) now.add(page);
-    else now.delete(page);
-    // 並びを決めておく（書くたびに順番が変わって、中身が同じなのに差分が出ないように）
-    const hiddenPages = pageKeys.filter((k) => now.has(k));
-    const { commit } = await saveEntry(def, id, { hiddenPages }, entry.body);
+    if (!(await readOne(def, id))) return new Response("開催回のファイルがありません", { status: 404 });
+    // 書き込む時点の最新の値から切り替える（ほかの画面の保存と重なっても、互いに消さないように）
+    let hiddenPages: PageKey[] = [];
+    const { commit } = await saveEntry(def, id, (existing) => {
+      const now = new Set<PageKey>((existing.hiddenPages ?? []) as PageKey[]);
+      if (hidden) now.add(page);
+      else now.delete(page);
+      // 並びを決めておく（書くたびに順番が変わって、中身が同じなのに差分が出ないように）
+      hiddenPages = pageKeys.filter((k) => now.has(k));
+      return { hiddenPages };
+    });
     return new Response(JSON.stringify({ hiddenPages, commit }), {
       headers: { "content-type": "application/json" },
     });

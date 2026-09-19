@@ -701,11 +701,10 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         say(`${done}。サイトに反映しています…`, "ok");
         preview.pending();
         window.adminWaitLive(commit, {
-          live: () => {
-            say(`${done}。サイトに反映されました`, "ok");
-            preview.fresh();
+          live: () => sayLive(`${done}。サイトに反映されました`),
+          slow: () => {
+            if (!isDirty()) say(`${done}。サイトへの反映に時間がかかっています`);
           },
-          slow: () => say(`${done}。サイトへの反映に時間がかかっています`, "warn"),
         });
       };
 
@@ -1182,17 +1181,27 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   const isDirty = () => JSON.stringify(payload()) !== saved;
   /** 自動では保存しない（保存するとすぐ公開サイトに出るため）。代わりに、
       保存していない変更があることを目立たせ、そのまま離れようとしたら止める */
+  /** 保存の最中か。その間とアップロード中は、進み具合の文を上書きしない */
+  let busy = false;
   const checkDirty = () => {
     const dirty = isDirty();
     bar.classList.toggle("is-dirty", dirty);
+    if (busy || uploads.size) return;
     if (dirty) say("保存していない変更があります", "warn");
     else if (status.dataset.tone === "warn") say("");
   };
+  /** 反映が終わったときの文。その間に書き足していたら「保存していない変更」を優先する */
+  const sayLive = (done) => {
+    preview.fresh();
+    if (isDirty()) return say(`${done.replace(/。$/, "")}。ただし、保存していない変更があります`, "warn");
+    say(done, "ok");
+  };
   hooks.edited = checkDirty;
+  // 描画待ち（requestAnimationFrame）にすると、タブが裏にある間は動かないのでタイマーにする
   let checking = 0;
   const queueCheck = () => {
-    cancelAnimationFrame(checking);
-    checking = requestAnimationFrame(checkDirty);
+    clearTimeout(checking);
+    checking = setTimeout(checkDirty, 30);
   };
   for (const type of ["input", "change", "click", "drop", "keyup"]) {
     document.addEventListener(type, queueCheck);
@@ -1235,10 +1244,14 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   saveButton.addEventListener("click", async () => {
     // 待っている間に二度押しされて、二重に保存しないように
     saveButton.disabled = true;
+    busy = true;
     try {
       await save();
     } finally {
       saveButton.disabled = false;
+      busy = false;
+      // 保存の最中に書き足していたら、ここで「保存していない変更があります」を出す
+      if (isDirty()) checkDirty();
     }
   });
 
@@ -1250,6 +1263,9 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     }
     say("保存しています…");
     const sent = payload();
+    // 送った時点の行と削除。保存の最中に足したり消したりしたものと区別するため
+    const sentRows = Object.values(subState).flatMap((sub) => sub.rows.map((row) => ({ sub, row })));
+    const sentRemoved = new Set(sent.deletes.map((d) => d.id));
     const res = await fetch("/api/admin/save", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -1261,17 +1277,21 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     }
     const { slug, subSlugs, commit } = await res.json();
 
-    // 新しく作った行に、付いた名前を覚えさせる（次の保存で二重に作らないように）
-    let k = 0;
+    // 新しく作った行に、付いた名前を覚えさせる（次の保存で二重に作らないように）。
+    // 送ったときの行そのものに付ける（その後に並びが変わっていても取り違えないように）
+    sentRows.forEach(({ sub, row }, i) => {
+      if (!row.id) row.id = subSlugs[i];
+      sent.subs[i].id = row.id;
+      // 保存の最中に画面から消した新しい行は、作られてしまったので次の保存で消す
+      if (!sub.rows.includes(row) && !sub.removed.includes(row.id)) sub.removed.push(row.id);
+    });
+    // 送った削除だけを片づける。保存の最中に消したものは次の保存で送る
     for (const sub of Object.values(subState)) {
-      for (const row of sub.rows) {
-        if (!row.id) row.id = subSlugs[k];
-        k++;
-      }
-      sub.removed = [];
+      sub.removed = sub.removed.filter((id) => !sentRemoved.has(id));
     }
-    snapshot();
-    bar.classList.remove("is-dirty");
+    // 「保存済み」とみなすのは送った中身だけ。保存の最中に書き足した分は未保存のまま
+    saved = JSON.stringify({ ...sent, deletes: [] });
+    bar.classList.toggle("is-dirty", isDirty());
 
     if (!entryId) return location.replace(`/admin/${collection}/${slug}`);
     if (!commit) return say("保存しました（変更はありませんでした）", "ok");
@@ -1279,12 +1299,10 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     say("保存しました。サイトに反映しています…（1〜2分）", "ok");
     preview.pending();
     window.adminWaitLive(commit, {
-      live: () => {
-        say("保存しました。サイトに反映されました", "ok");
-        preview.fresh();
+      live: () => sayLive("保存しました。サイトに反映されました"),
+      slow: () => {
+        if (!isDirty()) say("保存はできています。サイトへの反映に時間がかかっています");
       },
-      slow: () =>
-        say("保存はできています。サイトへの反映に時間がかかっています", "warn"),
     });
   };
 
