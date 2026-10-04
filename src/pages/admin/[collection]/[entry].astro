@@ -523,7 +523,30 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     const wrap = el("div", { class: "field" });
     const value = get(f.name);
 
-    if (f.type === "boolean") {
+    if (f.type === "switch") {
+      // ページ全体のスイッチと同じ見た目。入れた値は「隠す」かどうか
+      const box = el("div", { class: "toggle" });
+      const button = el(
+        "button",
+        { type: "button", class: "toggle__switch", role: "switch" },
+        el("span", { class: "toggle__track", "aria-hidden": "true" }, el("span", { class: "toggle__thumb" })),
+        el("span", { class: "toggle__state" })
+      );
+      let hidden = !!value;
+      const draw = () => {
+        box.classList.toggle("toggle--off", hidden);
+        button.setAttribute("aria-checked", hidden ? "false" : "true");
+        button.querySelector(".toggle__state").textContent = hidden ? f.onText : f.offText;
+      };
+      button.addEventListener("click", () => {
+        hidden = !hidden;
+        set(f.name, hidden);
+        draw();
+      });
+      draw();
+      box.append(button);
+      wrap.append(labelFor(f), box, helpFor(f));
+    } else if (f.type === "boolean") {
       wrap.append(
         el(
           "label",

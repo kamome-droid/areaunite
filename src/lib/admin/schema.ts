@@ -16,6 +16,9 @@ export type Field =
   | { name: string; label: string; type: "image"; help?: string }
   | { name: string; label: string; type: "images"; help?: string; /** 置き場所を変える。省略するとこの画面の既定 */ media?: string }
   | { name: string; label: string; type: "boolean"; help?: string; hideFor?: string[] }
+  /** 公開・非公開の切り替え。真偽値だが、入／切のスイッチで出す。
+      on は「隠す」側（hidden の値をそのまま持つ） */
+  | { name: string; label: string; type: "switch"; onText: string; offText: string; help?: string }
   | {
       name: string;
       label: string;
@@ -155,6 +158,13 @@ export const collections: Record<string, CollectionDef> = {
       },
       { name: "schedule", label: "開催日", type: "days" },
       { name: "guests", label: "ゲストの名前", type: "lines", help: "1行に1人ずつ。改行で区切ってください" },
+      {
+        name: "sponsorsHidden",
+        label: "協賛ロゴの公開",
+        type: "switch",
+        onText: "準備中（COMING SOON と出ます）",
+        offText: "公開中",
+      },
       {
         name: "sponsors",
         label: "協賛",

@@ -188,6 +188,8 @@ const event = defineCollection({
     /* ---- 出演・協賛 ---- */
     /** 名前だけを並べる欄（来場ライダーなど） */
     guests: z.array(z.string()).default([]),
+    /** 協賛ロゴをまだ出さない。true のあいだ、サイトでは COMING SOON と出る */
+    sponsorsHidden: z.boolean().default(false),
     /** ロゴではなく名前だけを並べる欄（後援・協力） */
     supporters: z.array(z.string()).default([]),
   }),

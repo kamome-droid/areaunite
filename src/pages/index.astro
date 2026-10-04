@@ -164,9 +164,14 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
   }
 
   {
-    (sponsors.length > 0 || (ev && ev.supporters.length > 0)) && (
+    (sponsors.length > 0 || ev?.sponsorsHidden || (ev && ev.supporters.length > 0)) && (
       <Section id="sponsors" label="Sponsors" jp="協賛・後援">
-        {sponsors.length > 0 && <SponsorGrid sponsors={sponsors.map((s) => s.data)} />}
+        {/* ロゴがまだ出せないあいだは、枠だけ見せて COMING SOON と出す */}
+        {ev?.sponsorsHidden ? (
+          <p class="en sponsors__soon">Coming Soon</p>
+        ) : (
+          sponsors.length > 0 && <SponsorGrid sponsors={sponsors.map((s) => s.data)} />
+        )}
         {ev && ev.supporters.length > 0 && (
           <div class="supporters">
             <p class="en supporters__label">後援</p>
@@ -231,6 +236,14 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     .days__pending {
       margin-bottom: 8px;
     }
+  }
+
+  .sponsors__soon {
+    text-align: center;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--brand);
   }
 
   .supporters {
