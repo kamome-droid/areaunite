@@ -11,26 +11,27 @@ interface Props {
 const { sponsors } = Astro.props;
 ---
 
+{/* ロゴのimgはテンプレートの中に直接書く。
+    frontmatter で組み立てた要素には、このファイルのCSSが当たらないため */}
 <ul class="sp">
   {
-    sponsors.map((s) => {
-      const inner = s.logo ? (
-        <img src={s.logo} alt={s.name} loading="lazy" decoding="async" />
-      ) : (
-        <span class="en sp__name">{s.name}</span>
-      );
-      return (
-        <li class:list={["sp__item", `sp__item--t${s.tier}`]}>
-          {s.url ? (
-            <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.name}>
-              {inner}
-            </a>
-          ) : (
-            inner
-          )}
-        </li>
-      );
-    })
+    sponsors.map((s) => (
+      <li class:list={["sp__item", `sp__item--t${s.tier ?? 2}`]}>
+        {s.url ? (
+          <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.name}>
+            {s.logo ? (
+              <img src={s.logo} alt={s.name} loading="lazy" decoding="async" />
+            ) : (
+              <span class="en sp__name">{s.name}</span>
+            )}
+          </a>
+        ) : s.logo ? (
+          <img src={s.logo} alt={s.name} loading="lazy" decoding="async" />
+        ) : (
+          <span class="en sp__name">{s.name}</span>
+        )}
+      </li>
+    ))
   }
 </ul>
 
@@ -43,70 +44,75 @@ const { sponsors } = Astro.props;
   }
 
   .sp__item {
-    display: grid;
-    place-items: center;
-    padding: 14px 18px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    /* 高さが決まった箱の中で中央に置く。grid だと高さの100%が効かず、
+       大きいロゴが枠からはみ出す */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    /* ロゴは白地のものも、黒い文字のものも来る。白い面に元の色のまま置けば、
+       どんなロゴでも読める（黒い面に置くと、黒いロゴが消える） */
+    background: #fff;
     border-radius: var(--radius);
   }
 
   .sp__item a {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 100%;
   }
 
   .sp__item img {
-    /* どんな大きさのロゴを入れても枠に収める。
-       枠いっぱいを与えて、比率は保ったまま内側に合わせる */
-    width: 100%;
-    height: 100%;
+    /* どんな形のロゴ（横長・正方形・縦長）でも、切らずに枠の内側に収める */
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    /* ロゴの地色がまちまちでも黒背景で成立するよう、白に寄せる */
-    filter: brightness(0) invert(1);
-    opacity: 0.86;
     transition: opacity 0.2s ease;
   }
 
   .sp__item a:hover img {
-    opacity: 1;
+    opacity: 0.75;
   }
 
+  /* ロゴが無いときは名前を出す。白い面に載るので濃い文字にする */
   .sp__name {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    color: #1b1b1e;
     text-align: center;
   }
 
+  /* 枠は少し縦長ぎみにする。縦長のロゴが小さくなりすぎないように */
   .sp__item--t1 {
     width: 200px;
-    height: 104px;
+    height: 124px;
   }
   .sp__item--t2 {
-    width: 150px;
-    height: 82px;
+    width: 156px;
+    height: 100px;
   }
   .sp__item--t3 {
-    width: 116px;
-    height: 64px;
+    width: 124px;
+    height: 80px;
   }
 
   @media (max-width: 520px) {
     .sp__item--t1 {
-      width: 150px;
-      height: 82px;
+      width: 152px;
+      height: 96px;
     }
     .sp__item--t2 {
-      width: 124px;
-      height: 68px;
+      width: 126px;
+      height: 82px;
     }
     .sp__item--t3 {
-      width: 100px;
-      height: 56px;
+      width: 104px;
+      height: 68px;
     }
   }
 </style>

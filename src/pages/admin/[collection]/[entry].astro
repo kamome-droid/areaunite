@@ -194,6 +194,8 @@ const previewHash = previewPath?.split("#")[1] ?? "";
   const fileTitle = (path) =>
     decodeURIComponent(String(path ?? "").split("/").pop() ?? "")
       .replace(/\.[a-z0-9]+$/i, "")
+      // 保存するときに先頭へ付ける時刻の数字は、名前には使わない
+      .replace(/^\d{10,}-/, "")
       .replace(/[-_]+/g, " ")
       .trim();
   // 本文欄は Astro 側で出してあるものを使い回す。組み直しても失わないよう持っておく
