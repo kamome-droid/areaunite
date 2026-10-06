@@ -133,9 +133,9 @@ export const collections: Record<string, CollectionDef> = {
       {
         name: "tagline",
         label: "KVの英字キャッチ",
-        type: "text",
+        type: "textarea",
         placeholder: "Together, one in unity.",
-        help: "KVの上とフッター、SNS画像に出ます",
+        help: "KVの上とフッター、SNS画像に出ます。改行したいところで改行してください",
       },
       { name: "edition", label: "開催回の名前", type: "text", placeholder: "AREA UNITE 2026" },
       { name: "catch", label: "キャッチコピー", type: "textarea" },

@@ -436,10 +436,18 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
     const kv = await picture(ev.hero);
     // 縦長のKV（ポスター型）は切らずに全体を見せる。横長は帯にして切り抜く
     const tall = !!kv && kv.height > kv.width;
-    const KV_H = tall ? 600 : 560;
+    // キャッチが長いと下がはみ出すので、長さに応じて文字とKVを小さくする
+    const catchText = ev.catch ?? "";
+    const catchSize = catchText.length > 110 ? 30 : catchText.length > 70 ? 36 : 44;
+    // 1行に入るおよその文字数から行数を見て、KVに回せる高さを決める
+    const lines = Math.ceil(catchText.length / Math.floor(940 / catchSize));
+    const textBlock = lines * catchSize * 1.5;
+    // 日付・会場・足もとの帯のぶんを残して、余った高さをKVに回す
+    const KV_H = Math.max(240, Math.min(tall ? 600 : 560, 700 - textBlock));
     node = frame({
       ...base,
-      label: ev.tagline || site.tagline || "Film festival",
+      // 画像の中では1行に収める（改行はサイトの見せ方のためのもの）
+      label: (ev.tagline || site.tagline || "Film festival").replace(/\s*\n\s*/g, " "),
       jp: ev.edition,
       // 日付は本文に出すので、足もとは会場名にする
       footer: ev.venue ?? period,
@@ -467,8 +475,8 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
           : []),
         h(
           "div",
-          { fontSize: 44, fontWeight: 700, lineHeight: 1.5, marginBottom: 28 },
-          ev.catch ?? ""
+          { fontSize: catchSize, fontWeight: 700, lineHeight: 1.5, marginBottom: 28 },
+          catchText
         ),
         dateLine(theme, period, 34),
         ...(ev.venue
