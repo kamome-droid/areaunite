@@ -4,7 +4,7 @@ image: /images/items/1791293182084-825348450-1764423628010156-250182049772337887
 subtitle: 10/17 DJ -VYNAL NIGHT-
 title: Scarecrow (BASS Field/2×4/VINYL NIGHT)
 day: day1
-order: 90
+order: 30
 ---
 
 BASS Field主催、長野県白馬村生まれ白馬村育ち。
