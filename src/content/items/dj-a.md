@@ -3,10 +3,8 @@ group: dj
 title: MASAYA FANTASISTA
 subtitle: DJ -Vinal Night-
 day: day1
-image: /images/items/_dummy/image.png
+image: /images/items/1791292477849-836276352-1113772081209359-7399276290320015903-n.webp
 order: 10
-gallery:
-  - /images/items/1791292431116-836276352-1113772081209359-7399276290320015903-n.webp
 ---
 
 Jazzy Sport主宰。
