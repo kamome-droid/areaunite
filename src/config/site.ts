@@ -27,8 +27,13 @@ export const site = {
   hashtags: [] as string[],
   /** お問い合わせ */
   contact: {
-    /** フォームの送信先URL。空のあいだフォームは「未接続」表示になり、送信できない */
-    endpoint: "",
+    /** フォームの送信先URL。空のあいだフォームは「未接続」表示になり、送信できない。
+        Web3Forms（web3forms.com）を使っている。送信内容は accessKey を登録した
+        メールアドレスに届く */
+    endpoint: "https://api.web3forms.com/submit",
+    /** Web3Forms のアクセスキー。HTMLに出る前提のもので、隠す必要はない。
+        受信先を変えるときは Web3Forms 側で設定し、作り直したらここを差し替える */
+    accessKey: "64c55b36-9006-4119-b08c-7099ecfae495",
   },
   // SNSのリンクと連絡先メールは、管理画面（トップページ）で入れる
   /** ヘッダー右のCTAボタン。不要なら null */

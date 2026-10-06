@@ -7,6 +7,7 @@ import { site } from "../config/site";
 /** 送信先が未設定のあいだは、入力できない見本として出す。
     誤って送信され、問い合わせが消えるのを防ぐため。 */
 const endpoint = site.contact.endpoint;
+const accessKey = site.contact.accessKey;
 const info = await getSiteInfo();
 const connected = Boolean(endpoint);
 ---
@@ -34,7 +35,14 @@ const connected = Boolean(endpoint);
               class:list={["form", !connected && "form--preview"]}
               method="post"
               action={endpoint || undefined}
+              id="contactForm"
             >
+              {/* 送信先の指定と、メールの件名 */}
+              <input type="hidden" name="access_key" value={accessKey} />
+              <input type="hidden" name="subject" value={`${site.name} サイトからのお問い合わせ`} />
+              <input type="hidden" name="from_name" value={site.name} />
+              {/* ロボット除け。人には見えない欄で、埋まっていたら送らない */}
+              <input type="checkbox" name="botcheck" class="botcheck" tabindex="-1" autocomplete="off" />
               <div class="form__row">
                 <label class="field">
                   <span class="field__label">姓</span>
@@ -59,6 +67,8 @@ const connected = Boolean(endpoint);
               <button class="btn form__submit" type="submit" disabled={!connected}>
                 送信
               </button>
+
+              <p class="form__note" id="formNote" role="status" aria-live="polite" />
             </form>
 
             <div class="alt">
@@ -87,6 +97,48 @@ const connected = Boolean(endpoint);
   </section>
 </BaseLayout>
 
+<script>
+  /** 送信はページを離れずに行い、その場で結果を出す。
+      送信先（Web3Forms）の既定はお礼ページへの移動だが、
+      サイトの外へ飛ばされると戻ってこない人がいるため。 */
+  const form = document.getElementById("contactForm") as HTMLFormElement | null;
+  const note = document.getElementById("formNote");
+
+  if (form && note && form.getAttribute("action")) {
+    const button = form.querySelector<HTMLButtonElement>(".form__submit");
+    const say = (text: string, tone = "") => {
+      note.textContent = text;
+      note.dataset.tone = tone;
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+
+      const data = new FormData(form);
+      // 姓と名をまとめて、メールで名前として読めるようにする
+      data.set("name", `${data.get("lastName") ?? ""} ${data.get("firstName") ?? ""}`.trim());
+
+      button!.disabled = true;
+      say("送信しています…");
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: data,
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        form.reset();
+        say("送信しました。お問い合わせありがとうございます。改めてご連絡いたします。", "ok");
+      } catch {
+        say("送信できませんでした。お手数ですが、時間をおいて試すか、下の連絡先までお願いします。", "error");
+      } finally {
+        button!.disabled = false;
+      }
+    });
+  }
+</script>
+
 <style>
   .page {
     /* 下はフッターとの間。セクションの下余白と同じだけ空ける */
@@ -107,6 +159,25 @@ const connected = Boolean(endpoint);
     display: flex;
     flex-direction: column;
     gap: 20px;
+  }
+
+  /* ロボット除けの欄。人の画面には出さない */
+  .botcheck {
+    display: none;
+  }
+
+  .form__note {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .form__note[data-tone="ok"] {
+    color: var(--brand);
+  }
+
+  .form__note[data-tone="error"] {
+    color: #ff8f8f;
   }
 
   .form--preview {
