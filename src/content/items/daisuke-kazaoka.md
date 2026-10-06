@@ -4,7 +4,7 @@ image: /images/items/1791293607541-828691813-1718287919265480-814715441906179991
 subtitle: 10/18  DJ -ONYOKU-
 title: Daisuke Kazaoka
 day: day2
-order: 50
+order: 60
 ---
 
 1994年、愛知県生まれ。シンガーソングライター、作曲家。
