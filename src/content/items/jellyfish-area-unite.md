@@ -2,6 +2,7 @@
 group: dj
 subtitle: 10/18  DJ -ONYOKU-
 title: Jellyfish (AREA UNITE)
+day: day2
 ---
 
 地元白馬エリアの恵まれた環境や人々に感謝しマイペースにdj活動を行なっている、好きだからこそのマイペース。
