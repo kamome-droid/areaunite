@@ -18,5 +18,10 @@ export default defineConfig({
     includeFiles: ["./node_modules/harfbuzzjs/hb.wasm"],
   }),
 
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // 管理画面とパスワードの入口は、検索結果に出す意味がないので載せない
+      filter: (page) => !/\/(admin|gate)(\/|$)/.test(new URL(page).pathname),
+    }),
+  ],
 });

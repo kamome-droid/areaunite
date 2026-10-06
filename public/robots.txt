@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+# 管理画面は検索結果に出さない
+Disallow: /admin
+Disallow: /gate
+
+Sitemap: https://www.areaunite.jp/sitemap-index.xml
