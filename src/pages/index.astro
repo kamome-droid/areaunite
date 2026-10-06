@@ -194,7 +194,12 @@ const contentsNav = groupsOf("contents").map(([key, g]) => ({
     margin-top: clamp(28px, 4vw, 40px);
   }
 
+  /* 「もっと見る」とのあいだを空ける。動画の下に続くときは詰める */
   .about__photos {
+    margin-top: clamp(36px, 5vw, 56px);
+  }
+
+  .about__video + .about__photos {
     margin-top: clamp(16px, 2.5vw, 24px);
   }
 
