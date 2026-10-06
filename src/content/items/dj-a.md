@@ -4,7 +4,7 @@ title: MASAYA FANTASISTA
 subtitle: 10/17 DJ -VYNAL NIGHT-
 day: day1
 image: /images/items/1791292477849-836276352-1113772081209359-7399276290320015903-n.webp
-order: 70
+order: 60
 ---
 
 Jazzy Sport主宰。
