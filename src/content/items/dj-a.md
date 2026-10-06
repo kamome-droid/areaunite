@@ -1,13 +1,18 @@
 ---
 group: dj
-title: DJ NAME A
-subtitle: DJ
-time: "23:00"
+title: MASAYA FANTASISTA
+subtitle: DJ -Vinal Night-
 day: day1
 image: /images/items/_dummy/image.png
 order: 10
 ---
 
-ここに説明文が入ります。ここに説明文が入ります。
-
-ここに説明文が入ります。ここに説明文が入ります。
+Jazzy Sport主宰。
+ポーランドにて生をうける。
+横須賀育ち小県郡長和町在住。
+感覚はパーフェクトにフリー、そしてB-Boyスタンスであり、愛があふれる音楽を中心とした様々な物への情熱に溢れる。 
+"女性に優しいハードコア"をモットーに
+"音楽とスポーツで世界を一つに”をスローガンに掲げ
+音楽・映像、グラフィック、WEB、空間、内装施工をこなす職人集団のキャプテン。
+クリエイターコレクティブ CINEMA CARAVANの一員としてDOCUMENTA15への参加や
+JAZZY DOGの用務員として人と犬の共生を研究するなど、こなせるポジションは多い。
