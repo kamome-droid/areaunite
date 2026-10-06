@@ -4,7 +4,7 @@ image: /images/items/1791293753413-831452132-1092740566990609-883529532305898066
 subtitle: 10/18  DJ -ONYOKU-
 title: YU
 day: day2
-order: 40
+order: 50
 ---
 
 信州は白馬村を拠点に活動するDJ/ギタリスト。
