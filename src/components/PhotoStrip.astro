@@ -1,22 +1,23 @@
 ---
 /**
- * 写真を横一列に並べ、横スクロールで見せる。
+ * 写真を横一列に並べ、ゆっくり自動で流す。
+ * 指やマウスでそのまま横にスクロールもできる（触っているあいだは止まる）。
  * 画像は管理画面で 4:3 にそろえて保存されるので、ここでは高さだけ決める。
- * 左右はページの余白ぶん外に出し、端で切れて見えることで
- * 「まだ続きがある」と分かるようにしている。
  */
 interface Props {
   photos: string[];
   label?: string;
 }
 const { photos, label = "写真" } = Astro.props;
+/** 途切れずに流すため、同じ並びを2周ぶん出す（2周目は読み上げから外す） */
+const loop = photos.length > 1 ? [...photos, ...photos] : photos;
 ---
 
 {
   photos.length > 0 && (
-    <div class="strip" role="group" aria-label={label} tabindex="0">
-      {photos.map((src) => (
-        <figure class="strip__item">
+    <div class="strip" role="group" aria-label={label} tabindex="0" data-strip data-count={photos.length}>
+      {loop.map((src, i) => (
+        <figure class="strip__item" aria-hidden={i >= photos.length ? "true" : undefined}>
           <img src={src} alt="" loading="lazy" decoding="async" />
         </figure>
       ))}
@@ -30,13 +31,16 @@ const { photos, label = "写真" } = Astro.props;
     gap: 12px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
     /* 端まで写真を出すため、ページの余白ぶん外に広げてから内側で戻す */
     margin-inline: calc(var(--page-pad) * -1);
     padding-inline: var(--page-pad);
     padding-bottom: 12px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
+    /* 自動で流れるので、スクロールバーは出さない */
+    scrollbar-width: none;
+  }
+
+  .strip::-webkit-scrollbar {
+    display: none;
   }
 
   .strip__item {
@@ -44,11 +48,8 @@ const { photos, label = "写真" } = Astro.props;
     width: clamp(230px, 40vw, 380px);
     aspect-ratio: 4 / 3;
     margin: 0;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    scroll-snap-align: start;
   }
 
   .strip__item img {
@@ -63,3 +64,42 @@ const { photos, label = "写真" } = Astro.props;
     outline-offset: 4px;
   }
 </style>
+
+<script>
+  /** 写真をゆっくり左へ流す。触っているあいだは止め、離すと再開する。
+      同じ並びを2周ぶん出してあるので、半分まで来たら先頭へ戻して途切れさせない。 */
+  const SPEED = 0.35; // 1フレームあたりの移動量（px）
+
+  document.querySelectorAll<HTMLElement>("[data-strip]").forEach((strip) => {
+    if (Number(strip.dataset.count) < 2) return;
+    // 動きを減らす設定の人には流さない
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let paused = false;
+    let resume = 0;
+    const hold = (ms: number) => {
+      paused = true;
+      clearTimeout(resume);
+      resume = window.setTimeout(() => (paused = false), ms);
+    };
+
+    strip.addEventListener("pointerenter", () => (paused = true));
+    strip.addEventListener("pointerleave", () => (paused = false));
+    strip.addEventListener("focusin", () => (paused = true));
+    strip.addEventListener("focusout", () => (paused = false));
+    // 指やホイールで動かしたあとは、少し置いてから再開する
+    for (const type of ["pointerdown", "wheel", "touchstart"]) {
+      strip.addEventListener(type, () => hold(2500), { passive: true });
+    }
+
+    const step = () => {
+      if (!paused && document.visibilityState === "visible") {
+        const half = strip.scrollWidth / 2;
+        if (strip.scrollLeft >= half) strip.scrollLeft -= half;
+        strip.scrollLeft += SPEED;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+</script>
