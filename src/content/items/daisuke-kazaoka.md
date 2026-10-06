@@ -1,7 +1,7 @@
 ---
 group: dj
 image: /images/items/1791293607541-828691813-1718287919265480-8147154419061799911-n.webp
-subtitle: 10/18  DJ -ONYOKU-
+subtitle: 10/18  LIVE -ONYOKU-
 title: Daisuke Kazaoka
 day: day2
 order: 60
