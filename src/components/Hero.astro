@@ -320,5 +320,22 @@ const overlay = style === "overlay";
     .hero--split .hero__media img {
       max-height: none;
     }
+
+    /* 縦に並ぶ幅では、日付と会場をいちばん上に出す。
+       KVのすぐ下で「いつ・どこで」が先に目に入るように */
+    .hero__text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero__meta {
+      order: -1;
+      margin-top: 0;
+      margin-bottom: clamp(20px, 4vw, 28px);
+      padding-top: 0;
+      padding-bottom: clamp(18px, 3.5vw, 24px);
+      border-top: 0;
+      border-bottom: 1px solid var(--border-strong);
+    }
   }
 </style>
