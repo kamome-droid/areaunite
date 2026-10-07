@@ -1,6 +1,6 @@
 ---
 logo: /images/sponsors/1791309867877-hhg-logooriginalimage.png
 name: hhg logooriginalimage
-tier: 3
+tier: 1
 order: 50
 ---
