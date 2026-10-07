@@ -2,7 +2,6 @@
 group: live
 title: 東田トモヒロ
 subtitle: LIVE
-time: "15:30"
 day: day1
 image: /images/items/1791327747098-829135930-1633246161870979-1841891841567636835-n.webp
 order: 20
