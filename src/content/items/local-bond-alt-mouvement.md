@@ -1,4 +1,4 @@
 ---
 group: shops
-title: LOCAL BOND & ALT MOUVEMENT
+title: LOCAL BOND & ALT MOVEMENT
 ---
