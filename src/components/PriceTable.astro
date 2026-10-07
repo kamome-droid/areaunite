@@ -21,9 +21,7 @@ const { rows } = Astro.props;
 </ul>
 
 <style>
-  .pt {
-    border-top: 1px solid var(--border);
-  }
+  /* 上下の端には線を引かない。行と行のあいだだけ区切る */
 
   .pt__row {
     display: flex;
@@ -32,6 +30,10 @@ const { rows } = Astro.props;
     gap: 20px;
     padding-block: 18px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .pt__row:last-child {
+    border-bottom: 0;
   }
 
   .pt__name {
