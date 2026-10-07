@@ -125,9 +125,9 @@ export const groups: Record<string, Group> = {
     parent: "contents",
   },
   dj: {
-    labels: { subtitle: "肩書き・拠点", title: "DJ名" },
-    label: "DJ",
-    jp: "DJ",
+    labels: { subtitle: "肩書き・拠点", title: "出演者名" },
+    label: "Party",
+    jp: "パーティー",
     ratio: "16 / 9",
     cardMin: "300px",
     detail: true,
