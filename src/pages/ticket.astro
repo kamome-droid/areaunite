@@ -4,18 +4,14 @@ import PageHero from "../components/PageHero.astro";
 import ShareImage from "../components/ShareImage.astro";
 import PriceTable from "../components/PriceTable.astro";
 import NoteList from "../components/NoteList.astro";
-import { dateRangeLabel, getCurrentEvent } from "../lib/content";
+import { getCurrentEvent } from "../lib/content";
 
 const event = await getCurrentEvent();
 const ev = event?.data;
 ---
 
 <BaseLayout title="Ticket｜チケット" description="チケットの料金と注意事項。">
-  <PageHero
-    label="Ticket"
-    jp="チケット"
-    lead={ev ? `${ev.edition}／${dateRangeLabel(ev.schedule)}` : undefined}
-  >
+  <PageHero label="Ticket" jp="チケット">
     <ShareImage
       srcs={["/api/og/ticket.png", "/api/og/ticketnotes.png"]}
       name="areaunite-ticket"
