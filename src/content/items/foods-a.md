@@ -3,6 +3,11 @@ group: foods
 title: 儘に
 subtitle: FOOD
 order: 10
+image: /images/items/1791499351766-img-1974.webp
+gallery:
+  - /images/items/1791499357314-img-1975.webp
+  - /images/items/1791499369124-img-1976.webp
+  - /images/items/1791499380095-img-1977.webp
 ---
 
 儘に(ままに)は長野県大町市に店舗を構えるおやき専門店です。
