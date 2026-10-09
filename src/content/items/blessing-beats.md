@@ -3,6 +3,7 @@ group: live
 image: /images/items/1791499630743-img-1978.webp
 subtitle: LIVE
 title: Blessing Beats
+day: day2
 ---
 
 白馬村出身のプロスノーボーダー山崎恵太のアーティスト名義。
