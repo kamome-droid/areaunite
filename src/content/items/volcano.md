@@ -1,6 +1,6 @@
 ---
 group: movies
-subtitle: MOVIE
+subtitle: Kenya Yamagishi
 title: VOLCANO
 day: day1
 video: https://genskier.com/proposal/
