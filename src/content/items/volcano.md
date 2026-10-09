@@ -3,6 +3,7 @@ group: movies
 subtitle: MOVIE
 title: VOLCANO
 day: day1
+video: https://genskier.com/proposal/
 ---
 
 制作者：山岸 建矢
