@@ -10,6 +10,7 @@ gallery:
   - /images/items/1791549962603-img-2110.webp
   - /images/items/1791549969369-img-2111.webp
   - /images/items/1791549977242-img-2112.webp
+day: day2
 ---
 
 2025年5月、北米最高峰デナリ（6,190m）へ。
