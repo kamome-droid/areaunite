@@ -2,6 +2,7 @@
 group: movies
 subtitle: MOVIE
 title: VOLCANO
+day: day1
 ---
 
 制作者：山岸 建矢
