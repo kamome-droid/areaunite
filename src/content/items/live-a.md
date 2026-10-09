@@ -4,7 +4,7 @@ title: 東田トモヒロ
 subtitle: LIVE
 day: day1
 image: /images/items/1791327747098-829135930-1633246161870979-1841891841567636835-n.webp
-order: 20
+order: 10
 ---
 
 1972年生まれ熊本市在住。

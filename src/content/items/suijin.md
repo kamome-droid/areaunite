@@ -4,6 +4,7 @@ subtitle: LIVE
 title: SUIJIN (水心)
 day: day2
 image: /images/items/1791510228145-img-1999.webp
+order: 40
 ---
 
 長野県入笠山に生まれ、
