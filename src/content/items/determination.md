@@ -1,8 +1,7 @@
 ---
-group: movies
-video: https://note.jp.omsystem.com/n/n73f41875ebbf?sub_rt=share_b&gs=d2623154481dba038f7e1375f45be5c5
+group: talk
 image: /images/items/1791549871337-img-2107.webp
-subtitle: 伊藤剛 @gomaniac
+subtitle: 森亜希子
 title: Determination｜ 決意　デナリ頂上とその先
 gallery:
   - /images/items/1791549942627-img-2108.webp
