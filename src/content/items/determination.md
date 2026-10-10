@@ -1,7 +1,7 @@
 ---
 group: talk
 image: /images/items/1791549871337-img-2107.webp
-subtitle: 森亜希子、池尻ヒロミ、稲垣千秋さん ほか
+subtitle: 森亜希子、池尻ヒロミ、稲垣千秋 ほか
 title: Determination｜ 決意　デナリ頂上とその先
 gallery:
   - /images/items/1791549942627-img-2108.webp
