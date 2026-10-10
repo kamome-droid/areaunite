@@ -6,7 +6,12 @@ function env(k: string): string | undefined {
   return (typeof process !== "undefined" && process.env[k]) || (import.meta.env as any)[k];
 }
 
-const SECRET = env("AUTH_SECRET") || "dev-insecure-secret";
+// リポジトリは公開しているので、この合言葉が無いと誰でもクッキーを偽造できてしまう。
+// 本番で AUTH_SECRET を入れ忘れたときは、毎回変わる値にして偽造を通さない
+// （ログインし直しは必要になるが、入られるよりよい）
+const SECRET =
+  env("AUTH_SECRET") ||
+  (import.meta.env.DEV ? "dev-insecure-secret" : crypto.randomBytes(32).toString("hex"));
 const PASSWORD = env("ADMIN_PASSWORD");
 
 export const COOKIE = "admin_session";
