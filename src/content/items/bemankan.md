@@ -2,7 +2,7 @@
 group: live
 image: /images/items/1791327899015-829630744-1981461756373502-165586760704387015-n.webp
 title: "\"BE'MANKAN\""
-day: day1
+day: day2
 subtitle: LIVE
 order: 30
 ---
