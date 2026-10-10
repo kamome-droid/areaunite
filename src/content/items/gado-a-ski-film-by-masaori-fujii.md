@@ -1,7 +1,7 @@
 ---
 group: movies
 image: /images/items/1791623148602-img-1748.webp
-subtitle: Makito Shiojima 塩島槙人
+subtitle: Makito Shiojima
 title: 我道 GADO | a ski film by Masaori Fujii
 day: day2
 gallery:
@@ -10,6 +10,7 @@ gallery:
   - /images/items/1791623184312-img-1841.webp
   - /images/items/1791623187072-img-6676.webp
   - /images/items/1791623190511-img-6677.webp
+featured: false
 ---
 
 白馬で生まれ、雪の上で生きてきた31年。
