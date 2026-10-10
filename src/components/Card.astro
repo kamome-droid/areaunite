@@ -102,7 +102,7 @@ const external = Boolean(link && /^https?:\/\//.test(link));
     flex-direction: column;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    /* 角は丸めない。写真ギャラリーと同じく、四角いまま並べる */
     overflow: hidden;
     transition: border-color 0.2s ease, transform 0.2s ease;
   }
