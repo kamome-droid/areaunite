@@ -1,5 +1,5 @@
 ---
-logo: /images/sponsors/1791705277158-msr-logo-1.png
+logo: /images/sponsors/1791712016192-image.png
 name: msr logo 1
 tier: 3
 order: 160
