@@ -12,4 +12,4 @@ day: day1
 
 ひとつの嵐の中で、フォイルサーフィンとスノーボードの両方を楽しめる特別なロケーションを舞台に、二つのスポーツに共通する魅力とつながりを描く映像作品。
 
-出演者：Chris Rasman,、Zane Westwood、 Kahi Pacarro
+出演者：鈴村新、Chris Rasman、Zane Westwood、 Kahi Pacarro
