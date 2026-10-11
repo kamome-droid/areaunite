@@ -5,6 +5,7 @@ image: /images/items/1791631049745-img-2230.webp
 subtitle: YoneFilm
 title: HITRIBE
 day: day1
+featured: true
 ---
 
 snowboard shaper
