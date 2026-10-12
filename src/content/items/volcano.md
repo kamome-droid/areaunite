@@ -5,7 +5,7 @@ title: VOLCANO
 day: day1
 video: https://genskier.com/proposal/
 image: /images/items/1791549303650-img-2106.webp
-order: 60
+order: 40
 ---
 
 順位ではなく自分自身への挑戦を積み重ねてきた佐々木玄。地元ニセコで開催された「Swatch Nines」で「Ski Men Best Trick賞」を受賞し、特大キッカーでのクワッドバックフリップを成功させるまでの挑戦の記録。「挑戦する相手は、自分自身。」というフリーライディングの本質を描く。
