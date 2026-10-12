@@ -6,7 +6,7 @@ subtitle: YoneFilm
 title: HITRIBE
 day: day1
 featured: true
-order: 30
+order: 20
 ---
 
 snowboard shaper
