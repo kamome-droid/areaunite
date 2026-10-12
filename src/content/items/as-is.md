@@ -1,7 +1,7 @@
 ---
 group: movies
 image: /images/items/1791765085153-img-2480.webp
-subtitle: 矢口哲哉
+subtitle: Tetsuya Yaguchi
 title: As is
 day: day2
 ---
