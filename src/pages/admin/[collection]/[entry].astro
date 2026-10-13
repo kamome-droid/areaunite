@@ -521,7 +521,7 @@ const previewHash = previewPath?.split("#")[1] ?? "";
     if (f.type === "hidden") return;
 
     const wrap = el("div", { class: "field" });
-    const value = get(f.name);
+    let value = get(f.name);
 
     if (f.type === "switch") {
       // ページ全体のスイッチと同じ見た目。入れた値は「隠す」かどうか
@@ -561,6 +561,12 @@ const previewHash = previewPath?.split("#")[1] ?? "";
         helpFor(f)
       );
     } else if (f.type === "select") {
+      // 値が空だと、画面は先頭の選択肢を出すのに中身は空のまま。
+      // 見えているものと保存されるものを合わせる
+      if ((value ?? "") === "" && f.options.length > 0 && f.options[0].value !== "") {
+        value = f.options[0].value;
+        set(f.name, value);
+      }
       const sel = el("select", {
         id: `f-${f.name}`,
         onchange: (e) => set(f.name, e.target.value),

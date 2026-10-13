@@ -328,6 +328,8 @@ export const collections: Record<string, CollectionDef> = {
 
   /* ---- 協賛（トップページから開く） ---- */
   sponsors: {
+    // 大きさを選ばずに保存されたとき、画面の表示（先頭の選択肢）と中身がずれないように
+    defaults: { tier: 2 },
     key: "sponsors",
     label: "協賛",
     labelOne: "協賛",
