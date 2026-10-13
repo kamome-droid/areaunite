@@ -1,6 +1,6 @@
 ---
 group: shops
-subtitle: SHOP
+subtitle: BOOTH
 title: NPO法人北アルプス自転車協議会（通称KABA：Kita Alps Bicycle Association ）
 image: /images/items/1791891452599-img-2798.webp
 gallery:
