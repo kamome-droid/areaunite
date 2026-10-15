@@ -5,7 +5,7 @@ subtitle: Tomoya Tezuka、Jumpei Inaba.、Takuma Yokoyama
 title: Loose riders Japan with HAKUBA
 day: day2
 time: "19:10"
-order: 80
+order: 90
 ---
 
 エリアユナイトにて発表できることを嬉しく思います。
