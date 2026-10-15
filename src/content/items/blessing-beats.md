@@ -4,7 +4,7 @@ image: /images/items/1791499630743-img-1978.webp
 subtitle: LIVE
 title: Blessing Beats
 day: day2
-order: 20
+order: 30
 time: "19:30"
 ---
 

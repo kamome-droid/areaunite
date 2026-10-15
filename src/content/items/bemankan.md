@@ -4,7 +4,7 @@ image: /images/items/1791327899015-829630744-1981461756373502-165586760704387015
 title: "\"BE'MANKAN\""
 day: day2
 subtitle: LIVE
-order: 30
+order: 40
 time: "17:00"
 ---
 
