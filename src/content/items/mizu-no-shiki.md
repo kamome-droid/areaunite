@@ -8,7 +8,7 @@ gallery:
   - /images/items/1791706237861-img-2394.webp
   - /images/items/1791706242710-img-2395.webp
 day: day1
-order: 80
+order: 10
 featured: true
 time: "18:30"
 ---
