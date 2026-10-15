@@ -3,6 +3,7 @@ group: movies
 subtitle: late 2 wenty
 title: 「HOME DIRT」＆「陰影 shadow」
 day: day1
+image: /images/items/1792053839990-833700547-1771556720775893-4721772661448181944-n.webp
 ---
 
 【MOVIE 1】
