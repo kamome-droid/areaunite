@@ -5,7 +5,7 @@ subtitle: DonutsEye、WAKU WAKU
 title: SuperLove
 day: day2
 time: "18:50"
-order: 60
+order: 70
 ---
 
 WAKUWAKUから5作目のフルムービー。

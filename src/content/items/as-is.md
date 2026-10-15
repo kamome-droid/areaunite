@@ -4,7 +4,7 @@ image: /images/items/1791765085153-img-2480.webp
 subtitle: Tetsuya Yaguchi
 title: As is
 day: day2
-order: 90
+order: 100
 time: "17:50"
 ---
 

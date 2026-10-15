@@ -5,7 +5,7 @@ subtitle: Patagonia / DENPA Inc.
 title: FREERIDE TOGETHER 認め合い、高め合う
 day: day1
 featured: true
-order: 30
+order: 40
 time: "17:30"
 ---
 
