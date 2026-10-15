@@ -15,4 +15,4 @@ day: day2
 そして、今も続いており、若い世代も台頭してきています。その若い世代の走りをメインにした動画です。
 ぜひご覧になってください。
 
-出演者：Hiroki Ito、hyuma Tomita、Sachi Matsuzawa、Arii Asato、Ryozi Toge、Koutaro Watanabe…and more
+出演者：Hiroki Ito、hyuma Tomita、Sachi Matsuzawa、Arii Asato、Ryoji Toge、Koutaro Watanabe…and more
