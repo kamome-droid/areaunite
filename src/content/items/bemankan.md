@@ -5,6 +5,7 @@ title: "\"BE'MANKAN\""
 day: day2
 subtitle: LIVE
 order: 30
+time: "17:00"
 ---
 
 2026年結成
