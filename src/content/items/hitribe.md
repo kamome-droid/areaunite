@@ -6,7 +6,7 @@ subtitle: YoneFilm
 title: HITRIBE
 day: day1
 featured: true
-order: 50
+order: 20
 time: "20:00"
 ---
 
