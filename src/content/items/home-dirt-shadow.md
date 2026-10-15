@@ -6,6 +6,7 @@ day: day1
 image: /images/items/1792055443718-mori.webp
 gallery:
   - /images/items/1792055320773-833700547-1771556720775893-4721772661448181944-n.webp
+time: "18:15"
 ---
 
 【MOVIE 1】
