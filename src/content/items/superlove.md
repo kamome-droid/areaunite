@@ -4,6 +4,7 @@ image: /images/items/1791935546547-img-2863.webp
 subtitle: DonutsEye、WAKU WAKU
 title: SuperLove
 day: day2
+time: "18:50"
 ---
 
 WAKUWAKUから5作目のフルムービー。
