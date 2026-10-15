@@ -4,7 +4,7 @@ image: /images/items/1791958829422-img-2864.webp
 subtitle: Tomoya Tezuka、Jumpei Inaba.、Takuma Yokoyama
 title: Loose riders Japan with HAKUBA
 day: day2
-time: "19:10"
+time: "19:05"
 order: 100
 ---
 
