@@ -12,7 +12,7 @@ gallery:
   - /images/items/1791623190511-img-6677.webp
 featured: false
 order: 140
-time: "17:30"
+time: "17:40"
 ---
 
 白馬で生まれ、雪の上で生きてきた31年。
