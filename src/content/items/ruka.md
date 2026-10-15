@@ -4,7 +4,7 @@ image: /images/items/1791765015497-img-2478.webp
 subtitle: 伊藤瑠耶
 title: RUKA
 day: day2
-order: 60
+order: 50
 time: "18:10"
 ---
 

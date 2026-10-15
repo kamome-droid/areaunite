@@ -8,6 +8,7 @@ gallery:
   - /images/items/1791890213145-img-2797.webp
   - /images/items/1791890221546-img-2796.webp
 time: "18:10"
+order: 40
 ---
 
 "Circle" は、2025-26シーズンに妙高杉ノ原スキー場で開催されたデイイベント。

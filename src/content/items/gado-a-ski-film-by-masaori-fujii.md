@@ -11,7 +11,7 @@ gallery:
   - /images/items/1791623187072-img-6676.webp
   - /images/items/1791623190511-img-6677.webp
 featured: false
-order: 70
+order: 20
 time: "17:30"
 ---
 
