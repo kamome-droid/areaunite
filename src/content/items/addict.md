@@ -7,7 +7,7 @@ day: day2
 gallery:
   - /images/items/1791890213145-img-2797.webp
   - /images/items/1791890221546-img-2796.webp
-time: "18:10"
+time: "18:15"
 order: 90
 ---
 
