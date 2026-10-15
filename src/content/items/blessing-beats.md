@@ -5,6 +5,7 @@ subtitle: LIVE
 title: Blessing Beats
 day: day2
 order: 20
+time: "19:30"
 ---
 
 白馬村出身のプロスノーボーダー山崎恵太のアーティスト名義。
