@@ -5,7 +5,7 @@ subtitle: Yasuhito Wakebe
 title: The Noise of the White Out
 day: day2
 time: "20:30"
-order: 120
+order: 130
 ---
 
 Deus Powder Toolsを体現するふたりのアイコン、豊間 祐介、本城 彪向。
