@@ -1,7 +1,7 @@
 ---
 group: talk
 image: /images/items/1792088446655-perfect-kiss-2.webp
-subtitle: 鈴木豪
+subtitle: スズキゴウ
 title: Patagonia Radio Pt.2 「自分のリズム×自然のリズム -全部HipHopのせいDA-」
 day: day1
 time: "14:00"
