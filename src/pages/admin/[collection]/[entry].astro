@@ -5,6 +5,7 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { collections, type Field } from "../../../lib/admin/schema";
 import { readOne, readAll } from "../../../lib/admin/store";
 import { groups } from "../../../config/site";
+import { quoteTitle } from "../../../lib/content";
 
 const key = Astro.params.collection!;
 const id = Astro.params.entry!;
@@ -85,7 +86,7 @@ const autoRows =
             id: e.id,
             day: e.data.day ? String(e.data.day) : "",
             time: String(e.data.time),
-            title: credit ? `${e.data.title}　${credit}` : String(e.data.title),
+            title: credit ? `${quoteTitle(e.data.title)}　${credit}` : quoteTitle(e.data.title),
             group: g?.jp ?? "",
           };
         })

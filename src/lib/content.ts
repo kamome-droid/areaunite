@@ -121,6 +121,14 @@ type ScheduleDay = {
 /** その日のコンテンツを分類を問わず時刻順に並べ、見出しで区切ってプログラムにする。
     上映作品などを一覧ページとスケジュールで二重に持たないための仕組みで、
     コンテンツ側に日と時刻を入れれば、ここには何も書かなくても並ぶ。 */
+/** スケジュールに並べる名前。作品名として「」で囲む。
+    すでに「」を含むものは、入れ子にならないようそのまま出す */
+export const quoteTitle = (title: string) => {
+  const t = String(title ?? "").trim();
+  if (!t) return t;
+  return /「.*」/.test(t) ? t : `「${t}」`;
+};
+
 export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> {
   // 自由記述の行。コンテンツに載せないもの（ゲートオープンなど）
   const items: ProgramItem[] = (day.extras ?? []).map((it) => ({ ...it }));
@@ -138,7 +146,7 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
       items.push({
         tag: groups[group].jp,
         time: entry.data.time,
-        title: entry.data.title,
+        title: quoteTitle(entry.data.title),
         // 制作者・登壇者は、タイトルのあとに添える
         credit: groups[group].scheduleCredit ? entry.data.subtitle : undefined,
         href: itemHref(group, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
