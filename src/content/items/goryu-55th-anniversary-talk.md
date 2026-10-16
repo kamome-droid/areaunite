@@ -4,7 +4,7 @@ subtitle: 藤田一茂、加藤ソフィー、中野中野 比呂志、サム
 title: 五竜のこれまでとこれから　Goryu's Past, Present & Future
 day: day1
 time: "15:00"
-order: 30
+order: 50
 image: /images/items/1792127697096-ea89e262-e7bf-40eb-aa35-2fefe0406f00.webp
 ---
 

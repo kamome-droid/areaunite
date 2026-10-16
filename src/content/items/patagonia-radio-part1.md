@@ -3,7 +3,7 @@ group: talk
 title: Patagonia radio Pt.1「ジェネレーション×コネクション -世代を越えた純粋な遊びとは？-」
 day: day1
 time: "13:00"
-order: 50
+order: 70
 subtitle: 谷川健太郎（カラースポーツ）、山本純暉（パタゴニア白馬）、武藤和結樹（マウントケア）
 ---
 
