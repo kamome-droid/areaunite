@@ -1,7 +1,7 @@
 ---
 group: talk
 subtitle: 福島のり子
-title: Patagoni Radio pt3.「競技×白馬 -未来へ繋ぐもの-＿
+title: Patagoni Radio pt3.「競技×白馬 -未来へ繋ぐもの-」
 day: day2
 time: "16:00"
 order: 20
