@@ -1,6 +1,6 @@
 ---
 group: talk
-subtitle: 藤田一茂、加藤ソフィー、中野中野 比呂志、サム
+subtitle: 藤田一茂、加藤ソフィー、中野 比呂志、サム
 title: 五竜のこれまでとこれから　Goryu's Past, Present & Future
 day: day1
 time: "15:00"
