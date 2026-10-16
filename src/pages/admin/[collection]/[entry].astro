@@ -79,12 +79,13 @@ const autoRows =
         .filter((e) => e.data.time)
         .map((e) => {
           const g = groups[e.data.group as keyof typeof groups];
-          const bracket = g?.scheduleFormat === "bracket" && e.data.subtitle;
+          // 画面と同じ並び：タイトルのあとに制作者・登壇者
+          const credit = g?.scheduleCredit ? e.data.subtitle : "";
           return {
             id: e.id,
             day: e.data.day ? String(e.data.day) : "",
             time: String(e.data.time),
-            title: bracket ? `${e.data.subtitle}「${e.data.title}」` : String(e.data.title),
+            title: credit ? `${e.data.title}　${credit}` : String(e.data.title),
             group: g?.jp ?? "",
           };
         })

@@ -209,7 +209,8 @@ const slot = (theme: OgTheme, time: string, title: string, tag: string | undefin
   h("div", { display: "flex", alignItems: "baseline", marginBottom: size * 0.5 }, [
     h(
       "div",
-      { width: 140, flexShrink: 0, fontSize: size, fontWeight: 700, color: theme.brand },
+      // 時刻の桁幅。文字を小さくしたぶん、この欄も詰める（titleWidth と同じ計算）
+      { width: size * 5.4, flexShrink: 0, fontSize: size, fontWeight: 700, color: theme.brand },
       time
     ),
     ...(tag
@@ -311,16 +312,19 @@ const priceRow = (theme: OgTheme, label: string, price: string, note: string | u
    スケジュールのページ分け
    --------------------------------------------------------- */
 
-/** 読める大きさを先に決めて、入りきらないぶんは次のページへ送る。
-    高さは実際の書き出しに合わせた実測値 */
-const SIZE = 26;
-const ROW_H = 48;
-const LINE_H = 34;
-const PART_H = 76;
+/** 1日ぶんを1枚に収めたいので、入る大きさを大きい順に試す。
+    どうしても入らないときだけページを分ける。
+    高さの比率は、実際の書き出しに合わせた実測値（26pxのとき 48 / 34 / 76） */
+const SIZES = [26, 24, 22, 20, 18, 16, 14];
 const ROOM = 780;
+const metrics = (size: number) => ({
+  rowH: size * 1.85,
+  lineH: size * 1.3,
+  partH: size * 2.9,
+});
 
 /** 内容が入る幅。時刻とタグのぶんを引いたもの */
-const TITLE_W = OG_SIZE.width - PAD * 2 - 140 - 80;
+const titleWidth = (size: number) => OG_SIZE.width - PAD * 2 - size * 5.4 - 80;
 
 /** ざっくりの文字幅。和文は全角、英数字は半角ぶんで数える */
 function textWidth(text: string, size: number): number {
@@ -329,13 +333,19 @@ function textWidth(text: string, size: number): number {
   return w;
 }
 
+type Line =
+  | { kind: "part"; text: string }
+  | { kind: "slot"; time: string; title: string; tag?: string };
+
 /** 折り返しを含めた1行の高さ。途中で切れないよう、行数ぶんを足す */
-const slotHeight = (title: string) =>
-  ROW_H + (Math.ceil(textWidth(title, SIZE) / TITLE_W) - 1) * LINE_H;
+function slotHeight(title: string, size: number): number {
+  const { rowH, lineH } = metrics(size);
+  return rowH + (Math.ceil(textWidth(title, size) / titleWidth(size)) - 1) * lineH;
+}
 
-type Line = { kind: "part"; text: string } | { kind: "slot"; time: string; title: string; tag?: string };
-
-function paginate(blocks: ProgramBlock[]): Line[][] {
+/** その大きさで組んだときのページ割り */
+function paginate(blocks: ProgramBlock[], size: number): Line[][] {
+  const { partH } = metrics(size);
   const pages: Line[][] = [];
   let page: Line[] = [];
   let used = 0;
@@ -351,17 +361,19 @@ function paginate(blocks: ProgramBlock[]): Line[][] {
   };
 
   for (const block of blocks) {
-    if (block.part) push({ kind: "part", text: block.part }, PART_H);
+    if (block.part) push({ kind: "part", text: block.part }, partH);
     block.items.forEach((s, i) => {
+      // 制作者・登壇者はタイトルのあとに添える
+      const title = s.credit ? `${s.title}　${s.credit}` : s.title;
       push(
         {
           kind: "slot",
           // 同じ時刻が続くときは時刻を繰り返さない
           time: i > 0 && block.items[i - 1].time === s.time ? "" : s.time,
-          title: s.title,
+          title,
           tag: s.tag,
         },
-        slotHeight(s.title)
+        slotHeight(title, size)
       );
     });
   }
@@ -369,9 +381,19 @@ function paginate(blocks: ProgramBlock[]): Line[][] {
   return pages.length > 0 ? pages : [[]];
 }
 
+/** 1枚に収まる、いちばん大きい文字で組む。入らないときだけページを分ける */
+function layout(blocks: ProgramBlock[]): { pages: Line[][]; size: number } {
+  for (const size of SIZES) {
+    const pages = paginate(blocks, size);
+    if (pages.length === 1) return { pages, size };
+  }
+  const size = SIZES[SIZES.length - 1];
+  return { pages: paginate(blocks, size), size };
+}
+
 /** その日のプログラムが何枚に分かれるか。ページ側で共有ボタンを組むのに使う */
 export function schedulePageCount(blocks: ProgramBlock[]): number {
-  return paginate(blocks).length;
+  return layout(blocks).pages.length;
 }
 
 /* ---------------------------------------------------------
@@ -416,7 +438,7 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
   if (kind === "schedule") {
     const day = ev.schedule.find((d) => d.id === id) ?? ev.schedule[0];
     if (!day) return null;
-    const pages = paginate(await resolveProgram(day));
+    const { pages, size } = layout(await resolveProgram(day));
     const lines = pages[Math.min(Math.max(page, 1), pages.length) - 1];
 
     node = frame({
@@ -427,8 +449,8 @@ export async function buildOg(kind: OgKind, id?: string, page = 1): Promise<OgRe
         pages.length > 1 ? `${day.time ?? period}　${page} / ${pages.length}` : day.time ?? period,
       children: lines.map((l) =>
         l.kind === "part"
-          ? partRow(theme, l.text, SIZE)
-          : slot(theme, l.time, l.title, l.tag, SIZE)
+          ? partRow(theme, l.text, size)
+          : slot(theme, l.time, l.title, l.tag, size)
       ),
     });
     name = pages.length > 1 ? `schedule-${day.id}-${page}` : `schedule-${day.id}`;

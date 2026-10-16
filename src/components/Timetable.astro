@@ -24,7 +24,12 @@ const { blocks } = Astro.props;
                 <p class="tt__title">
                   {s.href ? <a href={s.href} data-modal>{s.title}</a> : s.title}
                 </p>
-                {s.tag && <p class="tt__tag">{s.tag}</p>}
+                {(s.credit || s.tag) && (
+                  <p class="tt__meta">
+                    {s.credit && <span class="tt__credit">{s.credit}</span>}
+                    {s.tag && <span class="tt__tag">{s.tag}</span>}
+                  </p>
+                )}
                 {s.note && <p class="tt__note muted">{s.note}</p>}
               </div>
             </li>
@@ -83,8 +88,21 @@ const { blocks } = Astro.props;
   }
 
   /* 分類。ムービー / DJ など */
-  .tt__tag {
+  /* タイトルの下に、制作者・登壇者と分類を並べる */
+  .tt__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
     margin-top: 4px;
+  }
+
+  .tt__credit {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .tt__tag {
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.12em;

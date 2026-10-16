@@ -101,6 +101,8 @@ export async function getSponsors() {
 export type ProgramItem = {
   time: string;
   title: string;
+  /** タイトルのあとに添える、制作者や登壇者の名前 */
+  credit?: string;
   note?: string;
   /** 「ムービー」「DJ」など、その項目の分類名 */
   tag?: string;
@@ -133,14 +135,12 @@ export async function resolveProgram(day: ScheduleDay): Promise<ProgramBlock[]> 
       if (!entry.data.time) continue;
       // その日のものだけ。日の指定がない項目はどの日にも出す
       if (entry.data.day && day.id && entry.data.day !== day.id) continue;
-      const bracket = groups[group].scheduleFormat === "bracket" && entry.data.subtitle;
-
       items.push({
         tag: groups[group].jp,
         time: entry.data.time,
-        title: bracket
-          ? `${entry.data.subtitle}「${entry.data.title}」`
-          : entry.data.title,
+        title: entry.data.title,
+        // 制作者・登壇者は、タイトルのあとに添える
+        credit: groups[group].scheduleCredit ? entry.data.subtitle : undefined,
         href: itemHref(group, entry.id) ?? (base ? `${base}#${entry.id}` : undefined),
       });
     }

@@ -80,10 +80,10 @@ export type Group = {
   /** 所要時間に添えるラベル。ムービーなら Runtime、ライブなら Set など。
       既定は Runtime */
   runtimeLabel?: string;
-  /** タイムテーブルでの名前の書き方。
-      bracket … 制作者「作品名」（映画のように作り手を併記したいとき）
-      plain   … 名前だけ（出演者のように名前で通じるとき。既定） */
-  scheduleFormat?: "bracket" | "plain";
+  /** タイムテーブルで、タイトルのあとに制作者・登壇者（subtitle）も出すか。
+      ムービーやトークのように「作品名＋誰が」を併記したいときだけ true。
+      出演者のように名前そのものがタイトルの分類では出さない */
+  scheduleCredit?: boolean;
   /** 管理画面での欄の名前。分類ごとに呼び方が違うので、ここで決める。
       subtitle … タイトルの上に小さく出る文字 / title … 名前 */
   labels?: { subtitle?: string; title?: string };
@@ -101,7 +101,7 @@ export const groups: Record<string, Group> = {
     cardMin: "300px",
     detail: true,
     runtimeLabel: "Runtime",
-    scheduleFormat: "bracket",
+    scheduleCredit: true,
     parent: "contents",
   },
   live: {
@@ -116,6 +116,7 @@ export const groups: Record<string, Group> = {
   },
   talk: {
     labels: { subtitle: "登壇者", title: "トークのタイトル" },
+    scheduleCredit: true,
     label: "Talk Show",
     jp: "トークショー",
     ratio: "16 / 9",
